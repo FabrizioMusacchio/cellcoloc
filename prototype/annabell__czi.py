@@ -7,7 +7,7 @@ Installation:
 conda create -n cellpose_coloc python=3.12 -y
 conda activate cellpose_coloc
 conda install -y ipykernel
-pip install omio-microscopy cellpose matplotlib
+pip install omio-microscopy cellpose matplotlib openpyxl
 
 
 On windows, you may first need to install PyTorch with CUDA support 
@@ -34,9 +34,12 @@ import czifile
 from skimage.filters import gaussian, threshold_otsu, threshold_li
 from skimage.morphology import remove_small_objects, remove_small_holes, binary_closing, ball
 from skimage.measure import label
+
+import omio as om
 # %% SETTINGS
 # ADJUST HERE: path to your CZI file
-czi_path = Path(r"k:\Tmp\ID24137_3rdsection_contralateralCtx_DAPI-GB-NeuN_20x.czi")
+# czi_path = Path(r"k:\Tmp\ID24137_3rdsection_contralateralCtx_DAPI-GB-NeuN_20x.czi") # on windows
+czi_path = Path(r"/Users/husker/Science/Python/Projekte/Cell Colocalization/example_data/czi_private_3D/ID24137_3rdsection_contralateralCtx_DAPI-GB-NeuN_20x.czi") # on linux/macos
 
 # ADJUST HERE: zero-based channel numbers for neurons, DAPI, and cancer channels in the CZI file
 neuron_channel_number = 2
@@ -412,9 +415,19 @@ def get_roi_label_points(roi_labels_2d):
 
     return np.asarray(points), labels
 # %% LOAD IMAGES FROM CZI
-img_neurons = load_czi_channel_as_zyx(czi_path, neuron_channel_number)
-img_nuclei = load_czi_channel_as_zyx(czi_path, dapi_channel_number)
-img_cancer = load_czi_channel_as_zyx(czi_path, cancer_channel_number)
+# OLD SOLUTION
+# img_neurons = load_czi_channel_as_zyx(czi_path, neuron_channel_number)
+# img_nuclei = load_czi_channel_as_zyx(czi_path, dapi_channel_number)
+# img_cancer = load_czi_channel_as_zyx(czi_path, cancer_channel_number)
+
+# NEW SOLUTION USING OMIO (MAKES FILE-TYPE INDEPENDENT, WORKS CZI, TIF, RAW, ETC.):
+img, metadata = om.imread(czi_path) # OMIO ensures OME axes, i.e., TZCYX order
+print(f"Image shape: {img.shape}")
+
+img_neurons = img[:,:, neuron_channel_number, :, :].squeeze()
+img_nuclei = img[:,:, dapi_channel_number, :, :].squeeze()
+img_cancer = img[:,:, cancer_channel_number, :, :].squeeze()
+
 
 if img_neurons.shape != img_nuclei.shape or img_neurons.shape != img_cancer.shape:
     raise ValueError(
@@ -535,8 +548,8 @@ if PROCESS_ROIS:
 
     print(f"Found {len(roi_ids)} ROIs: {roi_ids}")
 
-    model_neurons = models.CellposeModel(gpu=GPU, model_type="cyto3")
-    model_nuclei = models.CellposeModel(gpu=GPU, model_type="nuclei")
+    model_neurons = models.CellposeModel(gpu=GPU, model_type="cyto3") # TODO: make model type selection configurable, e.g. "cyto2", "cyto3", "nuclei", or a custom model path
+    model_nuclei = models.CellposeModel(gpu=GPU, model_type="nuclei") # TODO: make model type selection configurable, e.g. "cyto2", "cyto3", "nuclei", or a custom model path
 
     full_neuron_masks = np.zeros(img_neurons.shape, dtype=np.uint32)
     full_nuclei_masks = np.zeros(img_nuclei.shape, dtype=np.uint32)
