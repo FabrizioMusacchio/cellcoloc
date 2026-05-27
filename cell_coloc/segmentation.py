@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,21 @@ from skimage.morphology import ball, closing, remove_small_holes, remove_small_o
 
 from .config import CellposeModelConfig, OptionalRegionSegmentationConfig
 from .schemas import OptionalRegionSegmentationResult
+
+
+def get_cellpose_major_version() -> int | None:
+    """Return the installed Cellpose major version when it can be determined."""
+
+    try:
+        raw_version = version("cellpose")
+    except PackageNotFoundError:
+        return None
+
+    major_token = raw_version.split(".", maxsplit=1)[0]
+    try:
+        return int(major_token)
+    except ValueError:
+        return None
 
 
 def get_available_cellpose_model_names() -> list[str]:
@@ -33,7 +49,9 @@ def create_cellpose_model(model_name_or_path: str, use_gpu: bool) -> models.Cell
 
     The helper is intentionally strict: if a requested built-in model name is
     not locally available in the installed Cellpose version, it raises a clear
-    error instead of silently falling back to a different model.
+    error instead of silently falling back to a different model. It also adapts
+    model construction to the installed Cellpose major version so that newer
+    Cellpose 4 setups do not receive the deprecated ``model_type`` argument.
     """
 
     candidate_path = Path(model_name_or_path).expanduser()
@@ -54,7 +72,16 @@ def create_cellpose_model(model_name_or_path: str, use_gpu: bool) -> models.Cell
             "required built-in model."
         )
 
+    cellpose_major = get_cellpose_major_version()
     print(f"Loading built-in Cellpose model: {model_name_or_path}")
+    if cellpose_major is not None and cellpose_major >= 4:
+        if model_name_or_path == "cpsam":
+            return models.CellposeModel(gpu=use_gpu)
+        return models.CellposeModel(
+            gpu=use_gpu,
+            pretrained_model=model_name_or_path,
+        )
+
     return models.CellposeModel(
         gpu=use_gpu,
         pretrained_model=model_name_or_path,
