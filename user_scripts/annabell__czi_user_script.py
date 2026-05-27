@@ -39,11 +39,11 @@ CACHE_ROOT = Path(tempfile.gettempdir()) / "cell_coloc_runtime_cache"
 CACHE_ROOT.mkdir(parents=True, exist_ok=True)
 (CACHE_ROOT / "matplotlib").mkdir(parents=True, exist_ok=True)
 (CACHE_ROOT / "numba").mkdir(parents=True, exist_ok=True)
-(CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
 (CACHE_ROOT / "xdg_cache").mkdir(parents=True, exist_ok=True)
+(CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(CACHE_ROOT / "matplotlib"))
 os.environ.setdefault("NUMBA_CACHE_DIR", str(CACHE_ROOT / "numba"))
-os.environ.setdefault("NAPARI_CONFIG", str(CACHE_ROOT / "napari"))
+os.environ.setdefault("NAPARI_CONFIG", str(CACHE_ROOT / "napari" / "settings.yaml"))
 os.environ.setdefault("XDG_CACHE_HOME", str(CACHE_ROOT / "xdg_cache"))
 
 import napari
@@ -84,14 +84,14 @@ VOXEL_SCALE_ZYX = (3.0, 0.3899, 0.3899)
 
 CELL_MODEL_CONFIG = CellposeModelConfig(
     diameter=60,
-    model_name_or_path="cyto3",
+    model_name_or_path="cpsam", # cyto3 for cellpose 3, cpsam for cellpose 4
     # Example for a custom trained Cellpose model:
     # model_name_or_path="/absolute/path/to/custom_model",
 )
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     diameter=20,
-    model_name_or_path="nuclei",
+    model_name_or_path="cpsam", # nuclei for cellpose 3, cpsam for cellpose 4
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(
@@ -181,12 +181,12 @@ else:
 # %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION AND EXPORT RESULTS
 if RUNTIME_CONFIG.process_rois:
     run_result = run_roi_cellpose_colocalization(
-        loaded_images=loaded_images,
-        roi_labels_2d=roi_labels_2d,
-        cell_model_config=CELL_MODEL_CONFIG,
-        marker_model_config=MARKER_MODEL_CONFIG,
+        loaded_images       =loaded_images,
+        roi_labels_2d       =roi_labels_2d,
+        cell_model_config   =CELL_MODEL_CONFIG,
+        marker_model_config =MARKER_MODEL_CONFIG,
         colocalization_config=COLOCALIZATION_CONFIG,
-        runtime_config=RUNTIME_CONFIG,
+        runtime_config      =RUNTIME_CONFIG,
         optional_region_result=optional_region_result,
     )
 
@@ -199,13 +199,9 @@ if RUNTIME_CONFIG.process_rois:
     print(run_result.tables.overview)
 else:
     print("ROI processing is disabled in the runtime settings.")
-
-
 # %% OPTIONAL TABLE INSPECTION IN THE INTERACTIVE WINDOW
 if RUNTIME_CONFIG.process_rois:
     run_result.tables.summary.head()
-
-
 # %% OPEN THE FINAL ANALYSIS RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results and RUNTIME_CONFIG.process_rois:
     viewer = show_analysis_results(
@@ -217,3 +213,4 @@ if RUNTIME_CONFIG.open_results and RUNTIME_CONFIG.process_rois:
     )
     print("Inspect the final layers in napari and close the window when finished.")
     napari.run()
+# %% END
