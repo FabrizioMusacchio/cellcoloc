@@ -8,20 +8,9 @@ next to the source dataset.
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-import tempfile
+from .runtime import get_runtime_cache_root, prepare_runtime_environment
 
-_CACHE_ROOT = Path(tempfile.gettempdir()) / "cell_coloc_runtime_cache"
-_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
-(_CACHE_ROOT / "matplotlib").mkdir(parents=True, exist_ok=True)
-(_CACHE_ROOT / "numba").mkdir(parents=True, exist_ok=True)
-(_CACHE_ROOT / "xdg_cache").mkdir(parents=True, exist_ok=True)
-(_CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
-os.environ.setdefault("MPLCONFIGDIR", str(_CACHE_ROOT / "matplotlib"))
-os.environ.setdefault("NUMBA_CACHE_DIR", str(_CACHE_ROOT / "numba"))
-os.environ.setdefault("NAPARI_CONFIG", str(_CACHE_ROOT / "napari" / "settings.yaml"))
-os.environ.setdefault("XDG_CACHE_HOME", str(_CACHE_ROOT / "xdg_cache"))
+prepare_runtime_environment()
 
 from .analysis import build_positive_cell_mask, run_roi_cellpose_colocalization
 from .config import (
@@ -69,6 +58,8 @@ __all__ = [
     "save_roi_labels",
     "load_roi_labels",
     "export_analysis_outputs",
+    "prepare_runtime_environment",
+    "get_runtime_cache_root",
     "rasterize_shapes_to_labelmask",
     "create_roi_drawing_viewer",
     "save_roi_labels_from_shapes",

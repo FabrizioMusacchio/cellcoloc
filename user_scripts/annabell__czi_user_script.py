@@ -24,29 +24,12 @@ to a ``results`` subfolder located next to the raw dataset.
 # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import sys
-import tempfile
-
-import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-CACHE_ROOT = Path(tempfile.gettempdir()) / "cell_coloc_runtime_cache"
-CACHE_ROOT.mkdir(parents=True, exist_ok=True)
-(CACHE_ROOT / "matplotlib").mkdir(parents=True, exist_ok=True)
-(CACHE_ROOT / "numba").mkdir(parents=True, exist_ok=True)
-(CACHE_ROOT / "xdg_cache").mkdir(parents=True, exist_ok=True)
-(CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
-os.environ.setdefault("MPLCONFIGDIR", str(CACHE_ROOT / "matplotlib"))
-os.environ.setdefault("NUMBA_CACHE_DIR", str(CACHE_ROOT / "numba"))
-os.environ.setdefault("NAPARI_CONFIG", str(CACHE_ROOT / "napari" / "settings.yaml"))
-os.environ.setdefault("XDG_CACHE_HOME", str(CACHE_ROOT / "xdg_cache"))
-
-import napari
 
 from cell_coloc import (
     CellposeModelConfig,
@@ -64,6 +47,9 @@ from cell_coloc import (
     segment_optional_region,
     show_analysis_results,
 )
+
+import napari
+import numpy as np
 # %% PROJECT SETTINGS
 DATA_PATH = PROJECT_ROOT / "example_data" / "czi_private_3D" / "ID24137_3rdsection_contralateralCtx_DAPI-GB-NeuN_20x.czi"
 
