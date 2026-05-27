@@ -16,11 +16,11 @@ _CACHE_ROOT = Path(tempfile.gettempdir()) / "cell_coloc_runtime_cache"
 _CACHE_ROOT.mkdir(parents=True, exist_ok=True)
 (_CACHE_ROOT / "matplotlib").mkdir(parents=True, exist_ok=True)
 (_CACHE_ROOT / "numba").mkdir(parents=True, exist_ok=True)
-(_CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
 (_CACHE_ROOT / "xdg_cache").mkdir(parents=True, exist_ok=True)
+(_CACHE_ROOT / "napari").mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(_CACHE_ROOT / "matplotlib"))
 os.environ.setdefault("NUMBA_CACHE_DIR", str(_CACHE_ROOT / "numba"))
-os.environ.setdefault("NAPARI_CONFIG", str(_CACHE_ROOT / "napari"))
+os.environ.setdefault("NAPARI_CONFIG", str(_CACHE_ROOT / "napari" / "settings.yaml"))
 os.environ.setdefault("XDG_CACHE_HOME", str(_CACHE_ROOT / "xdg_cache"))
 
 from .analysis import build_positive_cell_mask, run_roi_cellpose_colocalization
