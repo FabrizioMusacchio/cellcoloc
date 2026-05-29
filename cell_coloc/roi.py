@@ -150,3 +150,14 @@ def get_roi_label_points(roi_labels_2d: np.ndarray) -> tuple[np.ndarray, list[st
         return np.empty((0, 2), dtype=float), labels
 
     return np.asarray(points, dtype=float), labels
+
+
+def create_full_image_roi_labels(image_shape_yx: tuple[int, int]) -> np.ndarray:
+    """Create a single ROI label covering the complete field of view.
+
+    This helper is useful for analyses that should be run on the entire image
+    without manual ROI drawing. The returned label image contains the label
+    value ``1`` everywhere.
+    """
+
+    return np.ones(image_shape_yx, dtype=np.uint16)

@@ -94,16 +94,45 @@ def evaluate_cellpose_model(
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
 ) -> np.ndarray:
-    """Run Cellpose and return the resulting label image as ``uint32``."""
+    """Run Cellpose and return the resulting label image as ``uint32``.
+
+    The function accepts both 3D ``ZYX`` arrays and 2D images represented as a
+    singleton-z ``(1, Y, X)`` volume. When ``model_config.do_3d`` is ``None``,
+    the function auto-detects the correct Cellpose mode from the z-size.
+    """
+
+    do_3d = model_config.do_3d
+    if do_3d is None:
+        do_3d = image_zyx.shape[0] > 1
+
+    if not do_3d and image_zyx.shape[0] != 1:
+        raise ValueError(
+            "A 2D Cellpose run was requested for an image with more than one z "
+            "slice. Please keep automatic 3D detection enabled or project the "
+            "image to 2D before segmentation."
+        )
+
+    cellpose_input = image_zyx if do_3d else image_zyx[0]
 
     masks, _, _ = model.eval(
-        image_zyx,
-        do_3D=model_config.do_3d,
-        z_axis=model_config.z_axis,
+        cellpose_input,
+        do_3D=do_3d,
+        z_axis=model_config.z_axis if do_3d else None,
         channel_axis=model_config.channel_axis,
         diameter=model_config.diameter,
     )
-    return np.asarray(masks, dtype=np.uint32)
+
+    masks_array = np.asarray(masks, dtype=np.uint32)
+    if do_3d:
+        return masks_array
+
+    if masks_array.ndim != 2:
+        raise ValueError(
+            "Cellpose returned an unexpected 2D mask shape: "
+            f"{masks_array.shape}."
+        )
+
+    return masks_array[np.newaxis, :, :]
 
 
 def relabel_with_offset(mask: np.ndarray, offset: int) -> np.ndarray:

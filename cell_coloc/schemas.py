@@ -41,6 +41,8 @@ class LoadedImageChannels:
     marker_image: np.ndarray
     optional_region_image: np.ndarray | None
     raw_shape_tzcyx: tuple[int, ...]
+    raw_z_size: int
+    is_3d: bool
     metadata: Any
 
 

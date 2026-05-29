@@ -92,9 +92,12 @@ def load_analysis_images(
     paths = build_results_paths(source_path)
     image_tzcyx, metadata = om.imread(paths.source_path)
     image_tzcyx = np.asarray(image_tzcyx)
+    raw_z_size = int(image_tzcyx.shape[1])
+    is_3d = raw_z_size > 1
 
     print(f"Loaded image: {paths.source_path}")
     print(f"Raw image shape (expected TZCYX): {image_tzcyx.shape}")
+    print(f"Detected dimensionality from Z axis: {'3D' if is_3d else '2D'} (Z={raw_z_size})")
 
     cell_image = _extract_zyx_channel(image_tzcyx, channel_config.cell_channel)
     marker_image = _extract_zyx_channel(image_tzcyx, channel_config.marker_channel)
@@ -134,6 +137,8 @@ def load_analysis_images(
         marker_image=marker_image,
         optional_region_image=optional_region_image,
         raw_shape_tzcyx=tuple(image_tzcyx.shape),
+        raw_z_size=raw_z_size,
+        is_3d=is_3d,
         metadata=metadata,
     )
 

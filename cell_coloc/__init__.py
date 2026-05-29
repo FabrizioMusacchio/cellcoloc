@@ -22,7 +22,14 @@ from .config import (
     RuntimeConfig,
 )
 from .io import build_results_paths, export_analysis_outputs, load_analysis_images, load_roi_labels, save_roi_labels
-from .roi import create_roi_drawing_viewer, get_bbox_2d, get_roi_label_points, rasterize_shapes_to_labelmask, save_roi_labels_from_shapes
+from .roi import (
+    create_full_image_roi_labels,
+    create_roi_drawing_viewer,
+    get_bbox_2d,
+    get_roi_label_points,
+    rasterize_shapes_to_labelmask,
+    save_roi_labels_from_shapes,
+)
 from .schemas import (
     ColocalizationRunResult,
     ColocalizationTables,
@@ -60,6 +67,7 @@ __all__ = [
     "export_analysis_outputs",
     "prepare_runtime_environment",
     "get_runtime_cache_root",
+    "create_full_image_roi_labels",
     "rasterize_shapes_to_labelmask",
     "create_roi_drawing_viewer",
     "save_roi_labels_from_shapes",

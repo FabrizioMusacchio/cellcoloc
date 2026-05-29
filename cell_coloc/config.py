@@ -56,7 +56,8 @@ class CellposeModelConfig:
         Either a built-in Cellpose model identifier such as ``"cyto3"`` or
         ``"nuclei"``, or a filesystem path pointing to a custom trained model.
     do_3d:
-        Whether Cellpose should run in 3D mode.
+        Whether Cellpose should run in 3D mode. If set to ``None``, the
+        pipeline auto-detects 2D versus 3D from the loaded image z-size.
     z_axis:
         Array axis representing the z dimension for Cellpose.
     channel_axis:
@@ -66,7 +67,7 @@ class CellposeModelConfig:
 
     diameter: float
     model_name_or_path: str
-    do_3d: bool = True
+    do_3d: bool | None = None
     z_axis: int = 0
     channel_axis: int | None = None
 

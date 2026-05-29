@@ -160,8 +160,17 @@ The repository is already structured like a reusable package, but it is not yet 
 Example environment setup:
 
 ```bash
-conda create -n cell-coloc python=3.12 -y
-conda activate cell-coloc
+conda create -n cell_coloc python=3.12 -y
+conda activate cell_coloc
 conda install -y ipykernel
 pip install cellpose napari matplotlib pandas openpyxl scikit-image tifffile omio-microscopy appdirs
+```
 
+If you want to use the "old" cellpose (v<=3.x), you can install it with:
+
+```bash
+conda create -n cell_coloc python=3.12 -y
+conda activate cell_coloc
+conda install -y ipykernel
+pip install cellpose==3.1.1.2 napari matplotlib pandas openpyxl scikit-image tifffile omio-microscopy appdirs
+```
