@@ -69,12 +69,14 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
+    anisotropy=True,
 )
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
+    anisotropy=True,
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(

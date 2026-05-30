@@ -71,6 +71,7 @@ VOXEL_SCALE_ZYX = (3.0, 0.3899, 0.3899)
 CELL_MODEL_CONFIG = CellposeModelConfig(
     diameter=60,
     model_name_or_path="cpsam", # cyto3 for cellpose 3, cpsam for cellpose 4
+    anisotropy=True,
     # Example for a custom trained Cellpose model:
     # model_name_or_path="/absolute/path/to/custom_model",
 )
@@ -78,6 +79,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     diameter=20,
     model_name_or_path="cpsam", # nuclei for cellpose 3, cpsam for cellpose 4
+    anisotropy=True,
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(
