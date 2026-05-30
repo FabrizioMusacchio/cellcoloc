@@ -12,7 +12,12 @@ from .runtime import get_runtime_cache_root, prepare_runtime_environment
 
 prepare_runtime_environment()
 
-from .analysis import build_positive_cell_mask, run_roi_cellpose_colocalization
+from .analysis import (
+    analyze_existing_masks,
+    build_positive_cell_mask,
+    refine_run_result_from_cellpose_cache,
+    run_roi_cellpose_colocalization,
+)
 from .config import (
     CellposeModelConfig,
     ChannelConfig,
@@ -48,6 +53,7 @@ from .segmentation import (
     segment_optional_region,
 )
 from .visualization import show_analysis_results, show_optional_region_segmentation
+from .visualization import extract_label_masks_from_viewer
 
 __all__ = [
     "CellposeModelConfig",
@@ -66,6 +72,7 @@ __all__ = [
     "save_roi_labels",
     "load_roi_labels",
     "export_analysis_outputs",
+    "analyze_existing_masks",
     "prepare_runtime_environment",
     "get_runtime_cache_root",
     "create_full_image_roi_labels",
@@ -83,7 +90,9 @@ __all__ = [
     "get_available_cellpose_model_names",
     "segment_optional_region",
     "run_roi_cellpose_colocalization",
+    "refine_run_result_from_cellpose_cache",
     "build_positive_cell_mask",
+    "extract_label_masks_from_viewer",
     "show_optional_region_segmentation",
     "show_analysis_results",
 ]

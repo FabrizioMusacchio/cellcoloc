@@ -24,6 +24,23 @@ def _hide_layer_if_present(viewer, layer_name: str) -> None:
         viewer.layers[layer_name].visible = False
 
 
+def extract_label_masks_from_viewer(
+    viewer,
+    cell_layer_name: str = "Cellpose cell masks",
+    marker_layer_name: str = "Cellpose marker masks",
+) -> tuple[np.ndarray, np.ndarray]:
+    """Extract the current cell and marker label layers from a napari viewer."""
+
+    if cell_layer_name not in viewer.layers:
+        raise KeyError(f"Cell label layer not found in viewer: {cell_layer_name}")
+    if marker_layer_name not in viewer.layers:
+        raise KeyError(f"Marker label layer not found in viewer: {marker_layer_name}")
+
+    cell_masks = np.asarray(viewer.layers[cell_layer_name].data, dtype=np.uint32)
+    marker_masks = np.asarray(viewer.layers[marker_layer_name].data, dtype=np.uint32)
+    return cell_masks, marker_masks
+
+
 def show_optional_region_segmentation(
     loaded_images: LoadedImageChannels,
     region_result: OptionalRegionSegmentationResult,

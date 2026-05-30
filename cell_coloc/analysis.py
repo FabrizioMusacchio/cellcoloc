@@ -8,7 +8,14 @@ from skimage.measure import regionprops_table
 
 from .config import CellposeModelConfig, ColocalizationConfig, RuntimeConfig
 from .roi import get_bbox_2d
-from .schemas import ColocalizationRunResult, ColocalizationTables, LoadedImageChannels, OptionalRegionSegmentationResult
+from .schemas import (
+    CellposeChannelRefinementContext,
+    CellposeRefinementRoiCache,
+    ColocalizationRunResult,
+    ColocalizationTables,
+    LoadedImageChannels,
+    OptionalRegionSegmentationResult,
+)
 from .segmentation import create_cellpose_models_for_channels, evaluate_cellpose_model, filter_labels_by_size, relabel_with_offset
 
 
@@ -74,6 +81,179 @@ def build_positive_cell_mask(cell_masks: np.ndarray, summary_table: pd.DataFrame
     lookup = np.zeros(max_label + 1, dtype=np.uint32)
     lookup[positive_labels] = positive_labels
     return lookup[cell_masks]
+
+
+def analyze_existing_masks(
+    loaded_images: LoadedImageChannels,
+    roi_labels_2d: np.ndarray,
+    cell_masks: np.ndarray,
+    marker_masks: np.ndarray,
+    colocalization_config: ColocalizationConfig,
+    optional_region_result: OptionalRegionSegmentationResult | None = None,
+    cell_refinement_context: CellposeChannelRefinementContext | None = None,
+    marker_refinement_context: CellposeChannelRefinementContext | None = None,
+) -> ColocalizationRunResult:
+    """Recompute colocalization tables from existing label masks.
+
+    This helper is used both after the initial Cellpose segmentation and after
+    any later manual or threshold-based refinement of the label masks.
+    """
+
+    full_cell_masks = np.asarray(cell_masks, dtype=np.uint32).copy()
+    full_marker_masks = np.asarray(marker_masks, dtype=np.uint32).copy()
+
+    roi_ids = np.unique(roi_labels_2d)
+    roi_ids = roi_ids[roi_ids != 0]
+
+    print(f"\nFiltering cell labels smaller than {colocalization_config.min_cell_voxels} voxels...")
+    full_cell_masks = filter_labels_by_size(full_cell_masks, colocalization_config.min_cell_voxels)
+
+    detailed_rows: list[dict[str, int | float]] = []
+    for roi_id in roi_ids:
+        roi_mask_2d = roi_labels_2d == roi_id
+        bbox = get_bbox_2d(roi_mask_2d)
+        if bbox is None:
+            continue
+
+        y_slice, x_slice = bbox
+        cell_roi = full_cell_masks[:, y_slice, x_slice]
+        marker_roi = full_marker_masks[:, y_slice, x_slice]
+        rows = analyze_label_overlaps(cell_roi, marker_roi, roi_id=int(roi_id))
+        for row in rows:
+            row["y_min"] = int(y_slice.start)
+            row["y_max"] = int(y_slice.stop)
+            row["x_min"] = int(x_slice.start)
+            row["x_max"] = int(x_slice.stop)
+        detailed_rows.extend(rows)
+
+    detailed_table = pd.DataFrame(detailed_rows)
+    if not detailed_table.empty:
+        detailed_table = detailed_table.sort_values(
+            by=["roi_id", "cell_label", "overlap_voxels"],
+            ascending=[True, True, False],
+        )
+
+    summary_table = _build_summary_table(detailed_table, full_cell_masks, colocalization_config)
+    overview_table = _build_overview_table(
+        roi_labels_2d=roi_labels_2d,
+        loaded_images=loaded_images,
+        cell_masks=full_cell_masks,
+        marker_masks=full_marker_masks,
+        summary_table=summary_table,
+        optional_region_result=optional_region_result,
+    )
+    positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
+
+    return ColocalizationRunResult(
+        cell_masks=full_cell_masks,
+        marker_masks=full_marker_masks,
+        positive_cell_masks=positive_cell_masks,
+        tables=ColocalizationTables(
+            detailed=detailed_table,
+            summary=summary_table,
+            overview=overview_table,
+        ),
+        cell_refinement_context=cell_refinement_context,
+        marker_refinement_context=marker_refinement_context,
+    )
+
+
+def _rebuild_masks_from_refinement_context(
+    image_shape: tuple[int, int, int],
+    refinement_context: CellposeChannelRefinementContext,
+    flow_threshold: float | None = None,
+    cellprob_threshold: float | None = None,
+) -> np.ndarray:
+    """Recompute full-size masks from cached Cellpose network outputs."""
+
+    rebuilt_masks = np.zeros(image_shape, dtype=np.uint32)
+    label_offset = 0
+
+    for roi_cache in refinement_context.roi_caches:
+        current_flow_threshold = roi_cache.flow_threshold if flow_threshold is None else flow_threshold
+        current_cellprob_threshold = (
+            roi_cache.cellprob_threshold if cellprob_threshold is None else cellprob_threshold
+        )
+
+        masks_roi = refinement_context.model._compute_masks(
+            roi_cache.shape_for_masks,
+            roi_cache.dP,
+            roi_cache.cellprob,
+            flow_threshold=current_flow_threshold,
+            cellprob_threshold=current_cellprob_threshold,
+            min_size=roi_cache.min_size,
+            max_size_fraction=roi_cache.max_size_fraction,
+            niter=roi_cache.niter,
+            do_3D=roi_cache.do_3d,
+            stitch_threshold=0.0,
+        )
+
+        masks_roi = np.asarray(masks_roi, dtype=np.uint32)
+        if not roi_cache.do_3d:
+            masks_roi = masks_roi[np.newaxis, :, :]
+
+        masks_roi[:, ~roi_cache.roi_mask_crop_2d] = 0
+        masks_roi = relabel_with_offset(masks_roi, label_offset)
+        if masks_roi.max() > 0:
+            label_offset = int(masks_roi.max())
+
+        y_slice = slice(roi_cache.y_min, roi_cache.y_max)
+        x_slice = slice(roi_cache.x_min, roi_cache.x_max)
+        rebuilt_masks[:, y_slice, x_slice] = np.maximum(
+            rebuilt_masks[:, y_slice, x_slice],
+            masks_roi,
+        )
+
+    return rebuilt_masks
+
+
+def refine_run_result_from_cellpose_cache(
+    loaded_images: LoadedImageChannels,
+    roi_labels_2d: np.ndarray,
+    run_result: ColocalizationRunResult,
+    colocalization_config: ColocalizationConfig,
+    cell_cellprob_threshold: float | None = None,
+    cell_flow_threshold: float | None = None,
+    marker_cellprob_threshold: float | None = None,
+    marker_flow_threshold: float | None = None,
+    optional_region_result: OptionalRegionSegmentationResult | None = None,
+) -> ColocalizationRunResult:
+    """Recompute masks and tables from cached Cellpose outputs.
+
+    This avoids rerunning the neural network forward pass and only recomputes
+    the mask generation stage from cached ``dP`` and ``cellprob`` arrays.
+    """
+
+    if run_result.cell_refinement_context is None or run_result.marker_refinement_context is None:
+        raise ValueError(
+            "This run result does not contain Cellpose refinement caches. "
+            "Threshold-only refinement is currently available only when the "
+            "initial segmentation was produced with a supported Cellpose 4 run."
+        )
+
+    rebuilt_cell_masks = _rebuild_masks_from_refinement_context(
+        image_shape=loaded_images.cell_image.shape,
+        refinement_context=run_result.cell_refinement_context,
+        flow_threshold=cell_flow_threshold,
+        cellprob_threshold=cell_cellprob_threshold,
+    )
+    rebuilt_marker_masks = _rebuild_masks_from_refinement_context(
+        image_shape=loaded_images.marker_image.shape,
+        refinement_context=run_result.marker_refinement_context,
+        flow_threshold=marker_flow_threshold,
+        cellprob_threshold=marker_cellprob_threshold,
+    )
+
+    return analyze_existing_masks(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        cell_masks=rebuilt_cell_masks,
+        marker_masks=rebuilt_marker_masks,
+        colocalization_config=colocalization_config,
+        optional_region_result=optional_region_result,
+        cell_refinement_context=run_result.cell_refinement_context,
+        marker_refinement_context=run_result.marker_refinement_context,
+    )
 
 
 def _build_summary_table(
@@ -250,6 +430,8 @@ def run_roi_cellpose_colocalization(
 
     full_cell_masks = np.zeros(loaded_images.cell_image.shape, dtype=np.uint32)
     full_marker_masks = np.zeros(loaded_images.marker_image.shape, dtype=np.uint32)
+    cell_roi_caches: list[CellposeRefinementRoiCache] = []
+    marker_roi_caches: list[CellposeRefinementRoiCache] = []
 
     cell_label_offset = 0
     marker_label_offset = 0
@@ -271,8 +453,25 @@ def run_roi_cellpose_colocalization(
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
 
-        cell_masks_roi = evaluate_cellpose_model(cell_model, cell_crop, cell_model_config)
-        marker_masks_roi = evaluate_cellpose_model(marker_model, marker_crop, marker_model_config)
+        cell_masks_roi, cell_refinement_cache = evaluate_cellpose_model(cell_model, cell_crop, cell_model_config)
+        marker_masks_roi, marker_refinement_cache = evaluate_cellpose_model(marker_model, marker_crop, marker_model_config)
+
+        if cell_refinement_cache is not None:
+            cell_refinement_cache.roi_id = int(roi_id)
+            cell_refinement_cache.y_min = int(y_slice.start)
+            cell_refinement_cache.y_max = int(y_slice.stop)
+            cell_refinement_cache.x_min = int(x_slice.start)
+            cell_refinement_cache.x_max = int(x_slice.stop)
+            cell_refinement_cache.roi_mask_crop_2d = roi_mask_crop_2d.copy()
+            cell_roi_caches.append(cell_refinement_cache)
+        if marker_refinement_cache is not None:
+            marker_refinement_cache.roi_id = int(roi_id)
+            marker_refinement_cache.y_min = int(y_slice.start)
+            marker_refinement_cache.y_max = int(y_slice.stop)
+            marker_refinement_cache.x_min = int(x_slice.start)
+            marker_refinement_cache.x_max = int(x_slice.stop)
+            marker_refinement_cache.roi_mask_crop_2d = roi_mask_crop_2d.copy()
+            marker_roi_caches.append(marker_refinement_cache)
 
         cell_masks_roi = relabel_with_offset(cell_masks_roi, cell_label_offset)
         marker_masks_roi = relabel_with_offset(marker_masks_roi, marker_label_offset)
@@ -285,60 +484,28 @@ def run_roi_cellpose_colocalization(
         full_cell_masks[:, y_slice, x_slice] = np.maximum(full_cell_masks[:, y_slice, x_slice], cell_masks_roi)
         full_marker_masks[:, y_slice, x_slice] = np.maximum(full_marker_masks[:, y_slice, x_slice], marker_masks_roi)
 
-        rows = analyze_label_overlaps(cell_masks_roi, marker_masks_roi, roi_id=int(roi_id))
-        for row in rows:
-            row["y_min"] = int(y_slice.start)
-            row["y_max"] = int(y_slice.stop)
-            row["x_min"] = int(x_slice.start)
-            row["x_max"] = int(x_slice.stop)
-        detailed_rows.extend(rows)
-
-    print(f"\nFiltering cell labels smaller than {colocalization_config.min_cell_voxels} voxels...")
-    full_cell_masks = filter_labels_by_size(full_cell_masks, colocalization_config.min_cell_voxels)
-
-    detailed_rows = []
-    for roi_id in roi_ids:
-        roi_mask_2d = roi_labels_2d == roi_id
-        bbox = get_bbox_2d(roi_mask_2d)
-        if bbox is None:
-            continue
-
-        y_slice, x_slice = bbox
-        cell_roi = full_cell_masks[:, y_slice, x_slice]
-        marker_roi = full_marker_masks[:, y_slice, x_slice]
-        rows = analyze_label_overlaps(cell_roi, marker_roi, roi_id=int(roi_id))
-        for row in rows:
-            row["y_min"] = int(y_slice.start)
-            row["y_max"] = int(y_slice.stop)
-            row["x_min"] = int(x_slice.start)
-            row["x_max"] = int(x_slice.stop)
-        detailed_rows.extend(rows)
-
-    detailed_table = pd.DataFrame(detailed_rows)
-    if not detailed_table.empty:
-        detailed_table = detailed_table.sort_values(
-            by=["roi_id", "cell_label", "overlap_voxels"],
-            ascending=[True, True, False],
+    cell_refinement_context = None
+    marker_refinement_context = None
+    if cell_roi_caches:
+        cell_refinement_context = CellposeChannelRefinementContext(
+            model=cell_model,
+            model_name_or_path=cell_model_config.model_name_or_path,
+            roi_caches=cell_roi_caches,
+        )
+    if marker_roi_caches:
+        marker_refinement_context = CellposeChannelRefinementContext(
+            model=marker_model,
+            model_name_or_path=marker_model_config.model_name_or_path,
+            roi_caches=marker_roi_caches,
         )
 
-    summary_table = _build_summary_table(detailed_table, full_cell_masks, colocalization_config)
-    overview_table = _build_overview_table(
-        roi_labels_2d=roi_labels_2d,
+    return analyze_existing_masks(
         loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
         cell_masks=full_cell_masks,
         marker_masks=full_marker_masks,
-        summary_table=summary_table,
+        colocalization_config=colocalization_config,
         optional_region_result=optional_region_result,
-    )
-    positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
-
-    return ColocalizationRunResult(
-        cell_masks=full_cell_masks,
-        marker_masks=full_marker_masks,
-        positive_cell_masks=positive_cell_masks,
-        tables=ColocalizationTables(
-            detailed=detailed_table,
-            summary=summary_table,
-            overview=overview_table,
-        ),
+        cell_refinement_context=cell_refinement_context,
+        marker_refinement_context=marker_refinement_context,
     )

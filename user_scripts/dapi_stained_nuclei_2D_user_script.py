@@ -14,7 +14,6 @@ The workflow is intentionally interactive and notebook-like:
 4. run Cellpose-based colocalization within the ROI set,
 5. inspect the resulting masks and tables.
 """
-
 # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
 from __future__ import annotations
 
@@ -26,15 +25,18 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from cell_coloc import (
+    analyze_existing_masks,
     CellposeModelConfig,
     ChannelConfig,
     ColocalizationConfig,
     DisplayNames,
     RuntimeConfig,
     create_roi_drawing_viewer,
+    extract_label_masks_from_viewer,
     export_analysis_outputs,
     load_analysis_images,
     load_roi_labels,
+    refine_run_result_from_cellpose_cache,
     run_roi_cellpose_colocalization,
     save_roi_labels_from_shapes,
     show_analysis_results,
@@ -42,8 +44,6 @@ from cell_coloc import (
 
 import napari
 import numpy as np
-
-
 # %% PROJECT SETTINGS
 DATA_PATH = PROJECT_ROOT / "example_data" / "dapi_stained_nuclei_2D" / "dapi_stained_nuclei_2D.ome.tif"
 
@@ -94,18 +94,14 @@ RUNTIME_CONFIG = RuntimeConfig(
     use_gpu=True,
     crop_for_testing=None,
 )
-
 # %% LOAD THE ANALYSIS CHANNELS
 loaded_images = load_analysis_images(
     source_path=DATA_PATH,
     channel_config=CHANNEL_CONFIG,
     voxel_scale_zyx=VOXEL_SCALE_ZYX,
-    crop_for_testing=RUNTIME_CONFIG.crop_for_testing,
-)
+    crop_for_testing=RUNTIME_CONFIG.crop_for_testing)
 
 print(f"Results directory:\n{loaded_images.paths.results_dir}")
-
-
 # %% DRAW ROIS INTERACTIVELY IN NAPARI
 if RUNTIME_CONFIG.draw_rois:
     viewer, shapes_layer = create_roi_drawing_viewer(
@@ -116,8 +112,6 @@ if RUNTIME_CONFIG.draw_rois:
     napari.run()
 else:
     print("ROI drawing is disabled. The next cell will load an existing ROI mask from disk.")
-
-
 # %% SAVE THE DRAWN ROIS OR LOAD AN EXISTING ROI MASK
 if RUNTIME_CONFIG.draw_rois:
     roi_labels_2d = save_roi_labels_from_shapes(
@@ -132,9 +126,7 @@ else:
 roi_ids = np.unique(roi_labels_2d)
 roi_ids = roi_ids[roi_ids != 0]
 print(f"ROI ids: {roi_ids}")
-
-
-# %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION AND EXPORT RESULTS
+# %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION
 run_result = run_roi_cellpose_colocalization(
     loaded_images=loaded_images,
     roi_labels_2d=roi_labels_2d,
@@ -142,22 +134,8 @@ run_result = run_roi_cellpose_colocalization(
     marker_model_config=MARKER_MODEL_CONFIG,
     colocalization_config=COLOCALIZATION_CONFIG,
     runtime_config=RUNTIME_CONFIG,
-    optional_region_result=None,
-)
-
-export_analysis_outputs(
-    run_result=run_result,
-    paths=loaded_images.paths,
-    optional_region_result=None,
-)
-
+    optional_region_result=None)
 print(run_result.tables.overview)
-
-
-# %% OPTIONAL TABLE INSPECTION
-run_result.tables.summary.head()
-
-
 # %% VISUALIZE THE RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results:
     viewer = show_analysis_results(
@@ -169,5 +147,70 @@ if RUNTIME_CONFIG.open_results:
     )
     print("Inspect the final layers in napari and close the window when finished.")
     napari.run()
+# %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
+REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
+REFINED_CELL_CELLPROB_THRESHOLD     = CELL_MODEL_CONFIG.cellprob_threshold - 1.0
+REFINED_CELL_FLOW_THRESHOLD         = CELL_MODEL_CONFIG.flow_threshold + 0.0
+REFINED_MARKER_CELLPROB_THRESHOLD   = MARKER_MODEL_CONFIG.cellprob_threshold
+REFINED_MARKER_FLOW_THRESHOLD       = MARKER_MODEL_CONFIG.flow_threshold
 
+if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
+    run_result = refine_run_result_from_cellpose_cache(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        run_result=run_result,
+        colocalization_config=COLOCALIZATION_CONFIG,
+        cell_cellprob_threshold=REFINED_CELL_CELLPROB_THRESHOLD,
+        cell_flow_threshold=REFINED_CELL_FLOW_THRESHOLD,
+        marker_cellprob_threshold=REFINED_MARKER_CELLPROB_THRESHOLD,
+        marker_flow_threshold=REFINED_MARKER_FLOW_THRESHOLD,
+        optional_region_result=None)
+
+    print(run_result.tables.overview)
+
+    viewer = show_analysis_results(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        run_result=run_result,
+        display_names=DISPLAY_NAMES,
+        optional_region_result=None)
+    print("Inspect the refined layers in napari and close the window when finished.")
+    napari.run()
+else:
+    print("Cached Cellpose refinement is disabled for this run.")
+# %% OPTIONALLY REANALYZE MANUALLY EDITED LABEL LAYERS FROM NAPARI
+REANALYZE_EDITED_LABELS_FROM_VIEWER = True
+
+if REANALYZE_EDITED_LABELS_FROM_VIEWER:
+    cell_masks_from_viewer, marker_masks_from_viewer = extract_label_masks_from_viewer(viewer)
+    run_result = analyze_existing_masks(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        cell_masks=cell_masks_from_viewer,
+        marker_masks=marker_masks_from_viewer,
+        colocalization_config=COLOCALIZATION_CONFIG,
+        optional_region_result=None,
+        cell_refinement_context=run_result.cell_refinement_context,
+        marker_refinement_context=run_result.marker_refinement_context,
+    )
+
+    print(run_result.tables.overview)
+
+    viewer = show_analysis_results(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        run_result=run_result,
+        display_names=DISPLAY_NAMES,
+        optional_region_result=None,
+    )
+    print("Inspect the relabeled result in napari and close the window when finished.")
+    napari.run()
+else:
+    print("Manual label reanalysis from the napari viewer is disabled for this run.")
+# %% EXPORT RESULTS
+export_analysis_outputs(
+    run_result=run_result,
+    paths=loaded_images.paths,
+    optional_region_result=None)
+print("Final results exported.")
 # %% END

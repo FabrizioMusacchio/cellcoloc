@@ -12,7 +12,7 @@ from skimage.measure import label
 from skimage.morphology import ball, closing, remove_small_holes, remove_small_objects
 
 from .config import CellposeModelConfig, OptionalRegionSegmentationConfig
-from .schemas import OptionalRegionSegmentationResult
+from .schemas import CellposeRefinementRoiCache, OptionalRegionSegmentationResult
 
 
 def get_cellpose_major_version() -> int | None:
@@ -121,7 +121,7 @@ def evaluate_cellpose_model(
     model: models.CellposeModel,
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
-) -> np.ndarray:
+) -> tuple[np.ndarray, CellposeRefinementRoiCache | None]:
     """Run Cellpose and return the resulting label image as ``uint32``.
 
     The function accepts both 3D ``ZYX`` arrays and 2D images represented as a
@@ -142,6 +142,7 @@ def evaluate_cellpose_model(
         )
 
     cellpose_input = image_zyx if do_3d else image_zyx[0]
+    shape_for_masks = image_zyx.shape if do_3d else (1, image_zyx.shape[1], image_zyx.shape[2])
     eval_kwargs = {
         "do_3D": do_3d,
         "z_axis": model_config.z_axis if do_3d else None,
@@ -151,6 +152,7 @@ def evaluate_cellpose_model(
     if cellpose_major is not None and cellpose_major >= 4:
         eval_kwargs["cellprob_threshold"] = model_config.cellprob_threshold
         eval_kwargs["flow_threshold"] = model_config.flow_threshold
+        eval_kwargs["compute_masks"] = False
         if model_config.diameter is not None:
             eval_kwargs["diameter"] = model_config.diameter
     else:
@@ -162,11 +164,75 @@ def evaluate_cellpose_model(
             )
         eval_kwargs["diameter"] = model_config.diameter
 
-    masks, _, _ = model.eval(cellpose_input, **eval_kwargs)
+    masks, flows, _ = model.eval(cellpose_input, **eval_kwargs)
+
+    if cellpose_major is not None and cellpose_major >= 4:
+        dP = np.asarray(flows[1])
+        cellprob = np.asarray(flows[2])
+        if do_3d:
+            if dP.ndim != 4:
+                raise ValueError(
+                    "Cellpose returned unexpected 3D flow dimensions for "
+                    f"`dP`: {dP.shape}."
+                )
+            if cellprob.ndim != 3:
+                raise ValueError(
+                    "Cellpose returned unexpected 3D cellprob dimensions: "
+                    f"{cellprob.shape}."
+                )
+        else:
+            if dP.ndim == 3:
+                dP = dP[:, np.newaxis, :, :]
+            elif dP.ndim != 4:
+                raise ValueError(
+                    "Cellpose returned unexpected 2D flow dimensions for "
+                    f"`dP`: {dP.shape}."
+                )
+
+            if cellprob.ndim == 2:
+                cellprob = cellprob[np.newaxis, :, :]
+            elif cellprob.ndim != 3:
+                raise ValueError(
+                    "Cellpose returned unexpected 2D cellprob dimensions: "
+                    f"{cellprob.shape}."
+                )
+        image_scaling = 30.0 / model_config.diameter if model_config.diameter is not None and model_config.diameter > 0 else 1.0
+        niter = int(200 / image_scaling)
+        masks = model._compute_masks(
+            shape_for_masks,
+            dP,
+            cellprob,
+            flow_threshold=model_config.flow_threshold,
+            cellprob_threshold=model_config.cellprob_threshold,
+            min_size=15,
+            max_size_fraction=0.4,
+            niter=niter,
+            do_3D=do_3d,
+            stitch_threshold=0.0,
+        )
+        refinement_cache = CellposeRefinementRoiCache(
+            roi_id=-1,
+            y_min=-1,
+            y_max=-1,
+            x_min=-1,
+            x_max=-1,
+            roi_mask_crop_2d=np.zeros((1, 1), dtype=bool),
+            shape_for_masks=tuple(int(v) for v in shape_for_masks),
+            dP=dP,
+            cellprob=cellprob,
+            do_3d=do_3d,
+            niter=niter,
+            min_size=15,
+            max_size_fraction=0.4,
+            flow_threshold=model_config.flow_threshold,
+            cellprob_threshold=model_config.cellprob_threshold,
+        )
+    else:
+        refinement_cache = None
 
     masks_array = np.asarray(masks, dtype=np.uint32)
     if do_3d:
-        return masks_array
+        return masks_array, refinement_cache
 
     if masks_array.ndim != 2:
         raise ValueError(
@@ -174,7 +240,7 @@ def evaluate_cellpose_model(
             f"{masks_array.shape}."
         )
 
-    return masks_array[np.newaxis, :, :]
+    return masks_array[np.newaxis, :, :], refinement_cache
 
 
 def relabel_with_offset(mask: np.ndarray, offset: int) -> np.ndarray:
