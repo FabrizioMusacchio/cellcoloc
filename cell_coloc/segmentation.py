@@ -15,6 +15,74 @@ from .config import CellposeModelConfig, OptionalRegionSegmentationConfig
 from .schemas import CellposeRefinementRoiCache, OptionalRegionSegmentationResult
 
 
+def resolve_cellpose_anisotropy(
+    model_config: CellposeModelConfig,
+    voxel_scale_zyx: tuple[float, float, float],
+    do_3d: bool,
+) -> float | None:
+    """Resolve the Cellpose anisotropy factor for one segmentation run.
+
+    The function only applies anisotropy handling to genuine 3D runs. Users
+    can disable the feature with ``False``, enable automatic derivation from
+    voxel spacing with ``True``, or provide a numeric factor explicitly.
+
+    The automatic rule follows a practical microscopy heuristic: if the z-step
+    is appreciably larger than the in-plane sampling, Cellpose benefits from an
+    anisotropy factor of ``z_spacing / mean(xy_spacing)``. If z-spacing is not
+    larger than the in-plane spacing, no anisotropy value is forwarded.
+    """
+
+    if not do_3d:
+        return None
+
+    anisotropy_setting = model_config.anisotropy
+    if anisotropy_setting is False:
+        return None
+
+    if isinstance(anisotropy_setting, (int, float)) and not isinstance(
+        anisotropy_setting,
+        bool,
+    ):
+        anisotropy_value = float(anisotropy_setting)
+        if anisotropy_value <= 0:
+            raise ValueError(
+                "A manually configured Cellpose anisotropy value must be "
+                f"greater than 0, got {anisotropy_value}."
+            )
+        print(f"Using manually configured Cellpose anisotropy: {anisotropy_value:.4f}")
+        return anisotropy_value
+
+    if anisotropy_setting is not True:
+        raise ValueError(
+            "`CellposeModelConfig.anisotropy` must be set to False, True, or "
+            f"a positive numeric value, got {anisotropy_setting!r}."
+        )
+
+    z_spacing, y_spacing, x_spacing = voxel_scale_zyx
+    if z_spacing <= 0 or y_spacing <= 0 or x_spacing <= 0:
+        raise ValueError(
+            "Voxel spacing values must be strictly positive to derive "
+            f"anisotropy automatically, got {voxel_scale_zyx}."
+        )
+
+    xy_spacing = (y_spacing + x_spacing) / 2.0
+    anisotropy_activation_ratio = 1.25
+    if z_spacing <= xy_spacing * anisotropy_activation_ratio:
+        print(
+            "Skipping Cellpose anisotropy auto-correction because z-spacing "
+            f"({z_spacing:.4f}) is not sufficiently larger than mean "
+            f"xy-spacing ({xy_spacing:.4f})."
+        )
+        return None
+
+    anisotropy_value = z_spacing / xy_spacing
+    print(
+        "Using automatically derived Cellpose anisotropy: "
+        f"{anisotropy_value:.4f} (z={z_spacing:.4f}, mean_xy={xy_spacing:.4f})"
+    )
+    return anisotropy_value
+
+
 def get_cellpose_major_version() -> int | None:
     """Return the installed Cellpose major version when it can be determined."""
 
@@ -121,6 +189,7 @@ def evaluate_cellpose_model(
     model: models.CellposeModel,
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
+    voxel_scale_zyx: tuple[float, float, float],
 ) -> tuple[np.ndarray, CellposeRefinementRoiCache | None]:
     """Run Cellpose and return the resulting label image as ``uint32``.
 
@@ -132,6 +201,11 @@ def evaluate_cellpose_model(
     do_3d = model_config.do_3d
     if do_3d is None:
         do_3d = image_zyx.shape[0] > 1
+    anisotropy = resolve_cellpose_anisotropy(
+        model_config=model_config,
+        voxel_scale_zyx=voxel_scale_zyx,
+        do_3d=do_3d,
+    )
     cellpose_major = get_cellpose_major_version()
 
     if not do_3d and image_zyx.shape[0] != 1:
@@ -148,6 +222,8 @@ def evaluate_cellpose_model(
         "z_axis": model_config.z_axis if do_3d else None,
         "channel_axis": model_config.channel_axis,
     }
+    if anisotropy is not None:
+        eval_kwargs["anisotropy"] = anisotropy
 
     if cellpose_major is not None and cellpose_major >= 4:
         eval_kwargs["cellprob_threshold"] = model_config.cellprob_threshold

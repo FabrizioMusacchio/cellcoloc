@@ -453,8 +453,18 @@ def run_roi_cellpose_colocalization(
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
 
-        cell_masks_roi, cell_refinement_cache = evaluate_cellpose_model(cell_model, cell_crop, cell_model_config)
-        marker_masks_roi, marker_refinement_cache = evaluate_cellpose_model(marker_model, marker_crop, marker_model_config)
+        cell_masks_roi, cell_refinement_cache = evaluate_cellpose_model(
+            cell_model,
+            cell_crop,
+            cell_model_config,
+            loaded_images.voxel_scale_zyx,
+        )
+        marker_masks_roi, marker_refinement_cache = evaluate_cellpose_model(
+            marker_model,
+            marker_crop,
+            marker_model_config,
+            loaded_images.voxel_scale_zyx,
+        )
 
         if cell_refinement_cache is not None:
             cell_refinement_cache.roi_id = int(roi_id)

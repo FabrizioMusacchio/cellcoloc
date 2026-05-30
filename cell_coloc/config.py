@@ -71,6 +71,12 @@ class CellposeModelConfig:
     flow_threshold:
         Cellpose flow error threshold used during mask generation. This is only
         forwarded explicitly for Cellpose 4 and newer.
+    anisotropy:
+        Controls whether a 3D Cellpose run should use anisotropy correction.
+        Set this to ``False`` to disable anisotropy handling entirely, to
+        ``True`` to let the pipeline derive an anisotropy factor from the
+        configured voxel size, or to a numeric value to force a specific
+        Cellpose anisotropy factor. The value is ignored for 2D runs.
     """
 
     model_name_or_path: str
@@ -80,6 +86,7 @@ class CellposeModelConfig:
     channel_axis: int | None = None
     cellprob_threshold: float = 0.0
     flow_threshold: float = 0.4
+    anisotropy: bool | float = False
 
 
 @dataclass(slots=True)
