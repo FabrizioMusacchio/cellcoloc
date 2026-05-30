@@ -39,6 +39,7 @@ from .schemas import (
 )
 from .segmentation import (
     create_cellpose_model,
+    create_cellpose_models_for_channels,
     evaluate_cellpose_model,
     filter_labels_by_size,
     get_cellpose_major_version,
@@ -74,6 +75,7 @@ __all__ = [
     "get_bbox_2d",
     "get_roi_label_points",
     "create_cellpose_model",
+    "create_cellpose_models_for_channels",
     "evaluate_cellpose_model",
     "relabel_with_offset",
     "filter_labels_by_size",

@@ -9,7 +9,7 @@ from skimage.measure import regionprops_table
 from .config import CellposeModelConfig, ColocalizationConfig, RuntimeConfig
 from .roi import get_bbox_2d
 from .schemas import ColocalizationRunResult, ColocalizationTables, LoadedImageChannels, OptionalRegionSegmentationResult
-from .segmentation import create_cellpose_model, evaluate_cellpose_model, filter_labels_by_size, relabel_with_offset
+from .segmentation import create_cellpose_models_for_channels, evaluate_cellpose_model, filter_labels_by_size, relabel_with_offset
 
 
 def analyze_label_overlaps(
@@ -242,8 +242,11 @@ def run_roi_cellpose_colocalization(
 
     print(f"Found {len(roi_ids)} ROIs: {roi_ids}")
 
-    cell_model = create_cellpose_model(cell_model_config.model_name_or_path, runtime_config.use_gpu)
-    marker_model = create_cellpose_model(marker_model_config.model_name_or_path, runtime_config.use_gpu)
+    cell_model, marker_model = create_cellpose_models_for_channels(
+        cell_model_config=cell_model_config,
+        marker_model_config=marker_model_config,
+        use_gpu=runtime_config.use_gpu,
+    )
 
     full_cell_masks = np.zeros(loaded_images.cell_image.shape, dtype=np.uint32)
     full_marker_masks = np.zeros(loaded_images.marker_image.shape, dtype=np.uint32)

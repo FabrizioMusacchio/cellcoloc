@@ -52,6 +52,8 @@ class CellposeModelConfig:
     ----------
     diameter:
         Diameter parameter passed to :meth:`cellpose.models.CellposeModel.eval`.
+        For Cellpose 4 and newer this can be set to ``None`` to let Cellpose
+        choose its default behavior without an explicit diameter.
     model_name_or_path:
         Either a built-in Cellpose model identifier such as ``"cyto3"`` or
         ``"nuclei"``, or a filesystem path pointing to a custom trained model.
@@ -63,13 +65,21 @@ class CellposeModelConfig:
     channel_axis:
         Channel axis passed to Cellpose. Keep this as ``None`` for single
         channel volumes.
+    cellprob_threshold:
+        Cellpose pixel probability threshold used during mask generation. This
+        is only forwarded explicitly for Cellpose 4 and newer.
+    flow_threshold:
+        Cellpose flow error threshold used during mask generation. This is only
+        forwarded explicitly for Cellpose 4 and newer.
     """
 
-    diameter: float
     model_name_or_path: str
+    diameter: float | None = None
     do_3d: bool | None = None
     z_axis: int = 0
     channel_axis: int | None = None
+    cellprob_threshold: float = 0.0
+    flow_threshold: float = 0.4
 
 
 @dataclass(slots=True)

@@ -89,6 +89,34 @@ def create_cellpose_model(model_name_or_path: str, use_gpu: bool) -> models.Cell
     )
 
 
+def create_cellpose_models_for_channels(
+    cell_model_config: CellposeModelConfig,
+    marker_model_config: CellposeModelConfig,
+    use_gpu: bool,
+) -> tuple[models.CellposeModel, models.CellposeModel]:
+    """Create Cellpose model instances for the cell and marker channels.
+
+    For Cellpose 4 and newer, the same model instance is reused when both
+    channels request the same built-in model or custom model path. For older
+    Cellpose versions, the previous behavior is preserved and separate model
+    instances are created for each channel configuration.
+    """
+
+    cellpose_major = get_cellpose_major_version()
+    if cellpose_major is not None and cellpose_major >= 4:
+        cell_model_name = cell_model_config.model_name_or_path
+        marker_model_name = marker_model_config.model_name_or_path
+        if cell_model_name == marker_model_name:
+            shared_model = create_cellpose_model(cell_model_name, use_gpu)
+            print("Reusing one shared Cellpose model instance for both channels.")
+            return shared_model, shared_model
+
+    return (
+        create_cellpose_model(cell_model_config.model_name_or_path, use_gpu),
+        create_cellpose_model(marker_model_config.model_name_or_path, use_gpu),
+    )
+
+
 def evaluate_cellpose_model(
     model: models.CellposeModel,
     image_zyx: np.ndarray,
@@ -104,6 +132,7 @@ def evaluate_cellpose_model(
     do_3d = model_config.do_3d
     if do_3d is None:
         do_3d = image_zyx.shape[0] > 1
+    cellpose_major = get_cellpose_major_version()
 
     if not do_3d and image_zyx.shape[0] != 1:
         raise ValueError(
@@ -113,14 +142,27 @@ def evaluate_cellpose_model(
         )
 
     cellpose_input = image_zyx if do_3d else image_zyx[0]
+    eval_kwargs = {
+        "do_3D": do_3d,
+        "z_axis": model_config.z_axis if do_3d else None,
+        "channel_axis": model_config.channel_axis,
+    }
 
-    masks, _, _ = model.eval(
-        cellpose_input,
-        do_3D=do_3d,
-        z_axis=model_config.z_axis if do_3d else None,
-        channel_axis=model_config.channel_axis,
-        diameter=model_config.diameter,
-    )
+    if cellpose_major is not None and cellpose_major >= 4:
+        eval_kwargs["cellprob_threshold"] = model_config.cellprob_threshold
+        eval_kwargs["flow_threshold"] = model_config.flow_threshold
+        if model_config.diameter is not None:
+            eval_kwargs["diameter"] = model_config.diameter
+    else:
+        if model_config.diameter is None:
+            raise ValueError(
+                "For Cellpose versions below 4, an explicit diameter is "
+                "currently required by this pipeline. Please set "
+                "`CellposeModelConfig.diameter` in the user script."
+            )
+        eval_kwargs["diameter"] = model_config.diameter
+
+    masks, _, _ = model.eval(cellpose_input, **eval_kwargs)
 
     masks_array = np.asarray(masks, dtype=np.uint32)
     if do_3d:
