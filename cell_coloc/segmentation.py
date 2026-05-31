@@ -201,6 +201,11 @@ def evaluate_cellpose_model(
     do_3d = model_config.do_3d
     if do_3d is None:
         do_3d = image_zyx.shape[0] > 1
+    if model_config.flow3d_smooth < 0 or model_config.flow3d_smooth > 10:
+        raise ValueError(
+            "`CellposeModelConfig.flow3d_smooth` must be between 0 and 10, "
+            f"got {model_config.flow3d_smooth}."
+        )
     anisotropy = resolve_cellpose_anisotropy(
         model_config=model_config,
         voxel_scale_zyx=voxel_scale_zyx,
@@ -224,6 +229,8 @@ def evaluate_cellpose_model(
     }
     if anisotropy is not None:
         eval_kwargs["anisotropy"] = anisotropy
+    if do_3d:
+        eval_kwargs["flow3D_smooth"] = model_config.flow3d_smooth
 
     if cellpose_major is not None and cellpose_major >= 4:
         eval_kwargs["cellprob_threshold"] = model_config.cellprob_threshold

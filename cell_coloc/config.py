@@ -77,6 +77,10 @@ class CellposeModelConfig:
         ``True`` to let the pipeline derive an anisotropy factor from the
         configured voxel size, or to a numeric value to force a specific
         Cellpose anisotropy factor. The value is ignored for 2D runs.
+    flow3d_smooth:
+        Optional Gaussian smoothing strength forwarded to Cellpose for 3D flow
+        fields. This setting only has an effect for true 3D runs and is
+        ignored for 2D data. Keep the default ``0`` to disable smoothing.
     """
 
     model_name_or_path: str
@@ -87,6 +91,7 @@ class CellposeModelConfig:
     cellprob_threshold: float = 0.0
     flow_threshold: float = 0.4
     anisotropy: bool | float = False
+    flow3d_smooth: int = 0
 
 
 @dataclass(slots=True)

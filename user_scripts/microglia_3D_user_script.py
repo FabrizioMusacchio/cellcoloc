@@ -70,6 +70,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
+    flow3d_smooth=3, # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
     cellprob_threshold=1.5,
     flow_threshold=0.4,
 )
@@ -79,6 +80,7 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
+    flow3d_smooth=0,
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(

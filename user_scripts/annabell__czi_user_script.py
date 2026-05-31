@@ -72,6 +72,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     diameter=60,
     model_name_or_path="cpsam", # cyto3 for cellpose 3, cpsam for cellpose 4
     anisotropy=True,
+    flow3d_smooth=0,
     # Example for a custom trained Cellpose model:
     # model_name_or_path="/absolute/path/to/custom_model",
 )
@@ -80,6 +81,7 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
     diameter=20,
     model_name_or_path="cpsam", # nuclei for cellpose 3, cpsam for cellpose 4
     anisotropy=True,
+    flow3d_smooth=0,
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(
