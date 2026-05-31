@@ -70,7 +70,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     flow_threshold=0.5,     # quality threshold; After mask generation, Cellpose checks whether the flows reconstructed from the mask are 
                             # consistent with the flows predicted by the network. The mean squared error between the two is used as the flow 
                             # error; masks with an error that is too large are discarded. The default value is 0.4.  
-                            # the higher, the more tolerant the algorithm is, i.e. more cells but also more false positives (default: 0.4)
+                            # The higher, the more tolerant the algorithm is, i.e. more cells but also more false positives.
 )
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(

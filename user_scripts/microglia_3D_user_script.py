@@ -15,7 +15,6 @@ The quantitative colocalization is performed between channel 0 and channel 1.
 ROIs can be drawn interactively in napari or, if desired, the whole field of
 view can be analyzed as one single ROI.
 """
-
 # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
 from __future__ import annotations
 
@@ -37,6 +36,7 @@ from cell_coloc import (
     export_analysis_outputs,
     load_analysis_images,
     load_roi_labels,
+    refine_run_result_from_cellpose_cache,
     run_roi_cellpose_colocalization,
     save_roi_labels_from_shapes,
     show_analysis_results,
@@ -45,7 +45,7 @@ from cell_coloc import (
 import napari
 import numpy as np
 # %% PROJECT SETTINGS
-DATA_DIR = PROJECT_ROOT / "example_data" / "microglia_2D"
+DATA_DIR = PROJECT_ROOT / "example_data" / "microglia_3D"
 DATA_PATHS = sorted(DATA_DIR.glob("*.czi"))
 
 CHANNEL_CONFIG = ChannelConfig(
@@ -63,17 +63,19 @@ DISPLAY_NAMES = DisplayNames(
 
 # Placeholder values. Replace with the true metadata-derived pixel sizes when
 # available for quantitative micrometer-scale interpretation.
-VOXEL_SCALE_ZYX = (1.0, 1.0, 1.0)
+VOXEL_SCALE_ZYX = (1.0, 0.6239258, 0.6239258)
 
 CELL_MODEL_CONFIG = CellposeModelConfig(
-    diameter=15,
+    #diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
+    cellprob_threshold=1.5,
+    flow_threshold=0.4,
 )
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
-    diameter=15,
+    #diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
@@ -141,7 +143,7 @@ else:
 roi_ids = np.unique(roi_labels_2d)
 roi_ids = roi_ids[roi_ids != 0]
 print(f"ROI ids: {roi_ids}")
-# %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION AND EXPORT RESULTS
+# %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION
 run_result = run_roi_cellpose_colocalization(
     loaded_images=loaded_images,
     roi_labels_2d=roi_labels_2d,
@@ -151,16 +153,7 @@ run_result = run_roi_cellpose_colocalization(
     runtime_config=RUNTIME_CONFIG,
     optional_region_result=None)
 
-export_analysis_outputs(
-    run_result=run_result,
-    paths=loaded_images.paths,
-    optional_region_result=None)
-
 print(run_result.tables.overview)
-# %% OPTIONAL TABLE INSPECTION
-run_result.tables.summary.head()
-
-
 # %% VISUALIZE THE RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results:
     viewer = show_analysis_results(
@@ -183,5 +176,56 @@ if RUNTIME_CONFIG.open_results:
 
     print(f"Inspecting visualization for:\n{SELECTED_FILE_NAME}")
     napari.run()
+# %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
+REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
+REFINED_CELL_CELLPROB_THRESHOLD     = CELL_MODEL_CONFIG.cellprob_threshold +1.5
+REFINED_CELL_FLOW_THRESHOLD         = CELL_MODEL_CONFIG.flow_threshold #- 0.4
+REFINED_MARKER_CELLPROB_THRESHOLD   = MARKER_MODEL_CONFIG.cellprob_threshold
+REFINED_MARKER_FLOW_THRESHOLD       = MARKER_MODEL_CONFIG.flow_threshold
+
+if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
+    run_result = refine_run_result_from_cellpose_cache(
+        loaded_images=loaded_images,
+        roi_labels_2d=roi_labels_2d,
+        run_result=run_result,
+        colocalization_config=COLOCALIZATION_CONFIG,
+        cell_cellprob_threshold=REFINED_CELL_CELLPROB_THRESHOLD,
+        cell_flow_threshold=REFINED_CELL_FLOW_THRESHOLD,
+        marker_cellprob_threshold=REFINED_MARKER_CELLPROB_THRESHOLD,
+        marker_flow_threshold=REFINED_MARKER_FLOW_THRESHOLD,
+        optional_region_result=None)
+
+    print(run_result.tables.overview)
+
+    if RUNTIME_CONFIG.open_results:
+        viewer = show_analysis_results(
+            loaded_images=loaded_images,
+            roi_labels_2d=roi_labels_2d,
+            run_result=run_result,
+            display_names=DISPLAY_NAMES,
+            optional_region_result=None,
+        )
+
+        if loaded_images.optional_region_image is not None:
+            viewer.add_image(
+                loaded_images.optional_region_image,
+                name="DAPI",
+                scale=loaded_images.voxel_scale_zyx,
+                blending="additive",
+                colormap="yellow",
+                channel_axis=None,
+            )
+
+        print(f"Inspecting refined visualization for:\n{SELECTED_FILE_NAME}")
+        napari.run()
+else:
+    print("Cached Cellpose refinement is disabled for this run.")
+# %% EXPORT RESULTS
+export_analysis_outputs(
+    run_result=run_result,
+    paths=loaded_images.paths,
+    optional_region_result=None,
+)
+print("Final results exported.")
 
 # %% END
