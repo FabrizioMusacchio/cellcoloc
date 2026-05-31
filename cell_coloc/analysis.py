@@ -7,6 +7,7 @@ import pandas as pd
 from skimage.measure import regionprops_table
 
 from .config import CellposeModelConfig, ColocalizationConfig, RuntimeConfig
+from .filtering import apply_postfilters, apply_prefilter
 from .roi import get_bbox_2d
 from .schemas import (
     CellposeChannelRefinementContext,
@@ -92,6 +93,8 @@ def analyze_existing_masks(
     optional_region_result: OptionalRegionSegmentationResult | None = None,
     cell_refinement_context: CellposeChannelRefinementContext | None = None,
     marker_refinement_context: CellposeChannelRefinementContext | None = None,
+    cell_model_config: CellposeModelConfig | None = None,
+    marker_model_config: CellposeModelConfig | None = None,
 ) -> ColocalizationRunResult:
     """Recompute colocalization tables from existing label masks.
 
@@ -107,6 +110,22 @@ def analyze_existing_masks(
 
     print(f"\nFiltering cell labels smaller than {colocalization_config.min_cell_voxels} voxels...")
     full_cell_masks = filter_labels_by_size(full_cell_masks, colocalization_config.min_cell_voxels)
+
+    if cell_model_config is not None and cell_model_config.postfilters is not None:
+        print("Applying configured postfilters to cell masks...")
+        full_cell_masks = apply_postfilters(
+            full_cell_masks,
+            loaded_images.cell_image,
+            cell_model_config,
+        )
+
+    if marker_model_config is not None and marker_model_config.postfilters is not None:
+        print("Applying configured postfilters to marker masks...")
+        full_marker_masks = apply_postfilters(
+            full_marker_masks,
+            loaded_images.marker_image,
+            marker_model_config,
+        )
 
     detailed_rows: list[dict[str, int | float]] = []
     for roi_id in roi_ids:
@@ -212,6 +231,8 @@ def refine_run_result_from_cellpose_cache(
     roi_labels_2d: np.ndarray,
     run_result: ColocalizationRunResult,
     colocalization_config: ColocalizationConfig,
+    cell_model_config: CellposeModelConfig | None = None,
+    marker_model_config: CellposeModelConfig | None = None,
     cell_cellprob_threshold: float | None = None,
     cell_flow_threshold: float | None = None,
     marker_cellprob_threshold: float | None = None,
@@ -253,6 +274,8 @@ def refine_run_result_from_cellpose_cache(
         optional_region_result=optional_region_result,
         cell_refinement_context=run_result.cell_refinement_context,
         marker_refinement_context=run_result.marker_refinement_context,
+        cell_model_config=cell_model_config,
+        marker_model_config=marker_model_config,
     )
 
 
@@ -435,8 +458,6 @@ def run_roi_cellpose_colocalization(
 
     cell_label_offset = 0
     marker_label_offset = 0
-    detailed_rows: list[dict[str, int | float]] = []
-
     for roi_id in roi_ids:
         print(f"\nProcessing ROI {int(roi_id)} with Cellpose...")
         roi_mask_2d = roi_labels_2d == roi_id
@@ -450,6 +471,8 @@ def run_roi_cellpose_colocalization(
 
         cell_crop = loaded_images.cell_image[:, y_slice, x_slice].copy()
         marker_crop = loaded_images.marker_image[:, y_slice, x_slice].copy()
+        cell_crop = apply_prefilter(cell_crop, cell_model_config)
+        marker_crop = apply_prefilter(marker_crop, marker_model_config)
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
 
@@ -518,4 +541,6 @@ def run_roi_cellpose_colocalization(
         optional_region_result=optional_region_result,
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
+        cell_model_config=cell_model_config,
+        marker_model_config=marker_model_config,
     )

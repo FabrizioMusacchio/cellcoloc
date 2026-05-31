@@ -8,6 +8,7 @@ pipeline functions exposed by :mod:`cell_coloc`.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Sequence
 
 
 @dataclass(slots=True)
@@ -81,6 +82,40 @@ class CellposeModelConfig:
         Optional Gaussian smoothing strength forwarded to Cellpose for 3D flow
         fields. This setting only has an effect for true 3D runs and is
         ignored for 2D data. Keep the default ``0`` to disable smoothing.
+    prefilter:
+        Optional image prefilter applied before Cellpose. Supported values are
+        ``None``, ``"gaussian"``, and ``"median"``.
+    prefilter_sigma_xy:
+        Gaussian prefilter sigma in the in-plane directions. Used when
+        ``prefilter="gaussian"``.
+    prefilter_sigma_z:
+        Gaussian prefilter sigma along z. If ``None``, the pipeline reuses
+        ``prefilter_sigma_xy``. Only relevant for 3D data.
+    prefilter_median_size_xy:
+        Median prefilter kernel size in the in-plane directions. Used when
+        ``prefilter="median"``.
+    prefilter_median_size_z:
+        Median prefilter kernel size along z. If ``None``, the pipeline reuses
+        ``prefilter_median_size_xy``. Only relevant for 3D data.
+    postfilters:
+        Optional post-segmentation filters applied to the resulting masks.
+        Supported values are ``None``, ``"min_intensity"``,
+        ``"local_contrast"``, or a list combining both in the requested
+        execution order.
+    min_intensity_measure:
+        Statistic used by the ``"min_intensity"`` postfilter. Supported values
+        are ``"mean"`` and ``"max"``.
+    min_intensity_threshold:
+        Intensity threshold used by the ``"min_intensity"`` postfilter.
+    local_contrast_k:
+        Contrast multiplier used by the ``"local_contrast"`` postfilter in the
+        criterion ``object_median > background_median + k * background_mad``.
+    local_contrast_shell_inner_radius:
+        Inner dilation radius, in pixels or voxels, used to construct the
+        local shell for the ``"local_contrast"`` postfilter.
+    local_contrast_shell_outer_radius:
+        Outer dilation radius, in pixels or voxels, used to construct the
+        local shell for the ``"local_contrast"`` postfilter.
     """
 
     model_name_or_path: str
@@ -92,6 +127,17 @@ class CellposeModelConfig:
     flow_threshold: float = 0.4
     anisotropy: bool | float = False
     flow3d_smooth: int = 0
+    prefilter: str | None = None
+    prefilter_sigma_xy: float = 1.0
+    prefilter_sigma_z: float | None = None
+    prefilter_median_size_xy: int = 3
+    prefilter_median_size_z: int | None = None
+    postfilters: str | Sequence[str] | None = None
+    min_intensity_measure: str = "mean"
+    min_intensity_threshold: float | None = None
+    local_contrast_k: float = 1.0
+    local_contrast_shell_inner_radius: int = 1
+    local_contrast_shell_outer_radius: int = 4
 
 
 @dataclass(slots=True)
