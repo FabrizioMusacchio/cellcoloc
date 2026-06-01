@@ -66,17 +66,17 @@ DISPLAY_NAMES = DisplayNames(
 VOXEL_SCALE_ZYX = (1.0, 0.6239258, 0.6239258)
 
 CELL_MODEL_CONFIG = CellposeModelConfig(
-    #diameter=15,
+    # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
-    flow3d_smooth=3, # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
-    prefilter="gaussian",  # optional; available options: "gaussian", "median", None (default)
+    flow3d_smooth=3,  # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
+    prefilter="gaussian",  # available options: "gaussian", "median", None
         prefilter_sigma_xy=0.6,
         prefilter_sigma_z=0.0,
         prefilter_median_size_xy=3,
         prefilter_median_size_z=3,
-    postfilters=None, # optional; available options: "min_intensity", "local_contrast", None (default)
+    postfilters=None,  # available options: "min_intensity", "local_contrast", None
         min_intensity_measure="mean",
         min_intensity_threshold=None,
         local_contrast_k=1.0,
@@ -87,7 +87,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
 )
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
-    #diameter=15,
+    # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     do_3d=None,
     anisotropy=True,
@@ -103,6 +103,8 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
         local_contrast_k=1.0,
         local_contrast_shell_inner_radius=1,
         local_contrast_shell_outer_radius=4,
+    cellprob_threshold=1.5,
+    flow_threshold=0.4,
 )
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(
@@ -128,6 +130,21 @@ for data_path in DATA_PATHS:
 
 SELECTED_FILE_NAME = DATA_PATHS[0].name
 USE_FULL_IMAGE_AS_SINGLE_ROI = False
+INITIAL_RESULT_LAYER_KEYS = [
+    "cell_image",
+    "marker_image",
+    "optional_region_image",
+    "rois",
+    "roi_numbers",
+    "cell_masks",
+    "marker_masks",
+    "positive_cells",
+]
+REFINEMENT_RESULT_LAYER_KEYS = [
+    "cell_masks",
+    "marker_masks",
+    "positive_cells",
+]
 
 DATA_PATH = DATA_DIR / SELECTED_FILE_NAME
 if not DATA_PATH.exists():
@@ -185,25 +202,20 @@ if RUNTIME_CONFIG.open_results:
         run_result=run_result,
         display_names=DISPLAY_NAMES,
         optional_region_result=None,
+        viewer=globals().get("viewer"),
+        layers_to_show=INITIAL_RESULT_LAYER_KEYS,
+        replace_existing_layers=True,
+        show_optional_region_image=True,
     )
-
-    if loaded_images.optional_region_image is not None:
-        viewer.add_image(
-            loaded_images.optional_region_image,
-            name="DAPI",
-            scale=loaded_images.voxel_scale_zyx,
-            blending="additive",
-            colormap="yellow",
-            channel_axis=None)
 
     print(f"Inspecting visualization for:\n{SELECTED_FILE_NAME}")
     napari.run()
 # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
-REFINED_CELL_CELLPROB_THRESHOLD     = CELL_MODEL_CONFIG.cellprob_threshold -0.9  #-0.5
-REFINED_CELL_FLOW_THRESHOLD         = CELL_MODEL_CONFIG.flow_threshold #+ 0.6
-REFINED_MARKER_CELLPROB_THRESHOLD   = 2.5  #-0.5
-REFINED_MARKER_FLOW_THRESHOLD       = 0.8
+REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold - 0.9
+REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold
+REFINED_MARKER_CELLPROB_THRESHOLD = 2.5
+REFINED_MARKER_FLOW_THRESHOLD = 0.8
 
 if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     run_result = refine_run_result_from_cellpose_cache(
@@ -224,21 +236,15 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     if RUNTIME_CONFIG.open_results:
         viewer = show_analysis_results(
             loaded_images=loaded_images,
-            roi_labels_2d=roi_labels_2d,
-            run_result=run_result,
-            display_names=DISPLAY_NAMES,
-            optional_region_result=None,
+        roi_labels_2d=roi_labels_2d,
+        run_result=run_result,
+        display_names=DISPLAY_NAMES,
+        optional_region_result=None,
+            viewer=globals().get("viewer"),
+            layers_to_show=REFINEMENT_RESULT_LAYER_KEYS,
+            replace_existing_layers=True,
+            show_optional_region_image=True,
         )
-
-        if loaded_images.optional_region_image is not None:
-            viewer.add_image(
-                loaded_images.optional_region_image,
-                name="DAPI",
-                scale=loaded_images.voxel_scale_zyx,
-                blending="additive",
-                colormap="yellow",
-                channel_axis=None,
-            )
 
         print(f"Inspecting refined visualization for:\n{SELECTED_FILE_NAME}")
         napari.run()
