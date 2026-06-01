@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import numpy as np
 
 from .config import DisplayNames
@@ -14,7 +16,23 @@ def _get_or_create_viewer(existing_viewer=None):
 
     import napari
 
-    return existing_viewer if existing_viewer is not None else napari.Viewer()
+    if existing_viewer is not None:
+        return existing_viewer
+
+    current_viewer_getter = getattr(napari, "current_viewer", None)
+    if callable(current_viewer_getter):
+        current_viewer = current_viewer_getter()
+        if current_viewer is not None:
+            return current_viewer
+
+    return napari.Viewer()
+
+
+def _remove_layer_if_present(viewer, layer_name: str) -> None:
+    """Remove a napari layer when it already exists in the viewer."""
+
+    if layer_name in viewer.layers:
+        viewer.layers.remove(viewer.layers[layer_name])
 
 
 def _hide_layer_if_present(viewer, layer_name: str) -> None:
@@ -22,6 +40,73 @@ def _hide_layer_if_present(viewer, layer_name: str) -> None:
 
     if layer_name in viewer.layers:
         viewer.layers[layer_name].visible = False
+
+
+def _normalize_layer_selection(
+    layers_to_show: Sequence[str] | None,
+) -> set[str] | None:
+    """Normalize the optional set of layer keys that should be refreshed."""
+
+    if layers_to_show is None:
+        return None
+    return {layer_name.strip() for layer_name in layers_to_show}
+
+
+def _should_render_layer(
+    selected_layers: set[str] | None,
+    layer_key: str,
+) -> bool:
+    """Return whether a given logical layer should be rendered."""
+
+    return selected_layers is None or layer_key in selected_layers
+
+
+def _replace_or_add_image(
+    viewer,
+    *,
+    replace_existing_layers: bool,
+    name: str,
+    data,
+    **kwargs,
+):
+    """Replace an existing image layer or add it when missing."""
+
+    if name in viewer.layers and replace_existing_layers:
+        _remove_layer_if_present(viewer, name)
+    if name not in viewer.layers:
+        viewer.add_image(data, name=name, **kwargs)
+
+
+def _replace_or_add_labels(
+    viewer,
+    *,
+    replace_existing_layers: bool,
+    name: str,
+    data,
+    **kwargs,
+):
+    """Replace an existing labels layer or add it when missing."""
+
+    if name in viewer.layers and replace_existing_layers:
+        _remove_layer_if_present(viewer, name)
+    if name not in viewer.layers:
+        viewer.add_labels(data, name=name, **kwargs)
+
+
+def _replace_or_add_points(
+    viewer,
+    *,
+    replace_existing_layers: bool,
+    name: str,
+    data,
+    **kwargs,
+):
+    """Replace an existing points layer or add it when missing."""
+
+    if name in viewer.layers and replace_existing_layers:
+        _remove_layer_if_present(viewer, name)
+    if name not in viewer.layers:
+        viewer.add_points(data, name=name, **kwargs)
 
 
 def extract_label_masks_from_viewer(
@@ -99,57 +184,100 @@ def show_analysis_results(
     display_names: DisplayNames | None = None,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
     viewer=None,
+    layers_to_show: Sequence[str] | None = None,
+    replace_existing_layers: bool = True,
+    show_optional_region_image: bool = False,
 ):
-    """Display the final analysis layers in napari."""
+    """Display or refresh analysis layers in napari.
+
+    Parameters
+    ----------
+    layers_to_show:
+        Optional list of logical layer keys to add or refresh. Supported keys
+        are ``"cell_image"``, ``"marker_image"``, ``"optional_region_image"``,
+        ``"optional_region_labels"``, ``"rois"``, ``"roi_numbers"``,
+        ``"cell_masks"``, ``"marker_masks"``, and ``"positive_cells"``.
+        When ``None``, the function renders all standard analysis layers.
+    replace_existing_layers:
+        If ``True``, existing layers with the same name are removed and added
+        again. This keeps repeated refinement runs from piling up duplicate
+        layers in the same viewer.
+    show_optional_region_image:
+        If ``True``, the optional third-channel image is shown even when no
+        threshold result object is provided.
+    """
 
     display_names = display_names or DisplayNames()
     viewer = _get_or_create_viewer(viewer)
+    selected_layers = _normalize_layer_selection(layers_to_show)
 
-    viewer.add_image(
-        loaded_images.cell_image,
-        name=display_names.cell,
-        scale=loaded_images.voxel_scale_zyx,
-        blending="additive",
-        colormap="magenta",
-        channel_axis=None,
-    )
-    viewer.add_image(
-        loaded_images.marker_image,
-        name=display_names.marker,
-        scale=loaded_images.voxel_scale_zyx,
-        blending="additive",
-        colormap="cyan",
-        channel_axis=None,
-    )
-
-    if optional_region_result is not None and loaded_images.optional_region_image is not None:
-        viewer.add_image(
-            loaded_images.optional_region_image,
-            name=display_names.optional_region,
+    if _should_render_layer(selected_layers, "cell_image"):
+        _replace_or_add_image(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=loaded_images.cell_image,
+            name=display_names.cell,
             scale=loaded_images.voxel_scale_zyx,
             blending="additive",
-            colormap="red",
+            colormap="magenta",
             channel_axis=None,
         )
-        viewer.add_labels(
-            optional_region_result.labels,
+    if _should_render_layer(selected_layers, "marker_image"):
+        _replace_or_add_image(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=loaded_images.marker_image,
+            name=display_names.marker,
+            scale=loaded_images.voxel_scale_zyx,
+            blending="additive",
+            colormap="cyan",
+            channel_axis=None,
+        )
+
+    if loaded_images.optional_region_image is not None and (
+        show_optional_region_image or optional_region_result is not None
+    ):
+        if _should_render_layer(selected_layers, "optional_region_image"):
+            _replace_or_add_image(
+                viewer,
+                replace_existing_layers=replace_existing_layers,
+                data=loaded_images.optional_region_image,
+                name=display_names.optional_region,
+                scale=loaded_images.voxel_scale_zyx,
+                blending="additive",
+                colormap="red",
+                channel_axis=None,
+            )
+    if optional_region_result is not None and _should_render_layer(
+        selected_layers,
+        "optional_region_labels",
+    ):
+        _replace_or_add_labels(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=optional_region_result.labels,
             name=f"{display_names.optional_region} threshold labels",
             blending="additive",
             scale=loaded_images.voxel_scale_zyx,
         )
 
     roi_labels_3d = np.repeat(roi_labels_2d[np.newaxis, :, :], loaded_images.cell_image.shape[0], axis=0)
-    viewer.add_labels(
-        roi_labels_3d,
-        name="ROIs",
-        blending="additive",
-        scale=loaded_images.voxel_scale_zyx,
-    )
+    if _should_render_layer(selected_layers, "rois"):
+        _replace_or_add_labels(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=roi_labels_3d,
+            name="ROIs",
+            blending="additive",
+            scale=loaded_images.voxel_scale_zyx,
+        )
 
     roi_points_yx, roi_text_labels = get_roi_label_points(roi_labels_2d)
-    if len(roi_points_yx) > 0:
-        viewer.add_points(
-            roi_points_yx,
+    if len(roi_points_yx) > 0 and _should_render_layer(selected_layers, "roi_numbers"):
+        _replace_or_add_points(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=roi_points_yx,
             name="ROI numbers",
             scale=loaded_images.voxel_scale_zyx[1:],
             size=10,
@@ -162,24 +290,33 @@ def show_analysis_results(
             },
         )
 
-    viewer.add_labels(
-        run_result.cell_masks,
-        name="Cellpose cell masks",
-        blending="additive",
-        scale=loaded_images.voxel_scale_zyx,
-    )
-    viewer.add_labels(
-        run_result.marker_masks,
-        name="Cellpose marker masks",
-        blending="additive",
-        scale=loaded_images.voxel_scale_zyx,
-    )
-    viewer.add_labels(
-        run_result.positive_cell_masks,
-        name=display_names.positive_cells,
-        blending="additive",
-        scale=loaded_images.voxel_scale_zyx,
-    )
+    if _should_render_layer(selected_layers, "cell_masks"):
+        _replace_or_add_labels(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=run_result.cell_masks,
+            name="Cellpose cell masks",
+            blending="additive",
+            scale=loaded_images.voxel_scale_zyx,
+        )
+    if _should_render_layer(selected_layers, "marker_masks"):
+        _replace_or_add_labels(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=run_result.marker_masks,
+            name="Cellpose marker masks",
+            blending="additive",
+            scale=loaded_images.voxel_scale_zyx,
+        )
+    if _should_render_layer(selected_layers, "positive_cells"):
+        _replace_or_add_labels(
+            viewer,
+            replace_existing_layers=replace_existing_layers,
+            data=run_result.positive_cell_masks,
+            name=display_names.positive_cells,
+            blending="additive",
+            scale=loaded_images.voxel_scale_zyx,
+        )
 
     _hide_layer_if_present(viewer, f"{display_names.cell} max projection for ROI drawing")
     _hide_layer_if_present(viewer, f"{display_names.marker} max projection for ROI drawing")
