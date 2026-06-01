@@ -18,6 +18,7 @@ view can be analyzed as one single ROI.
 # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import sys
 
@@ -40,6 +41,7 @@ from cell_coloc import (
     run_roi_cellpose_colocalization,
     save_roi_labels_from_shapes,
     show_analysis_results,
+    try_load_roi_labels,
 )
 
 import napari
@@ -68,11 +70,10 @@ VOXEL_SCALE_ZYX = (1.0, 0.6239258, 0.6239258)
 CELL_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
-    do_3d=None,
     anisotropy=True,
     flow3d_smooth=3,  # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
     prefilter="gaussian",  # available options: "gaussian", "median", None
-        prefilter_sigma_xy=0.6,
+        prefilter_sigma_xy=0.8,
         prefilter_sigma_z=0.0,
         prefilter_median_size_xy=3,
         prefilter_median_size_z=3,
@@ -89,7 +90,6 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
-    do_3d=None,
     anisotropy=True,
     flow3d_smooth=3,
     prefilter="gaussian",
@@ -130,6 +130,7 @@ for data_path in DATA_PATHS:
 
 SELECTED_FILE_NAME = DATA_PATHS[0].name
 USE_FULL_IMAGE_AS_SINGLE_ROI = False
+REUSE_EXISTING_ROI_MASK_IF_AVAILABLE = True
 INITIAL_RESULT_LAYER_KEYS = [
     "cell_image",
     "marker_image",
@@ -156,11 +157,16 @@ loaded_images = load_analysis_images(
     voxel_scale_zyx=VOXEL_SCALE_ZYX,
     crop_for_testing=RUNTIME_CONFIG.crop_for_testing)
 print(f"Results directory:\n{loaded_images.paths.results_dir}")
+existing_roi_labels = None
+if REUSE_EXISTING_ROI_MASK_IF_AVAILABLE:
+    existing_roi_labels = try_load_roi_labels(loaded_images.paths.roi_mask_path)
 # %% DRAW ROIS INTERACTIVELY IN NAPARI
 if USE_FULL_IMAGE_AS_SINGLE_ROI:
     print("Whole-image mode is enabled. ROI drawing is skipped.")
+elif existing_roi_labels is not None:
+    print("An existing ROI mask was found and will be reused. ROI drawing is skipped.")
 elif RUNTIME_CONFIG.draw_rois:
-    viewer, shapes_layer = create_roi_drawing_viewer(
+    roi_viewer, shapes_layer = create_roi_drawing_viewer(
         loaded_images=loaded_images,
         display_names=DISPLAY_NAMES,
     )
@@ -171,6 +177,8 @@ else:
 # %% SAVE THE DRAWN ROIS OR LOAD AN EXISTING ROI MASK
 if USE_FULL_IMAGE_AS_SINGLE_ROI:
     roi_labels_2d = create_full_image_roi_labels(loaded_images.cell_image.shape[1:])
+elif existing_roi_labels is not None:
+    roi_labels_2d = existing_roi_labels
 elif RUNTIME_CONFIG.draw_rois:
     roi_labels_2d = save_roi_labels_from_shapes(
         shapes_layer=shapes_layer,
@@ -184,6 +192,7 @@ else:
 roi_ids = np.unique(roi_labels_2d)
 roi_ids = roi_ids[roi_ids != 0]
 print(f"ROI ids: {roi_ids}")
+result_viewer = None
 # %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION
 run_result = run_roi_cellpose_colocalization(
     loaded_images=loaded_images,
@@ -196,13 +205,13 @@ run_result = run_roi_cellpose_colocalization(
 print(run_result.tables.overview)
 # %% VISUALIZE THE RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results:
-    viewer = show_analysis_results(
+    result_viewer = show_analysis_results(
         loaded_images=loaded_images,
         roi_labels_2d=roi_labels_2d,
         run_result=run_result,
         display_names=DISPLAY_NAMES,
         optional_region_result=None,
-        viewer=globals().get("viewer"),
+        viewer=result_viewer,
         layers_to_show=INITIAL_RESULT_LAYER_KEYS,
         replace_existing_layers=True,
         show_optional_region_image=True,
@@ -212,19 +221,54 @@ if RUNTIME_CONFIG.open_results:
     napari.run()
 # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
-REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold - 0.9
-REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold
-REFINED_MARKER_CELLPROB_THRESHOLD = 2.5
+
+REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold -1.0 # - 0.9
+REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold#+0.6
+
+REFINED_MARKER_CELLPROB_THRESHOLD = 3.5
 REFINED_MARKER_FLOW_THRESHOLD = 0.8
 
+REFINED_CELL_POSTFILTERS = "min_intensity" # available options: "min_intensity", "local_contrast", None
+REFINED_CELL_MIN_INTENSITY_MEASURE = "max"
+REFINED_CELL_MIN_INTENSITY_THRESHOLD = 100
+REFINED_CELL_LOCAL_CONTRAST_K = 2
+REFINED_CELL_LOCAL_CONTRAST_SHELL_INNER_RADIUS = 0.5
+REFINED_CELL_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = 10
+
+REFINED_MARKER_POSTFILTERS = "local_contrast" # available options: "min_intensity", "local_contrast", None
+REFINED_MARKER_MIN_INTENSITY_MEASURE = MARKER_MODEL_CONFIG.min_intensity_measure
+REFINED_MARKER_MIN_INTENSITY_THRESHOLD = MARKER_MODEL_CONFIG.min_intensity_threshold
+REFINED_MARKER_LOCAL_CONTRAST_K = MARKER_MODEL_CONFIG.local_contrast_k
+REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS = MARKER_MODEL_CONFIG.local_contrast_shell_inner_radius
+REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = MARKER_MODEL_CONFIG.local_contrast_shell_outer_radius
+
 if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
+    refined_cell_model_config = replace(
+        CELL_MODEL_CONFIG,
+        postfilters=REFINED_CELL_POSTFILTERS,
+        min_intensity_measure=REFINED_CELL_MIN_INTENSITY_MEASURE,
+        min_intensity_threshold=REFINED_CELL_MIN_INTENSITY_THRESHOLD,
+        local_contrast_k=REFINED_CELL_LOCAL_CONTRAST_K,
+        local_contrast_shell_inner_radius=REFINED_CELL_LOCAL_CONTRAST_SHELL_INNER_RADIUS,
+        local_contrast_shell_outer_radius=REFINED_CELL_LOCAL_CONTRAST_SHELL_OUTER_RADIUS,
+    )
+    refined_marker_model_config = replace(
+        MARKER_MODEL_CONFIG,
+        postfilters=REFINED_MARKER_POSTFILTERS,
+        min_intensity_measure=REFINED_MARKER_MIN_INTENSITY_MEASURE,
+        min_intensity_threshold=REFINED_MARKER_MIN_INTENSITY_THRESHOLD,
+        local_contrast_k=REFINED_MARKER_LOCAL_CONTRAST_K,
+        local_contrast_shell_inner_radius=REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS,
+        local_contrast_shell_outer_radius=REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS,
+    )
+
     run_result = refine_run_result_from_cellpose_cache(
         loaded_images=loaded_images,
         roi_labels_2d=roi_labels_2d,
         run_result=run_result,
         colocalization_config=COLOCALIZATION_CONFIG,
-        cell_model_config=CELL_MODEL_CONFIG,
-        marker_model_config=MARKER_MODEL_CONFIG,
+        cell_model_config=refined_cell_model_config,
+        marker_model_config=refined_marker_model_config,
         cell_cellprob_threshold=REFINED_CELL_CELLPROB_THRESHOLD,
         cell_flow_threshold=REFINED_CELL_FLOW_THRESHOLD,
         marker_cellprob_threshold=REFINED_MARKER_CELLPROB_THRESHOLD,
@@ -234,13 +278,13 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     print(run_result.tables.overview)
 
     if RUNTIME_CONFIG.open_results:
-        viewer = show_analysis_results(
+        result_viewer = show_analysis_results(
             loaded_images=loaded_images,
-        roi_labels_2d=roi_labels_2d,
-        run_result=run_result,
-        display_names=DISPLAY_NAMES,
-        optional_region_result=None,
-            viewer=globals().get("viewer"),
+            roi_labels_2d=roi_labels_2d,
+            run_result=run_result,
+            display_names=DISPLAY_NAMES,
+            optional_region_result=None,
+            viewer=result_viewer,
             layers_to_show=REFINEMENT_RESULT_LAYER_KEYS,
             replace_existing_layers=True,
             show_optional_region_image=True,

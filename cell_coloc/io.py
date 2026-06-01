@@ -158,6 +158,31 @@ def load_roi_labels(path: Path) -> np.ndarray:
     return roi_labels
 
 
+def try_load_roi_labels(path: Path) -> np.ndarray | None:
+    """Load a saved 2D ROI label mask when it exists.
+
+    Parameters
+    ----------
+    path:
+        Expected path of the ROI label TIFF.
+
+    Returns
+    -------
+    np.ndarray | None
+        The loaded ROI label mask when the file exists, otherwise ``None``.
+        This helper is useful for interactive scripts that should prefer a
+        previously drawn ROI mask but fall back to manual drawing when no saved
+        mask is available yet.
+    """
+
+    path = Path(path)
+    if not path.exists():
+        print(f"No existing ROI label mask found at:\n{path}")
+        return None
+
+    return load_roi_labels(path)
+
+
 def export_analysis_outputs(
     run_result: ColocalizationRunResult,
     paths: ResultsPaths,

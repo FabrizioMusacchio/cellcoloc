@@ -16,16 +16,45 @@ def _get_or_create_viewer(existing_viewer=None):
 
     import napari
 
-    if existing_viewer is not None:
+    if _viewer_is_usable(existing_viewer):
         return existing_viewer
 
     current_viewer_getter = getattr(napari, "current_viewer", None)
     if callable(current_viewer_getter):
         current_viewer = current_viewer_getter()
-        if current_viewer is not None:
+        if _viewer_is_usable(current_viewer):
             return current_viewer
 
     return napari.Viewer()
+
+
+def _viewer_is_usable(viewer) -> bool:
+    """Return whether a napari viewer object is still safe to reuse.
+
+    A closed viewer can remain bound to a Python variable even though its Qt
+    window has already been deleted. Reusing such a stale viewer leads to
+    inconsistent internal dims state and layer-addition crashes. napari removes
+    closed viewers from ``Viewer._instances``, which gives us a reliable
+    lightweight liveness check.
+    """
+
+    if viewer is None:
+        return False
+
+    viewer_instances = getattr(type(viewer), "_instances", None)
+    if viewer_instances is None:
+        return False
+
+    if viewer not in viewer_instances:
+        return False
+
+    try:
+        _ = viewer.layers
+        _ = viewer.dims.ndim
+    except Exception:
+        return False
+
+    return True
 
 
 def _remove_layer_if_present(viewer, layer_name: str) -> None:
@@ -69,12 +98,21 @@ def _replace_or_add_image(
     data,
     **kwargs,
 ):
-    """Replace an existing image layer or add it when missing."""
+    """Update an existing image layer in place or add it when missing."""
 
-    if name in viewer.layers and replace_existing_layers:
-        _remove_layer_if_present(viewer, name)
-    if name not in viewer.layers:
-        viewer.add_image(data, name=name, **kwargs)
+    if name in viewer.layers:
+        layer = viewer.layers[name]
+        layer.data = data
+        if "scale" in kwargs:
+            layer.scale = kwargs["scale"]
+        if "blending" in kwargs:
+            layer.blending = kwargs["blending"]
+        if "colormap" in kwargs:
+            layer.colormap = kwargs["colormap"]
+        layer.visible = True
+        return
+
+    viewer.add_image(data, name=name, **kwargs)
 
 
 def _replace_or_add_labels(
@@ -85,12 +123,19 @@ def _replace_or_add_labels(
     data,
     **kwargs,
 ):
-    """Replace an existing labels layer or add it when missing."""
+    """Update an existing labels layer in place or add it when missing."""
 
-    if name in viewer.layers and replace_existing_layers:
-        _remove_layer_if_present(viewer, name)
-    if name not in viewer.layers:
-        viewer.add_labels(data, name=name, **kwargs)
+    if name in viewer.layers:
+        layer = viewer.layers[name]
+        layer.data = data
+        if "scale" in kwargs:
+            layer.scale = kwargs["scale"]
+        if "blending" in kwargs:
+            layer.blending = kwargs["blending"]
+        layer.visible = True
+        return
+
+    viewer.add_labels(data, name=name, **kwargs)
 
 
 def _replace_or_add_points(
@@ -101,12 +146,23 @@ def _replace_or_add_points(
     data,
     **kwargs,
 ):
-    """Replace an existing points layer or add it when missing."""
+    """Update an existing points layer in place or add it when missing."""
 
-    if name in viewer.layers and replace_existing_layers:
-        _remove_layer_if_present(viewer, name)
-    if name not in viewer.layers:
-        viewer.add_points(data, name=name, **kwargs)
+    if name in viewer.layers:
+        layer = viewer.layers[name]
+        layer.data = data
+        if "scale" in kwargs:
+            layer.scale = kwargs["scale"]
+        if "size" in kwargs:
+            layer.size = kwargs["size"]
+        if "face_color" in kwargs:
+            layer.face_color = kwargs["face_color"]
+        if "text" in kwargs:
+            layer.text = kwargs["text"]
+        layer.visible = True
+        return
+
+    viewer.add_points(data, name=name, **kwargs)
 
 
 def extract_label_masks_from_viewer(

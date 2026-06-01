@@ -158,10 +158,10 @@ def _apply_min_intensity_postfilter(
         )
 
     measure = model_config.min_intensity_measure.strip().lower()
-    if measure not in {"mean", "max"}:
+    if measure not in {"mean", "median", "max"}:
         raise ValueError(
-            "`CellposeModelConfig.min_intensity_measure` must be 'mean' or "
-            f"'max', got {model_config.min_intensity_measure!r}."
+            "`CellposeModelConfig.min_intensity_measure` must be 'mean', "
+            f"'median', or 'max', got {model_config.min_intensity_measure!r}."
         )
 
     filtered = label_image.copy()
@@ -174,7 +174,12 @@ def _apply_min_intensity_postfilter(
             filtered[label_mask] = 0
             continue
 
-        score = float(intensities.mean()) if measure == "mean" else float(intensities.max())
+        if measure == "mean":
+            score = float(intensities.mean())
+        elif measure == "median":
+            score = float(np.median(intensities))
+        else:
+            score = float(intensities.max())
         if score <= threshold:
             filtered[label_mask] = 0
 

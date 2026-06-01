@@ -26,7 +26,14 @@ from .config import (
     OptionalRegionSegmentationConfig,
     RuntimeConfig,
 )
-from .io import build_results_paths, export_analysis_outputs, load_analysis_images, load_roi_labels, save_roi_labels
+from .io import (
+    build_results_paths,
+    export_analysis_outputs,
+    load_analysis_images,
+    load_roi_labels,
+    save_roi_labels,
+    try_load_roi_labels,
+)
 from .roi import (
     create_full_image_roi_labels,
     create_roi_drawing_viewer,
@@ -71,6 +78,7 @@ __all__ = [
     "load_analysis_images",
     "save_roi_labels",
     "load_roi_labels",
+    "try_load_roi_labels",
     "export_analysis_outputs",
     "analyze_existing_masks",
     "prepare_runtime_environment",
