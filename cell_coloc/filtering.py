@@ -102,6 +102,8 @@ def apply_postfilters(
             filtered = _apply_min_intensity_postfilter(filtered, original, model_config)
         elif postfilter == "local_contrast":
             filtered = _apply_local_contrast_postfilter(filtered, original, model_config)
+        elif postfilter == "bright_pixel_support":
+            filtered = _apply_bright_pixel_support_postfilter(filtered, original, model_config)
         else:
             raise ValueError(f"Unsupported postfilter option: {postfilter!r}.")
 
@@ -133,7 +135,7 @@ def _normalize_postfilters(postfilters: str | Sequence[str] | None) -> list[str]
         values = list(postfilters)
 
     normalized = [value.strip().lower() for value in values]
-    allowed = {"min_intensity", "local_contrast"}
+    allowed = {"min_intensity", "local_contrast", "bright_pixel_support"}
     invalid = [value for value in normalized if value not in allowed]
     if invalid:
         raise ValueError(
@@ -235,6 +237,75 @@ def _apply_local_contrast_postfilter(
 
         if object_median <= background_median + (k_value * background_mad):
             filtered[filtered == label_value] = 0
+
+    return filtered
+
+
+def _apply_bright_pixel_support_postfilter(
+    label_image: np.ndarray,
+    intensity_image: np.ndarray,
+    model_config: CellposeModelConfig,
+) -> np.ndarray:
+    """Remove labels with too little clearly bright signal support."""
+
+    threshold = model_config.bright_pixel_threshold
+    if threshold is None:
+        raise ValueError(
+            "`bright_pixel_support` postfilter requires "
+            "`CellposeModelConfig.bright_pixel_threshold` to be set."
+        )
+
+    measure = model_config.bright_pixel_measure.strip().lower()
+    if measure not in {"count", "fraction"}:
+        raise ValueError(
+            "`CellposeModelConfig.bright_pixel_measure` must be 'count' or "
+            f"'fraction', got {model_config.bright_pixel_measure!r}."
+        )
+
+    if measure == "count":
+        min_count = model_config.bright_pixel_min_count
+        if min_count is None:
+            raise ValueError(
+                "`bright_pixel_support` with `bright_pixel_measure='count'` "
+                "requires `CellposeModelConfig.bright_pixel_min_count` to be set."
+            )
+        if min_count < 0:
+            raise ValueError(
+                "`CellposeModelConfig.bright_pixel_min_count` must be >= 0, "
+                f"got {min_count}."
+            )
+    else:
+        min_fraction = model_config.bright_pixel_min_fraction
+        if min_fraction is None:
+            raise ValueError(
+                "`bright_pixel_support` with `bright_pixel_measure='fraction'` "
+                "requires `CellposeModelConfig.bright_pixel_min_fraction` to be set."
+            )
+        if min_fraction < 0 or min_fraction > 1:
+            raise ValueError(
+                "`CellposeModelConfig.bright_pixel_min_fraction` must be "
+                f"between 0 and 1, got {min_fraction}."
+            )
+
+    filtered = label_image.copy()
+    for label_value in np.unique(filtered):
+        if label_value == 0:
+            continue
+        label_mask = filtered == label_value
+        intensities = intensity_image[label_mask]
+        if intensities.size == 0:
+            filtered[label_mask] = 0
+            continue
+
+        bright_pixel_count = int(np.count_nonzero(intensities > threshold))
+        if measure == "count":
+            keep_label = bright_pixel_count >= int(model_config.bright_pixel_min_count)
+        else:
+            bright_pixel_fraction = bright_pixel_count / float(intensities.size)
+            keep_label = bright_pixel_fraction >= float(model_config.bright_pixel_min_fraction)
+
+        if not keep_label:
+            filtered[label_mask] = 0
 
     return filtered
 

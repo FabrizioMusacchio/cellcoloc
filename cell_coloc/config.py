@@ -100,11 +100,11 @@ class CellposeModelConfig:
     postfilters:
         Optional post-segmentation filters applied to the resulting masks.
         Supported values are ``None``, ``"min_intensity"``,
-        ``"local_contrast"``, or a list combining both in the requested
-        execution order.
+        ``"local_contrast"``, ``"bright_pixel_support"``, or a list combining
+        them in the requested execution order.
     min_intensity_measure:
         Statistic used by the ``"min_intensity"`` postfilter. Supported values
-        are ``"mean"`` and ``"max"``.
+        are ``"mean"``, ``"median"``, and ``"max"``.
     min_intensity_threshold:
         Intensity threshold used by the ``"min_intensity"`` postfilter.
     local_contrast_k:
@@ -116,6 +116,20 @@ class CellposeModelConfig:
     local_contrast_shell_outer_radius:
         Outer dilation radius, in pixels or voxels, used to construct the
         local shell for the ``"local_contrast"`` postfilter.
+    bright_pixel_measure:
+        Statistic used by the ``"bright_pixel_support"`` postfilter.
+        ``"count"`` requires at least a minimum number of bright pixels within
+        the mask, while ``"fraction"`` requires a minimum fraction of bright
+        pixels relative to the object size.
+    bright_pixel_threshold:
+        Intensity threshold above which a pixel or voxel counts as bright for
+        the ``"bright_pixel_support"`` postfilter.
+    bright_pixel_min_count:
+        Minimum number of bright pixels or voxels required when
+        ``bright_pixel_measure="count"``.
+    bright_pixel_min_fraction:
+        Minimum fraction of bright pixels or voxels required when
+        ``bright_pixel_measure="fraction"``.
     """
 
     model_name_or_path: str
@@ -138,6 +152,10 @@ class CellposeModelConfig:
     local_contrast_k: float = 1.0
     local_contrast_shell_inner_radius: int = 1
     local_contrast_shell_outer_radius: int = 4
+    bright_pixel_measure: str = "count"
+    bright_pixel_threshold: float | None = None
+    bright_pixel_min_count: int | None = None
+    bright_pixel_min_fraction: float | None = None
 
 
 @dataclass(slots=True)

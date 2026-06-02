@@ -77,12 +77,16 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
         prefilter_sigma_z=0.0,
         prefilter_median_size_xy=3,
         prefilter_median_size_z=3,
-    postfilters=None,  # available options: "min_intensity", "local_contrast", None
+    postfilters=None,  # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
         min_intensity_measure="mean",
         min_intensity_threshold=None,
         local_contrast_k=1.0,
         local_contrast_shell_inner_radius=1,
         local_contrast_shell_outer_radius=4,
+        bright_pixel_measure="count",
+        bright_pixel_threshold=None,
+        bright_pixel_min_count=None,
+        bright_pixel_min_fraction=None,
     cellprob_threshold=1.5,
     flow_threshold=0.4,
 )
@@ -93,7 +97,7 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
     anisotropy=True,
     flow3d_smooth=3,
     prefilter="gaussian",
-        prefilter_sigma_xy=0.6,
+        prefilter_sigma_xy=3.0,
         prefilter_sigma_z=0.0,
         prefilter_median_size_xy=3,
         prefilter_median_size_z=3,
@@ -103,7 +107,11 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
         local_contrast_k=1.0,
         local_contrast_shell_inner_radius=1,
         local_contrast_shell_outer_radius=4,
-    cellprob_threshold=1.5,
+        bright_pixel_measure="count",
+        bright_pixel_threshold=None,
+        bright_pixel_min_count=None,
+        bright_pixel_min_fraction=None,
+    cellprob_threshold=0,
     flow_threshold=0.4,
 )
 
@@ -205,6 +213,7 @@ run_result = run_roi_cellpose_colocalization(
 print(run_result.tables.overview)
 # %% VISUALIZE THE RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results:
+    result_viewer = None
     result_viewer = show_analysis_results(
         loaded_images=loaded_images,
         roi_labels_2d=roi_labels_2d,
@@ -222,25 +231,33 @@ if RUNTIME_CONFIG.open_results:
 # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
 
-REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold -1.0 # - 0.9
-REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold#+0.6
+REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold- 2.0 # - 0.9
+REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold+0.1
 
-REFINED_MARKER_CELLPROB_THRESHOLD = 3.5
-REFINED_MARKER_FLOW_THRESHOLD = 0.8
+REFINED_MARKER_CELLPROB_THRESHOLD = -0.5
+REFINED_MARKER_FLOW_THRESHOLD = 0.6
 
-REFINED_CELL_POSTFILTERS = "min_intensity" # available options: "min_intensity", "local_contrast", None
+REFINED_CELL_POSTFILTERS = ["min_intensity", "bright_pixel_support", "local_contrast"] # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
 REFINED_CELL_MIN_INTENSITY_MEASURE = "max"
-REFINED_CELL_MIN_INTENSITY_THRESHOLD = 100
-REFINED_CELL_LOCAL_CONTRAST_K = 2
-REFINED_CELL_LOCAL_CONTRAST_SHELL_INNER_RADIUS = 0.5
+REFINED_CELL_MIN_INTENSITY_THRESHOLD = 250
+REFINED_CELL_LOCAL_CONTRAST_K = 1
+REFINED_CELL_LOCAL_CONTRAST_SHELL_INNER_RADIUS = 1.0
 REFINED_CELL_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = 10
+REFINED_CELL_BRIGHT_PIXEL_MEASURE = "fraction"
+REFINED_CELL_BRIGHT_PIXEL_THRESHOLD = 250
+REFINED_CELL_BRIGHT_PIXEL_MIN_COUNT = None
+REFINED_CELL_BRIGHT_PIXEL_MIN_FRACTION = 0.08
 
-REFINED_MARKER_POSTFILTERS = "local_contrast" # available options: "min_intensity", "local_contrast", None
-REFINED_MARKER_MIN_INTENSITY_MEASURE = MARKER_MODEL_CONFIG.min_intensity_measure
-REFINED_MARKER_MIN_INTENSITY_THRESHOLD = MARKER_MODEL_CONFIG.min_intensity_threshold
-REFINED_MARKER_LOCAL_CONTRAST_K = MARKER_MODEL_CONFIG.local_contrast_k
-REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS = MARKER_MODEL_CONFIG.local_contrast_shell_inner_radius
-REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = MARKER_MODEL_CONFIG.local_contrast_shell_outer_radius
+REFINED_MARKER_POSTFILTERS = None #"local_contrast" # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
+REFINED_MARKER_MIN_INTENSITY_MEASURE = "max"
+REFINED_MARKER_MIN_INTENSITY_THRESHOLD = 150
+REFINED_MARKER_LOCAL_CONTRAST_K = 1
+REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS = 1.0
+REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = 10
+REFINED_MARKER_BRIGHT_PIXEL_MEASURE = "fraction"
+REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD = 250
+REFINED_MARKER_BRIGHT_PIXEL_MIN_COUNT = None
+REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION = 0.08
 
 if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     refined_cell_model_config = replace(
@@ -251,6 +268,10 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
         local_contrast_k=REFINED_CELL_LOCAL_CONTRAST_K,
         local_contrast_shell_inner_radius=REFINED_CELL_LOCAL_CONTRAST_SHELL_INNER_RADIUS,
         local_contrast_shell_outer_radius=REFINED_CELL_LOCAL_CONTRAST_SHELL_OUTER_RADIUS,
+        bright_pixel_measure=REFINED_CELL_BRIGHT_PIXEL_MEASURE,
+        bright_pixel_threshold=REFINED_CELL_BRIGHT_PIXEL_THRESHOLD,
+        bright_pixel_min_count=REFINED_CELL_BRIGHT_PIXEL_MIN_COUNT,
+        bright_pixel_min_fraction=REFINED_CELL_BRIGHT_PIXEL_MIN_FRACTION,
     )
     refined_marker_model_config = replace(
         MARKER_MODEL_CONFIG,
@@ -260,6 +281,10 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
         local_contrast_k=REFINED_MARKER_LOCAL_CONTRAST_K,
         local_contrast_shell_inner_radius=REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS,
         local_contrast_shell_outer_radius=REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS,
+        bright_pixel_measure=REFINED_MARKER_BRIGHT_PIXEL_MEASURE,
+        bright_pixel_threshold=REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD,
+        bright_pixel_min_count=REFINED_MARKER_BRIGHT_PIXEL_MIN_COUNT,
+        bright_pixel_min_fraction=REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION,
     )
 
     run_result = refine_run_result_from_cellpose_cache(
