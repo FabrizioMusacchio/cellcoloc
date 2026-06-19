@@ -17,7 +17,12 @@ from .schemas import (
     LoadedImageChannels,
     OptionalRegionSegmentationResult,
 )
-from .segmentation import create_cellpose_models_for_channels, evaluate_cellpose_model, filter_labels_by_size, relabel_with_offset
+from .segmentation import (
+    create_cellpose_models_for_channels,
+    evaluate_segmentation_method,
+    filter_labels_by_size,
+    relabel_with_offset,
+)
 
 
 def analyze_label_overlaps(
@@ -435,7 +440,7 @@ def run_roi_cellpose_colocalization(
     runtime_config: RuntimeConfig,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
 ) -> ColocalizationRunResult:
-    """Run Cellpose ROI by ROI and build all downstream result tables."""
+    """Run the configured ROI-wise segmentation workflow and build result tables."""
 
     if not runtime_config.process_rois:
         raise ValueError("ROI processing is disabled in RuntimeConfig.")
@@ -459,7 +464,7 @@ def run_roi_cellpose_colocalization(
     cell_label_offset = 0
     marker_label_offset = 0
     for roi_id in roi_ids:
-        print(f"\nProcessing ROI {int(roi_id)} with Cellpose...")
+        print(f"\nProcessing ROI {int(roi_id)}...")
         roi_mask_2d = roi_labels_2d == roi_id
         bbox = get_bbox_2d(roi_mask_2d)
         if bbox is None:
@@ -476,13 +481,13 @@ def run_roi_cellpose_colocalization(
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
 
-        cell_masks_roi, cell_refinement_cache = evaluate_cellpose_model(
+        cell_masks_roi, cell_refinement_cache = evaluate_segmentation_method(
             cell_model,
             cell_crop,
             cell_model_config,
             loaded_images.voxel_scale_zyx,
         )
-        marker_masks_roi, marker_refinement_cache = evaluate_cellpose_model(
+        marker_masks_roi, marker_refinement_cache = evaluate_segmentation_method(
             marker_model,
             marker_crop,
             marker_model_config,

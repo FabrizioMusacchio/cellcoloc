@@ -9,10 +9,23 @@ import numpy as np
 from cellpose import models
 from skimage.filters import gaussian, threshold_li, threshold_otsu
 from skimage.measure import label
-from skimage.morphology import ball, closing, remove_small_holes, remove_small_objects
+from skimage.morphology import ball, closing, disk, remove_small_holes, remove_small_objects
 
 from .config import CellposeModelConfig, OptionalRegionSegmentationConfig
 from .schemas import CellposeRefinementRoiCache, OptionalRegionSegmentationResult
+
+
+def normalize_segmentation_method(method: str) -> str:
+    """Normalize and validate a configured segmentation method name."""
+
+    normalized = method.strip().lower()
+    allowed = {"cellpose", "otsu", "li", "percentile"}
+    if normalized not in allowed:
+        raise ValueError(
+            "`CellposeModelConfig.segmentation_method` must be one of "
+            f"{sorted(allowed)}, got {method!r}."
+        )
+    return normalized
 
 
 def resolve_cellpose_anisotropy(
@@ -161,14 +174,26 @@ def create_cellpose_models_for_channels(
     cell_model_config: CellposeModelConfig,
     marker_model_config: CellposeModelConfig,
     use_gpu: bool,
-) -> tuple[models.CellposeModel, models.CellposeModel]:
+) -> tuple[models.CellposeModel | None, models.CellposeModel | None]:
     """Create Cellpose model instances for the cell and marker channels.
 
-    For Cellpose 4 and newer, the same model instance is reused when both
-    channels request the same built-in model or custom model path. For older
-    Cellpose versions, the previous behavior is preserved and separate model
-    instances are created for each channel configuration.
+    Models are only created for channels configured with
+    ``segmentation_method="cellpose"``. For Cellpose 4 and newer, the same
+    model instance is reused when both such channels request the same built-in
+    model or custom model path. For older Cellpose versions, the previous
+    behavior is preserved and separate model instances are created for each
+    Cellpose channel configuration.
     """
+
+    cell_uses_cellpose = normalize_segmentation_method(cell_model_config.segmentation_method) == "cellpose"
+    marker_uses_cellpose = normalize_segmentation_method(marker_model_config.segmentation_method) == "cellpose"
+
+    if not cell_uses_cellpose and not marker_uses_cellpose:
+        return None, None
+    if cell_uses_cellpose and not marker_uses_cellpose:
+        return create_cellpose_model(cell_model_config.model_name_or_path, use_gpu), None
+    if marker_uses_cellpose and not cell_uses_cellpose:
+        return None, create_cellpose_model(marker_model_config.model_name_or_path, use_gpu)
 
     cellpose_major = get_cellpose_major_version()
     if cellpose_major is not None and cellpose_major >= 4:
@@ -183,6 +208,91 @@ def create_cellpose_models_for_channels(
         create_cellpose_model(cell_model_config.model_name_or_path, use_gpu),
         create_cellpose_model(marker_model_config.model_name_or_path, use_gpu),
     )
+
+
+def segment_threshold_channel(
+    image_zyx: np.ndarray,
+    model_config: CellposeModelConfig,
+) -> np.ndarray:
+    """Segment one analysis channel via thresholding and connected components."""
+
+    method = normalize_segmentation_method(model_config.segmentation_method)
+    if method == "cellpose":
+        raise ValueError("Threshold segmentation was requested with the 'cellpose' method.")
+
+    image_float = np.asarray(image_zyx, dtype=np.float32, copy=False)
+    is_3d = image_float.shape[0] > 1
+
+    if model_config.threshold_background_sigma is not None and model_config.threshold_background_sigma > 0:
+        print(
+            "Threshold segmentation: background subtraction with sigma="
+            f"{model_config.threshold_background_sigma}..."
+        )
+        background = gaussian(
+            image_float,
+            sigma=model_config.threshold_background_sigma,
+            preserve_range=True,
+        )
+        image_work = image_float - background
+        image_work[image_work < 0] = 0
+    else:
+        image_work = image_float
+
+    values = image_work[np.isfinite(image_work)]
+    values = values[values > 0]
+    if values.size == 0:
+        return np.zeros_like(image_float, dtype=np.uint32)
+
+    print(f"Threshold segmentation: computing threshold with method='{method}'...")
+    if method == "otsu":
+        threshold = float(threshold_otsu(values))
+    elif method == "li":
+        threshold = float(threshold_li(values))
+    elif method == "percentile":
+        threshold = float(np.percentile(values, model_config.threshold_percentile))
+    else:
+        raise ValueError(f"Unsupported threshold segmentation method: {method}")
+
+    binary_mask = image_work > threshold
+    if model_config.threshold_apply_closing:
+        binary_mask = closing(binary_mask, footprint=ball(1) if is_3d else disk(1))
+
+    if model_config.threshold_min_object_voxels > 0:
+        binary_mask = remove_small_objects(
+            binary_mask,
+            max_size=_legacy_threshold_to_max_size(model_config.threshold_min_object_voxels),
+        )
+    if model_config.threshold_min_hole_voxels > 0:
+        binary_mask = remove_small_holes(
+            binary_mask,
+            max_size=_legacy_threshold_to_max_size(model_config.threshold_min_hole_voxels),
+        )
+
+    labels = label(binary_mask)
+    labels = np.asarray(labels, dtype=np.uint32)
+    if labels.ndim == 2:
+        labels = labels[np.newaxis, :, :]
+    return labels
+
+
+def evaluate_segmentation_method(
+    model: models.CellposeModel | None,
+    image_zyx: np.ndarray,
+    model_config: CellposeModelConfig,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> tuple[np.ndarray, CellposeRefinementRoiCache | None]:
+    """Segment one image channel using the configured backend."""
+
+    method = normalize_segmentation_method(model_config.segmentation_method)
+    if method == "cellpose":
+        if model is None:
+            raise ValueError(
+                "A Cellpose segmentation was requested, but no Cellpose model "
+                "instance was created for this channel."
+            )
+        return evaluate_cellpose_model(model, image_zyx, model_config, voxel_scale_zyx)
+
+    return segment_threshold_channel(image_zyx, model_config), None
 
 
 def evaluate_cellpose_model(

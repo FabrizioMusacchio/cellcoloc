@@ -58,6 +58,11 @@ class CellposeModelConfig:
     model_name_or_path:
         Either a built-in Cellpose model identifier such as ``"cyto3"`` or
         ``"nuclei"``, or a filesystem path pointing to a custom trained model.
+    segmentation_method:
+        Segmentation backend used for this channel. ``"cellpose"`` keeps the
+        existing neural-network workflow. ``"otsu"``, ``"li"``, and
+        ``"percentile"`` use intensity thresholding followed by connected
+        component labeling.
     do_3d:
         Whether Cellpose should run in 3D mode. If set to ``None``, the
         pipeline auto-detects 2D versus 3D from the loaded image z-size.
@@ -98,6 +103,18 @@ class CellposeModelConfig:
     prefilter_median_size_z:
         Median prefilter kernel size along z. If ``None``, the pipeline reuses
         ``prefilter_median_size_xy``. Only relevant for 3D data.
+    threshold_percentile:
+        Percentile used when ``segmentation_method="percentile"``.
+    threshold_background_sigma:
+        Optional Gaussian sigma used for background subtraction before
+        threshold-based segmentation.
+    threshold_min_object_voxels:
+        Minimum object size kept after threshold-based segmentation.
+    threshold_min_hole_voxels:
+        Minimum hole size filled after threshold-based segmentation.
+    threshold_apply_closing:
+        Whether a small binary closing step should be applied before threshold
+        cleanup.
     postfilters:
         Optional post-segmentation filters applied to the resulting masks.
         Supported values are ``None``, ``"min_intensity"``,
@@ -134,6 +151,7 @@ class CellposeModelConfig:
     """
 
     model_name_or_path: str
+    segmentation_method: str = "cellpose"
     diameter: float | None = None
     do_3d: bool | None = None
     z_axis: int = 0
@@ -147,6 +165,11 @@ class CellposeModelConfig:
     prefilter_sigma_z: float | None = None
     prefilter_median_size_xy: int = 3
     prefilter_median_size_z: int | None = None
+    threshold_percentile: float = 98.0
+    threshold_background_sigma: float | None = None
+    threshold_min_object_voxels: int = 10
+    threshold_min_hole_voxels: int = 10
+    threshold_apply_closing: bool = True
     postfilters: str | Sequence[str] | None = None
     min_intensity_measure: str = "mean"
     min_intensity_threshold: float | None = None
