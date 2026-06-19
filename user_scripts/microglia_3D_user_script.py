@@ -60,8 +60,7 @@ DISPLAY_NAMES = DisplayNames(
     cell="Cx3cr1-tdTomato",
     marker="Iba1",
     optional_region="DAPI",
-    positive_cells="tdTomato + Iba1 positive masks",
-)
+    positive_cells="tdTomato + Iba1 positive masks")
 
 # Placeholder values. Replace with the true metadata-derived pixel sizes when
 # available for quantitative micrometer-scale interpretation.
@@ -72,7 +71,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     anisotropy=True,
     flow3d_smooth=3,  # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
-    prefilter="gaussian",  # available options: "gaussian", "median", None
+    prefilter="gaussian",  # available options: "gaussian", "laplacian_of_gaussian"/"log", "median", None
         prefilter_sigma_xy=0.8,
         prefilter_sigma_z=0.0,
         prefilter_median_size_xy=3,
@@ -88,17 +87,16 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
         bright_pixel_min_count=None,
         bright_pixel_min_fraction=None,
     cellprob_threshold=1.5,
-    flow_threshold=0.4,
-)
+    flow_threshold=0.4)
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     anisotropy=True,
     flow3d_smooth=3,
-    prefilter="gaussian",
-        prefilter_sigma_xy=3.0,
-        prefilter_sigma_z=0.0,
+    prefilter="laplacian_of_gaussian",
+        prefilter_sigma_xy=2.0,
+        prefilter_sigma_z=0.1,
         prefilter_median_size_xy=3,
         prefilter_median_size_z=3,
     postfilters=None,
@@ -112,8 +110,7 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
         bright_pixel_min_count=None,
         bright_pixel_min_fraction=None,
     cellprob_threshold=0,
-    flow_threshold=0.4,
-)
+    flow_threshold=0.4)
 
 COLOCALIZATION_CONFIG = ColocalizationConfig(
     min_cell_voxels=50,
@@ -176,8 +173,7 @@ elif existing_roi_labels is not None:
 elif RUNTIME_CONFIG.draw_rois:
     roi_viewer, shapes_layer = create_roi_drawing_viewer(
         loaded_images=loaded_images,
-        display_names=DISPLAY_NAMES,
-    )
+        display_names=DISPLAY_NAMES)
     print("Draw ROIs in napari and close the window. Then run the next cell.")
     napari.run()
 else:
@@ -192,8 +188,7 @@ elif RUNTIME_CONFIG.draw_rois:
         shapes_layer=shapes_layer,
         output_path=loaded_images.paths.roi_mask_path,
         image_shape_yx=loaded_images.cell_image.max(axis=0).shape,
-        scale_yx=loaded_images.voxel_scale_zyx[1:],
-    )
+        scale_yx=loaded_images.voxel_scale_zyx[1:])
 else:
     roi_labels_2d = load_roi_labels(loaded_images.paths.roi_mask_path)
 
@@ -223,8 +218,7 @@ if RUNTIME_CONFIG.open_results:
         viewer=result_viewer,
         layers_to_show=INITIAL_RESULT_LAYER_KEYS,
         replace_existing_layers=True,
-        show_optional_region_image=True,
-    )
+        show_optional_region_image=True)
 
     print(f"Inspecting visualization for:\n{SELECTED_FILE_NAME}")
     napari.run()
@@ -234,8 +228,8 @@ REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
 REFINED_CELL_CELLPROB_THRESHOLD = CELL_MODEL_CONFIG.cellprob_threshold- 2.0 # - 0.9
 REFINED_CELL_FLOW_THRESHOLD = CELL_MODEL_CONFIG.flow_threshold+0.1
 
-REFINED_MARKER_CELLPROB_THRESHOLD = -0.5
-REFINED_MARKER_FLOW_THRESHOLD = 0.6
+REFINED_MARKER_CELLPROB_THRESHOLD = -3#4.5
+REFINED_MARKER_FLOW_THRESHOLD = 0.4#0.8
 
 REFINED_CELL_POSTFILTERS = ["min_intensity", "bright_pixel_support", "local_contrast"] # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
 REFINED_CELL_MIN_INTENSITY_MEASURE = "max"
@@ -248,16 +242,17 @@ REFINED_CELL_BRIGHT_PIXEL_THRESHOLD = 250
 REFINED_CELL_BRIGHT_PIXEL_MIN_COUNT = None
 REFINED_CELL_BRIGHT_PIXEL_MIN_FRACTION = 0.08
 
-REFINED_MARKER_POSTFILTERS = None #"local_contrast" # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
+#REFINED_MARKER_POSTFILTERS = ["min_intensity", "bright_pixel_support", "local_contrast"] #"local_contrast" # available options: "min_intensity", "local_contrast", "bright_pixel_support", None
+REFINED_MARKER_POSTFILTERS = ["min_intensity", "bright_pixel_support", "local_contrast"]
 REFINED_MARKER_MIN_INTENSITY_MEASURE = "max"
-REFINED_MARKER_MIN_INTENSITY_THRESHOLD = 150
+REFINED_MARKER_MIN_INTENSITY_THRESHOLD = 250
 REFINED_MARKER_LOCAL_CONTRAST_K = 1
 REFINED_MARKER_LOCAL_CONTRAST_SHELL_INNER_RADIUS = 1.0
-REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = 10
+REFINED_MARKER_LOCAL_CONTRAST_SHELL_OUTER_RADIUS = 4
 REFINED_MARKER_BRIGHT_PIXEL_MEASURE = "fraction"
-REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD = 250
+REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD = 120
 REFINED_MARKER_BRIGHT_PIXEL_MIN_COUNT = None
-REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION = 0.08
+REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION = 0.09
 
 if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     refined_cell_model_config = replace(
