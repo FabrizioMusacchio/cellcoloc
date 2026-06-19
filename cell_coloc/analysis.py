@@ -248,27 +248,46 @@ def refine_run_result_from_cellpose_cache(
 
     This avoids rerunning the neural network forward pass and only recomputes
     the mask generation stage from cached ``dP`` and ``cellprob`` arrays.
+    Passing ``cell_model_config=None`` and/or ``marker_model_config=None``
+    leaves the respective channel unchanged and reuses the masks already stored
+    in ``run_result``.
     """
 
-    if run_result.cell_refinement_context is None or run_result.marker_refinement_context is None:
-        raise ValueError(
-            "This run result does not contain Cellpose refinement caches. "
-            "Threshold-only refinement is currently available only when the "
-            "initial segmentation was produced with a supported Cellpose 4 run."
+    if cell_model_config is None:
+        rebuilt_cell_masks = np.asarray(run_result.cell_masks, dtype=np.uint32).copy()
+    else:
+        if run_result.cell_refinement_context is None:
+            raise ValueError(
+                "Cell refinement was requested, but this run result does not "
+                "contain Cellpose refinement caches for the cell channel. "
+                "Threshold-only refinement is currently available only when "
+                "the initial segmentation was produced with a supported "
+                "Cellpose 4 run."
+            )
+        rebuilt_cell_masks = _rebuild_masks_from_refinement_context(
+            image_shape=loaded_images.cell_image.shape,
+            refinement_context=run_result.cell_refinement_context,
+            flow_threshold=cell_flow_threshold,
+            cellprob_threshold=cell_cellprob_threshold,
         )
 
-    rebuilt_cell_masks = _rebuild_masks_from_refinement_context(
-        image_shape=loaded_images.cell_image.shape,
-        refinement_context=run_result.cell_refinement_context,
-        flow_threshold=cell_flow_threshold,
-        cellprob_threshold=cell_cellprob_threshold,
-    )
-    rebuilt_marker_masks = _rebuild_masks_from_refinement_context(
-        image_shape=loaded_images.marker_image.shape,
-        refinement_context=run_result.marker_refinement_context,
-        flow_threshold=marker_flow_threshold,
-        cellprob_threshold=marker_cellprob_threshold,
-    )
+    if marker_model_config is None:
+        rebuilt_marker_masks = np.asarray(run_result.marker_masks, dtype=np.uint32).copy()
+    else:
+        if run_result.marker_refinement_context is None:
+            raise ValueError(
+                "Marker refinement was requested, but this run result does not "
+                "contain Cellpose refinement caches for the marker channel. "
+                "Threshold-only refinement is currently available only when "
+                "the initial segmentation was produced with a supported "
+                "Cellpose 4 run."
+            )
+        rebuilt_marker_masks = _rebuild_masks_from_refinement_context(
+            image_shape=loaded_images.marker_image.shape,
+            refinement_context=run_result.marker_refinement_context,
+            flow_threshold=marker_flow_threshold,
+            cellprob_threshold=marker_cellprob_threshold,
+        )
 
     return analyze_existing_masks(
         loaded_images=loaded_images,
