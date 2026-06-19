@@ -64,6 +64,7 @@ VOXEL_SCALE_ZYX = (1.0, 0.325, 0.325)
 
 CELL_MODEL_CONFIG = CellposeModelConfig(
     model_name_or_path="cpsam",
+    segmentation_method="cellpose",
     diameter=None,
     do_3d=None,
     cellprob_threshold=-0.5, # threshold for the cell probability map, between -6 and 6, where higher values lead to fewer cells (default: 0.0)
@@ -75,6 +76,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
 
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     model_name_or_path="cpsam",
+    segmentation_method="cellpose",
     diameter=None,
     do_3d=None,
     cellprob_threshold=0.0,
