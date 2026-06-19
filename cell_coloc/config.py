@@ -84,7 +84,8 @@ class CellposeModelConfig:
         ignored for 2D data. Keep the default ``0`` to disable smoothing.
     prefilter:
         Optional image prefilter applied before Cellpose. Supported values are
-        ``None``, ``"gaussian"``, and ``"median"``.
+        ``None``, ``"gaussian"``, ``"laplacian_of_gaussian"`` (alias
+        ``"log"``), and ``"median"``.
     prefilter_sigma_xy:
         Gaussian prefilter sigma in the in-plane directions. Used when
         ``prefilter="gaussian"``.

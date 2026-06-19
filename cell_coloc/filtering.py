@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, median_filter
+from scipy.ndimage import gaussian_filter, gaussian_laplace, median_filter
 from skimage.measure import regionprops
 from skimage.morphology import ball, binary_dilation, disk
 
@@ -61,6 +61,34 @@ def apply_prefilter(
         if is_3d:
             return gaussian_filter(image_float, sigma=(sigma_z, sigma_xy, sigma_xy))
         return gaussian_filter(image_float[0], sigma=(sigma_xy, sigma_xy))[np.newaxis, :, :]
+
+    if prefilter == "laplacian_of_gaussian":
+        sigma_xy = model_config.prefilter_sigma_xy
+        sigma_z = (
+            model_config.prefilter_sigma_xy
+            if model_config.prefilter_sigma_z is None
+            else model_config.prefilter_sigma_z
+        )
+        if sigma_xy < 0 or sigma_z < 0:
+            raise ValueError(
+                "Laplacian-of-Gaussian prefilter sigmas must be non-negative, "
+                f"got sigma_xy={sigma_xy}, sigma_z={sigma_z}."
+            )
+
+        # We invert the LoG response so that bright blob-like structures remain
+        # positive and intuitive for downstream Cellpose normalization.
+        if is_3d:
+            filtered = -gaussian_laplace(
+                image_float,
+                sigma=(sigma_z, sigma_xy, sigma_xy),
+            )
+            return filtered
+
+        filtered_2d = -gaussian_laplace(
+            image_float[0],
+            sigma=(sigma_xy, sigma_xy),
+        )
+        return filtered_2d[np.newaxis, :, :]
 
     if prefilter == "median":
         size_xy = model_config.prefilter_median_size_xy
@@ -116,11 +144,12 @@ def _normalize_prefilter_name(prefilter: str | None) -> str | None:
     if prefilter is None:
         return None
     normalized = prefilter.strip().lower()
-    if normalized in {"gaussian", "median"}:
-        return normalized
+    if normalized in {"gaussian", "median", "laplacian_of_gaussian", "log"}:
+        return "laplacian_of_gaussian" if normalized == "log" else normalized
     raise ValueError(
-        "`CellposeModelConfig.prefilter` must be None, 'gaussian', or "
-        f"'median', got {prefilter!r}."
+        "`CellposeModelConfig.prefilter` must be None, 'gaussian', "
+        "'laplacian_of_gaussian'/'log', or 'median', "
+        f"got {prefilter!r}."
     )
 
 
