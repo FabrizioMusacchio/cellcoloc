@@ -124,6 +124,7 @@ RUNTIME_CONFIG = RuntimeConfig(
     open_results=True,
     use_gpu=True,
     crop_for_testing=None,
+    image_loading_mode="disk",  # available options: "memory", "memap"
 )
 
 if not DATA_PATHS:
@@ -160,7 +161,9 @@ loaded_images = load_analysis_images(
     source_path=DATA_PATH,
     channel_config=CHANNEL_CONFIG,
     voxel_scale_zyx=VOXEL_SCALE_ZYX,
-    crop_for_testing=RUNTIME_CONFIG.crop_for_testing)
+    crop_for_testing=RUNTIME_CONFIG.crop_for_testing,
+    image_loading_mode=RUNTIME_CONFIG.image_loading_mode,
+)
 print(f"Results directory:\n{loaded_images.paths.results_dir}")
 existing_roi_labels = None
 if REUSE_EXISTING_ROI_MASK_IF_AVAILABLE:

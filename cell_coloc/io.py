@@ -82,16 +82,37 @@ def load_analysis_images(
     channel_config: ChannelConfig,
     voxel_scale_zyx: tuple[float, float, float],
     crop_for_testing: tuple[slice, slice, slice] | None = None,
+    image_loading_mode: str = "memory",
 ) -> LoadedImageChannels:
     """Load the configured channels from a microscopy dataset.
 
     The function relies on :mod:`omio` so that future projects are not limited
-    to CZI files. The loaded channels are returned as ZYX volumes.
+    to CZI files. The loaded channels are returned as ZYX volumes. Two loading
+    modes are supported:
+
+    - ``"memory"``: eager in-memory loading with ``zarr_store=None``
+    - ``"memap"``: disk-backed OMIO/Zarr cache with ``zarr_store="disk"``
+      and ``reuse_disk_cache=True``
     """
 
     paths = build_results_paths(source_path)
-    image_tzcyx, metadata = om.imread(paths.source_path)
-    image_tzcyx = np.asarray(image_tzcyx)
+    normalized_loading_mode = image_loading_mode.strip().lower()
+    if normalized_loading_mode == "memory":
+        image_tzcyx, metadata = om.imread(paths.source_path, zarr_store=None)
+        image_tzcyx = np.asarray(image_tzcyx)
+    elif normalized_loading_mode == "memap":
+        image_tzcyx, metadata = om.imread(
+            paths.source_path,
+            zarr_store="disk",
+            reuse_disk_cache=True,
+        )
+    else:
+        raise ValueError(
+            "`image_loading_mode` must be 'memory' or 'memap', got "
+            f"{image_loading_mode!r}."
+        )
+
+    print(f"Image loading mode: {normalized_loading_mode}")
     raw_z_size = int(image_tzcyx.shape[1])
     is_3d = raw_z_size > 1
 

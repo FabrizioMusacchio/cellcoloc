@@ -190,10 +190,31 @@ class OptionalRegionSegmentationConfig:
 
 @dataclass(slots=True)
 class RuntimeConfig:
-    """Execution-time settings that control interactivity and test crops."""
+    """Execution-time settings that control interactivity and test crops.
+
+    Attributes
+    ----------
+    draw_rois:
+        Whether the interactive ROI-drawing step should be used.
+    process_rois:
+        Whether ROI-wise processing should be executed.
+    open_results:
+        Whether napari result viewers should be opened.
+    use_gpu:
+        Whether GPU execution should be requested for Cellpose.
+    crop_for_testing:
+        Optional test crop in ``(Z, Y, X)`` order.
+    image_loading_mode:
+        Controls how OMIO loads the raw microscopy file. ``"memory"`` loads
+        the image eagerly in memory and forwards ``zarr_store=None`` to
+        :func:`omio.imread`. ``"memap"`` uses ``zarr_store="disk"`` with
+        ``reuse_disk_cache=True`` so large stacks can be backed by disk cache
+        instead of being fully materialized up front.
+    """
 
     draw_rois: bool = True
     process_rois: bool = True
     open_results: bool = True
     use_gpu: bool = True
     crop_for_testing: tuple[slice, slice, slice] | None = None
+    image_loading_mode: str = "memory"
