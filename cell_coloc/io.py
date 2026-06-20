@@ -25,6 +25,11 @@ def _convert_length_to_microns(value: float, unit: str | None, axis_name: str) -
         Corresponding physical unit string from OMIO metadata.
     axis_name:
         Human-readable axis name used for error messages.
+
+    Returns
+    -------
+    float
+        Physical size converted to micrometers.
     """
 
     if value is None:
@@ -74,11 +79,16 @@ def _resolve_voxel_scale_zyx(
 ) -> tuple[float, float, float]:
     """Resolve voxel size in ZYX order from user input or OMIO metadata.
 
-    Resolution order:
+    Resolution order is:
 
     1. Explicit user-provided ``voxel_scale_zyx``
     2. OMIO metadata entries ``PhysicalSizeZ/Y/X`` and their units
     3. Fallback to ``(1.0, 1.0, 1.0)`` with a warning
+
+    Returns
+    -------
+    tuple[float, float, float]
+        Resolved voxel size in ``(Z, Y, X)`` order expressed in micrometers.
     """
 
     if voxel_scale_zyx is not None:
@@ -142,7 +152,12 @@ def build_results_paths(source_path: Path) -> ResultsPaths:
 
 
 def _extract_zyx_channel(image_tzcyx: np.ndarray, channel_index: int) -> np.ndarray:
-    """Extract one zero-based channel from an image assumed to be in TZCYX order."""
+    """Extract one zero-based channel from a ``TZCYX`` image as a ``ZYX`` volume.
+
+    A singleton time axis is removed automatically. True 2D channels are
+    normalized to shape ``(1, Y, X)`` so downstream code can handle 2D and 3D
+    data through the same interface.
+    """
 
     if image_tzcyx.ndim != 5:
         raise ValueError(
@@ -181,12 +196,38 @@ def load_analysis_images(
     """Load the configured channels from a microscopy dataset.
 
     The function relies on :mod:`omio` so that future projects are not limited
-    to CZI files. The loaded channels are returned as ZYX volumes. Two loading
-    modes are supported:
+    to CZI files. The loaded channels are returned as ``ZYX`` volumes. Two
+    loading modes are supported:
 
     - ``"memory"``: eager in-memory loading with ``zarr_store=None``
     - ``"memap"``: disk-backed OMIO/Zarr cache with ``zarr_store="disk"``
       and ``reuse_disk_cache=True``
+
+    Parameters
+    ----------
+    source_path:
+        Input microscopy dataset that OMIO can open.
+    channel_config:
+        Zero-based channel mapping defining which raw channels correspond to
+        the cell, marker, and optional third channel.
+    voxel_scale_zyx:
+        Optional explicit voxel size in micrometers and ``(Z, Y, X)`` order.
+        When this is ``None``, the loader first tries to derive physical pixel
+        sizes from OMIO metadata entries such as ``PhysicalSizeZ`` and falls
+        back to ``(1.0, 1.0, 1.0)`` with a warning when no usable metadata are
+        available.
+    crop_for_testing:
+        Optional test crop applied after channel extraction in ``(Z, Y, X)``
+        order.
+    image_loading_mode:
+        Raw-image loading strategy. ``"memory"`` materializes the full image
+        eagerly, whereas ``"memap"`` keeps OMIO's disk-backed Zarr cache.
+
+    Returns
+    -------
+    LoadedImageChannels
+        Structured bundle containing the extracted analysis channels, resolved
+        voxel size, OMIO metadata, and standardized output paths.
     """
 
     paths = build_results_paths(source_path)

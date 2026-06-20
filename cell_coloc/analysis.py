@@ -77,7 +77,12 @@ def analyze_label_overlaps(
 
 
 def build_positive_cell_mask(cell_masks: np.ndarray, summary_table: pd.DataFrame) -> np.ndarray:
-    """Create a label image containing only marker-positive cells."""
+    """Create a label image containing only marker-positive cells.
+
+    The returned label image preserves the original cell labels for all cells
+    classified as marker-positive in ``summary_table`` and sets every other
+    voxel to zero.
+    """
 
     if summary_table.empty:
         return np.zeros_like(cell_masks, dtype=np.uint32)
@@ -95,7 +100,21 @@ def _normalize_z_crop_bounds(
     z_crop: tuple[int | None, int | None],
     z_size: int,
 ) -> tuple[int, int]:
-    """Validate and normalize a user-supplied z crop against one stack size."""
+    """Validate and normalize one user-supplied z crop against a stack size.
+
+    Parameters
+    ----------
+    z_crop:
+        Tuple of ``(start, stop)`` indices. ``None`` endpoints mean "from the
+        start" or "to the end" respectively.
+    z_size:
+        Full z depth of the currently loaded stack.
+
+    Returns
+    -------
+    tuple[int, int]
+        Clipped and validated z bounds suitable for Python slicing.
+    """
 
     start_raw, stop_raw = z_crop
     start = 0 if start_raw is None else int(start_raw)
@@ -149,7 +168,12 @@ def _apply_analysis_z_bounds(
     label_image: np.ndarray | None,
     analysis_z_bounds: tuple[int, int] | None,
 ) -> np.ndarray | None:
-    """Zero label content outside the active analysis z range."""
+    """Zero label content outside the active analysis z range.
+
+    This helper keeps all mask arrays in full-stack shape for visualization and
+    export, while ensuring that quantification and later refinement only see
+    labels inside the chosen analysis z interval.
+    """
 
     if label_image is None:
         return None
@@ -180,6 +204,37 @@ def analyze_existing_masks(
 
     This helper is used both after the initial Cellpose segmentation and after
     any later manual or threshold-based refinement of the label masks.
+
+    Parameters
+    ----------
+    loaded_images:
+        Loaded raw analysis channels and dataset metadata.
+    roi_labels_2d:
+        Drawn or generated 2D ROI label mask.
+    cell_masks, marker_masks:
+        Full-stack label masks for the two primary analysis channels. They may
+        originate from Cellpose, thresholding, or manual relabeling.
+    colocalization_config:
+        Thresholds controlling how per-cell overlaps are interpreted.
+    optional_region_result, optional_region_masks:
+        Optional third-channel segmentation supplied either as the legacy
+        result wrapper or directly as a label image. When both are provided,
+        ``optional_region_masks`` takes precedence.
+    analysis_z_bounds:
+        Optional global z interval used for the current analysis. Labels
+        outside this interval are ignored internally but the stored masks keep
+        full-stack shape.
+    cell_refinement_context, marker_refinement_context:
+        Optional cached Cellpose network outputs used for later threshold-only
+        refinement.
+    cell_model_config, marker_model_config:
+        Optional channel configs reused here mainly so postfilters can be
+        applied consistently when masks are reanalyzed.
+
+    Returns
+    -------
+    ColocalizationRunResult
+        Structured masks and tables reflecting the provided segmentation state.
     """
 
     full_cell_masks = _apply_analysis_z_bounds(cell_masks, analysis_z_bounds)
@@ -286,7 +341,12 @@ def _rebuild_masks_from_refinement_context(
     flow_threshold: float | None = None,
     cellprob_threshold: float | None = None,
 ) -> np.ndarray:
-    """Recompute full-size masks from cached Cellpose network outputs."""
+    """Recompute full-size masks from cached Cellpose network outputs.
+
+    The expensive neural-network forward pass is skipped here. Instead, this
+    helper rebuilds masks only from stored Cellpose flow and cell-probability
+    arrays for each ROI and stitches them back into one full-size label image.
+    """
 
     rebuilt_masks = np.zeros(image_shape, dtype=np.uint32)
     label_offset = 0
@@ -349,6 +409,11 @@ def refine_run_result_from_cellpose_cache(
     Passing ``cell_model_config=None`` and/or ``marker_model_config=None``
     leaves the respective channel unchanged and reuses the masks already stored
     in ``run_result``.
+
+    Any z crop defined in the supplied refinement configs is interpreted as one
+    global analysis z range and applied consistently across all channels. When
+    no refinement config specifies a z crop, the function preserves the
+    z-bounds stored in ``run_result``.
     """
 
     analysis_z_bounds = _resolve_analysis_z_bounds(
@@ -424,7 +489,12 @@ def _build_summary_table(
     roi_labels_2d: np.ndarray,
     optional_region_masks: np.ndarray | None = None,
 ) -> pd.DataFrame:
-    """Aggregate detailed overlap rows into one summary row per cell."""
+    """Aggregate detailed overlap rows into one summary row per cell.
+
+    The summary retains the strongest marker overlap for each cell, classifies
+    positivity according to ``ColocalizationConfig``, and optionally augments
+    the result with third-channel positivity columns.
+    """
 
     if detailed_table.empty:
         return pd.DataFrame(
@@ -527,7 +597,13 @@ def _build_optional_region_summary_table(
     optional_region_masks: np.ndarray | None,
     config: ColocalizationConfig,
 ) -> pd.DataFrame:
-    """Summarize which cells overlap an optional third-channel segmentation."""
+    """Summarize which cells overlap an optional third-channel segmentation.
+
+    This produces one row per cell with overlap statistics against the
+    segmented optional third channel so the main summary table can expose both
+    separate third-channel positivity and marker-and-third-channel
+    double-positivity.
+    """
 
     if optional_region_masks is None:
         return pd.DataFrame(
@@ -601,7 +677,13 @@ def _build_overview_table(
     optional_region_masks: np.ndarray | None,
     analysis_z_bounds: tuple[int, int] | None,
 ) -> pd.DataFrame:
-    """Create one ROI overview row per ROI."""
+    """Create one ROI overview row per ROI.
+
+    The overview combines ROI geometry, counts of segmented objects, counts of
+    positive cells, and channel-wise occupancy metrics. When a global analysis
+    z crop is active, ROI volume and all 3D occupancy metrics are computed only
+    inside that z interval.
+    """
 
     z_size_um, y_size_um, x_size_um = loaded_images.voxel_scale_zyx
     pixel_area_um2 = y_size_um * x_size_um
@@ -696,7 +778,12 @@ def _compute_mask_occupancy_metrics(
     voxel_scale_zyx: tuple[float, float, float],
     analysis_z_bounds: tuple[int, int] | None,
 ) -> dict[str, int | float]:
-    """Compute generic ROI occupancy metrics for one segmented channel."""
+    """Compute generic ROI occupancy metrics for one segmented channel.
+
+    Both 2D projection coverage and true 3D occupancy are reported. When an
+    ``analysis_z_bounds`` interval is provided, only voxels inside that z range
+    contribute to the 3D denominator and numerator.
+    """
 
     z_size_um, y_size_um, x_size_um = voxel_scale_zyx
     pixel_area_um2 = y_size_um * x_size_um
@@ -740,7 +827,19 @@ def run_roi_cellpose_colocalization(
     optional_region_model_config: CellposeModelConfig | None = None,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
 ) -> ColocalizationRunResult:
-    """Run the configured ROI-wise segmentation workflow and build result tables."""
+    """Run the configured ROI-wise segmentation workflow and build result tables.
+
+    The pipeline always segments ROI crops in ``XY`` and may additionally apply
+    one global analysis z crop resolved from the participating channel configs.
+    That z crop affects all channels, all ROIs, and all downstream
+    quantification consistently, while the exported and visualized arrays keep
+    full-stack shape.
+
+    The two primary analysis channels can each use either Cellpose or one of
+    the supported threshold-based backends. An optional third channel can be
+    segmented through the same mechanism and contributes occupancy metrics, and
+    optionally per-cell positivity, to the result tables.
+    """
 
     if not runtime_config.process_rois:
         raise ValueError("ROI processing is disabled in RuntimeConfig.")

@@ -170,7 +170,13 @@ def _build_roi_labels_3d(
     z_size: int,
     analysis_z_bounds: tuple[int, int] | None = None,
 ) -> np.ndarray:
-    """Expand 2D ROI labels to 3D, optionally only within one z interval."""
+    """Expand 2D ROI labels to a full-stack 3D labels volume.
+
+    When ``analysis_z_bounds`` is provided, ROI labels are only rendered inside
+    that z interval and remain zero elsewhere. This keeps the visible ROI layer
+    aligned with a cropped internal analysis while the raw image layers still
+    show the full stack.
+    """
 
     roi_labels_3d = np.zeros((z_size, *roi_labels_2d.shape), dtype=roi_labels_2d.dtype)
     if analysis_z_bounds is None:
@@ -191,7 +197,11 @@ def extract_label_masks_from_viewer(
     cell_layer_name: str = "Cellpose cell masks",
     marker_layer_name: str = "Cellpose marker masks",
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Extract the current cell and marker label layers from a napari viewer."""
+    """Extract the current cell and marker label layers from a napari viewer.
+
+    This is primarily used after manual label editing so the modified napari
+    layers can be fed back into :func:`cell_coloc.analysis.analyze_existing_masks`.
+    """
 
     if cell_layer_name not in viewer.layers:
         raise KeyError(f"Cell label layer not found in viewer: {cell_layer_name}")
@@ -210,7 +220,13 @@ def show_optional_region_segmentation(
     display_names: DisplayNames | None = None,
     viewer=None,
 ):
-    """Display the optional third-channel segmentation in napari."""
+    """Display the optional third-channel segmentation in napari.
+
+    This helper is mainly intended for standalone inspection of threshold- or
+    Cellpose-based third-channel masks. ROI overlays are shown across the full
+    stack because no run-specific analysis z crop is available in this
+    interface.
+    """
 
     display_names = display_names or DisplayNames()
     viewer = _get_or_create_viewer(viewer)
@@ -285,6 +301,13 @@ def show_analysis_results(
     show_optional_region_image:
         If ``True``, the optional third-channel image is shown even when no
         threshold result object is provided.
+
+    Notes
+    -----
+    Raw image layers are always shown as the full stack. When
+    ``run_result.analysis_z_bounds`` is set, only the ROI label layer is
+    visually restricted to that z interval so the viewer reflects the active
+    analysis extent without hiding the surrounding image context.
     """
 
     display_names = display_names or DisplayNames()
