@@ -228,8 +228,14 @@ def export_analysis_outputs(
     tifffile.imwrite(paths.marker_mask_path, run_result.marker_masks.astype(np.uint32))
     tifffile.imwrite(paths.positive_cell_mask_path, run_result.positive_cell_masks.astype(np.uint32))
 
-    if optional_region_result is not None:
-        tifffile.imwrite(paths.optional_region_mask_path, optional_region_result.labels.astype(np.uint32))
+    optional_region_labels_to_export = None
+    if run_result.optional_region_masks is not None:
+        optional_region_labels_to_export = run_result.optional_region_masks
+    elif optional_region_result is not None:
+        optional_region_labels_to_export = optional_region_result.labels
+
+    if optional_region_labels_to_export is not None:
+        tifffile.imwrite(paths.optional_region_mask_path, optional_region_labels_to_export.astype(np.uint32))
 
     with pd.ExcelWriter(paths.excel_path) as writer:
         run_result.tables.detailed.to_excel(writer, sheet_name="detailed_overlaps", index=False)
@@ -242,5 +248,5 @@ def export_analysis_outputs(
     print(f"Saved marker masks to:\n{paths.marker_mask_path}")
     print(f"Saved positive cell masks to:\n{paths.positive_cell_mask_path}")
 
-    if optional_region_result is not None:
+    if optional_region_labels_to_export is not None:
         print(f"Saved optional region mask to:\n{paths.optional_region_mask_path}")

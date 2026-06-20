@@ -18,9 +18,11 @@ from .schemas import (
     OptionalRegionSegmentationResult,
 )
 from .segmentation import (
+    create_cellpose_model,
     create_cellpose_models_for_channels,
     evaluate_segmentation_method,
     filter_labels_by_size,
+    normalize_segmentation_method,
     relabel_with_offset,
 )
 
@@ -96,6 +98,7 @@ def analyze_existing_masks(
     marker_masks: np.ndarray,
     colocalization_config: ColocalizationConfig,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
+    optional_region_masks: np.ndarray | None = None,
     cell_refinement_context: CellposeChannelRefinementContext | None = None,
     marker_refinement_context: CellposeChannelRefinementContext | None = None,
     cell_model_config: CellposeModelConfig | None = None,
@@ -158,13 +161,24 @@ def analyze_existing_masks(
         )
 
     summary_table = _build_summary_table(detailed_table, full_cell_masks, colocalization_config)
+    effective_optional_region_masks = (
+        np.asarray(optional_region_masks, dtype=np.uint32)
+        if optional_region_masks is not None
+        else (
+            np.asarray(optional_region_result.labels, dtype=np.uint32)
+            if optional_region_result is not None
+            else None
+        )
+    )
+
     overview_table = _build_overview_table(
         roi_labels_2d=roi_labels_2d,
         loaded_images=loaded_images,
         cell_masks=full_cell_masks,
         marker_masks=full_marker_masks,
         summary_table=summary_table,
-        optional_region_result=optional_region_result,
+        optional_region_masks=effective_optional_region_masks,
+        display_names=None,
     )
     positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
 
@@ -172,6 +186,7 @@ def analyze_existing_masks(
         cell_masks=full_cell_masks,
         marker_masks=full_marker_masks,
         positive_cell_masks=positive_cell_masks,
+        optional_region_masks=effective_optional_region_masks,
         tables=ColocalizationTables(
             detailed=detailed_table,
             summary=summary_table,
@@ -296,6 +311,7 @@ def refine_run_result_from_cellpose_cache(
         marker_masks=rebuilt_marker_masks,
         colocalization_config=colocalization_config,
         optional_region_result=optional_region_result,
+        optional_region_masks=run_result.optional_region_masks,
         cell_refinement_context=run_result.cell_refinement_context,
         marker_refinement_context=run_result.marker_refinement_context,
         cell_model_config=cell_model_config,
@@ -384,7 +400,7 @@ def _build_overview_table(
     cell_masks: np.ndarray,
     marker_masks: np.ndarray,
     summary_table: pd.DataFrame,
-    optional_region_result: OptionalRegionSegmentationResult | None,
+    optional_region_masks: np.ndarray | None,
 ) -> pd.DataFrame:
     """Create one ROI overview row per ROI."""
 
@@ -423,31 +439,59 @@ def _build_overview_table(
             "roi_volume_um3": roi_volume_um3,
         }
 
-        if optional_region_result is not None:
-            region_mask_roi = optional_region_result.mask & roi_mask_3d
-            region_volume_voxels = int(region_mask_roi.sum())
-            region_volume_um3 = float(region_volume_voxels * voxel_volume_um3)
-            region_coverage_3d_percent = float(100 * region_volume_voxels / roi_volume_voxels) if roi_volume_voxels > 0 else np.nan
+        row.update(_compute_mask_occupancy_metrics("cell", cell_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
+        row.update(_compute_mask_occupancy_metrics("marker", marker_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
 
-            region_projection_2d = optional_region_result.mask.any(axis=0)
-            region_area_px = int((region_projection_2d & roi_mask_2d).sum())
-            region_area_um2 = float(region_area_px * pixel_area_um2)
-            region_coverage_2d_percent = float(100 * region_area_px / roi_area_px) if roi_area_px > 0 else np.nan
-
+        if optional_region_masks is not None:
             row.update(
-                {
-                    "optional_region_area_px_2d_projection": region_area_px,
-                    "optional_region_area_um2_2d_projection": region_area_um2,
-                    "optional_region_coverage_2d_percent": region_coverage_2d_percent,
-                    "optional_region_volume_voxels_3d": region_volume_voxels,
-                    "optional_region_volume_um3_3d": region_volume_um3,
-                    "optional_region_coverage_3d_percent": region_coverage_3d_percent,
-                }
+                _compute_mask_occupancy_metrics(
+                    "optional_region",
+                    optional_region_masks,
+                    roi_mask_2d,
+                    loaded_images.voxel_scale_zyx,
+                )
             )
 
         rows.append(row)
 
     return pd.DataFrame(rows)
+
+
+def _compute_mask_occupancy_metrics(
+    prefix: str,
+    label_image: np.ndarray,
+    roi_mask_2d: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> dict[str, int | float]:
+    """Compute generic ROI occupancy metrics for one segmented channel."""
+
+    z_size_um, y_size_um, x_size_um = voxel_scale_zyx
+    pixel_area_um2 = y_size_um * x_size_um
+    voxel_volume_um3 = z_size_um * y_size_um * x_size_um
+    n_z = label_image.shape[0]
+
+    roi_area_px = int(roi_mask_2d.sum())
+    roi_volume_voxels = int(roi_area_px * n_z)
+    roi_mask_3d = np.repeat(roi_mask_2d[np.newaxis, :, :], n_z, axis=0)
+    occupancy_mask = (label_image > 0) & roi_mask_3d
+
+    occupied_volume_voxels = int(occupancy_mask.sum())
+    occupied_volume_um3 = float(occupied_volume_voxels * voxel_volume_um3)
+    occupancy_3d_percent = float(100 * occupied_volume_voxels / roi_volume_voxels) if roi_volume_voxels > 0 else np.nan
+
+    occupancy_projection_2d = occupancy_mask.any(axis=0)
+    occupied_area_px = int((occupancy_projection_2d & roi_mask_2d).sum())
+    occupied_area_um2 = float(occupied_area_px * pixel_area_um2)
+    occupancy_2d_percent = float(100 * occupied_area_px / roi_area_px) if roi_area_px > 0 else np.nan
+
+    return {
+        f"{prefix}_occupancy_area_px_2d_projection": occupied_area_px,
+        f"{prefix}_occupancy_area_um2_2d_projection": occupied_area_um2,
+        f"{prefix}_occupancy_coverage_2d_percent": occupancy_2d_percent,
+        f"{prefix}_occupancy_volume_voxels_3d": occupied_volume_voxels,
+        f"{prefix}_occupancy_volume_um3_3d": occupied_volume_um3,
+        f"{prefix}_occupancy_coverage_3d_percent": occupancy_3d_percent,
+    }
 
 
 def run_roi_cellpose_colocalization(
@@ -457,6 +501,7 @@ def run_roi_cellpose_colocalization(
     marker_model_config: CellposeModelConfig,
     colocalization_config: ColocalizationConfig,
     runtime_config: RuntimeConfig,
+    optional_region_model_config: CellposeModelConfig | None = None,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
 ) -> ColocalizationRunResult:
     """Run the configured ROI-wise segmentation workflow and build result tables."""
@@ -474,9 +519,22 @@ def run_roi_cellpose_colocalization(
         marker_model_config=marker_model_config,
         use_gpu=runtime_config.use_gpu,
     )
+    optional_region_model = None
+    if (
+        optional_region_model_config is not None
+        and loaded_images.optional_region_image is not None
+        and normalize_segmentation_method(optional_region_model_config.segmentation_method) == "cellpose"
+    ):
+        optional_region_model = create_cellpose_model(
+            optional_region_model_config.model_name_or_path,
+            runtime_config.use_gpu,
+        )
 
     full_cell_masks = np.zeros(loaded_images.cell_image.shape, dtype=np.uint32)
     full_marker_masks = np.zeros(loaded_images.marker_image.shape, dtype=np.uint32)
+    full_optional_region_masks = None
+    if optional_region_model_config is not None and loaded_images.optional_region_image is not None:
+        full_optional_region_masks = np.zeros(loaded_images.optional_region_image.shape, dtype=np.uint32)
     cell_roi_caches: list[CellposeRefinementRoiCache] = []
     marker_roi_caches: list[CellposeRefinementRoiCache] = []
 
@@ -499,6 +557,16 @@ def run_roi_cellpose_colocalization(
         marker_crop = apply_prefilter(marker_crop, marker_model_config)
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
+        optional_region_masks_roi = None
+        if optional_region_model_config is not None:
+            if loaded_images.optional_region_image is None:
+                raise ValueError(
+                    "An optional-region segmentation config was provided, but "
+                    "no optional region channel was loaded."
+                )
+            optional_region_crop = loaded_images.optional_region_image[:, y_slice, x_slice].copy()
+            optional_region_crop = apply_prefilter(optional_region_crop, optional_region_model_config)
+            optional_region_crop[:, ~roi_mask_crop_2d] = 0
 
         cell_masks_roi, cell_refinement_cache = evaluate_segmentation_method(
             cell_model,
@@ -512,6 +580,13 @@ def run_roi_cellpose_colocalization(
             marker_model_config,
             loaded_images.voxel_scale_zyx,
         )
+        if optional_region_model_config is not None:
+            optional_region_masks_roi, _ = evaluate_segmentation_method(
+                optional_region_model,
+                optional_region_crop,
+                optional_region_model_config,
+                loaded_images.voxel_scale_zyx,
+            )
 
         if cell_refinement_cache is not None:
             cell_refinement_cache.roi_id = int(roi_id)
@@ -540,6 +615,11 @@ def run_roi_cellpose_colocalization(
 
         full_cell_masks[:, y_slice, x_slice] = np.maximum(full_cell_masks[:, y_slice, x_slice], cell_masks_roi)
         full_marker_masks[:, y_slice, x_slice] = np.maximum(full_marker_masks[:, y_slice, x_slice], marker_masks_roi)
+        if full_optional_region_masks is not None and optional_region_masks_roi is not None:
+            full_optional_region_masks[:, y_slice, x_slice] = np.maximum(
+                full_optional_region_masks[:, y_slice, x_slice],
+                optional_region_masks_roi,
+            )
 
     cell_refinement_context = None
     marker_refinement_context = None
@@ -563,6 +643,7 @@ def run_roi_cellpose_colocalization(
         marker_masks=full_marker_masks,
         colocalization_config=colocalization_config,
         optional_region_result=optional_region_result,
+        optional_region_masks=full_optional_region_masks,
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
         cell_model_config=cell_model_config,

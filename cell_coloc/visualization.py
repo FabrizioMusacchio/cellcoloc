@@ -304,14 +304,17 @@ def show_analysis_results(
                 colormap="red",
                 channel_axis=None,
             )
-    if optional_region_result is not None and _should_render_layer(
-        selected_layers,
-        "optional_region_labels",
-    ):
+    optional_region_labels = None
+    if optional_region_result is not None:
+        optional_region_labels = optional_region_result.labels
+    elif run_result.optional_region_masks is not None:
+        optional_region_labels = run_result.optional_region_masks
+
+    if optional_region_labels is not None and _should_render_layer(selected_layers, "optional_region_labels"):
         _replace_or_add_labels(
             viewer,
             replace_existing_layers=replace_existing_layers,
-            data=optional_region_result.labels,
+            data=optional_region_labels,
             name=f"{display_names.optional_region} threshold labels",
             blending="additive",
             scale=loaded_images.voxel_scale_zyx,
