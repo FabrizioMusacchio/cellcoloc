@@ -16,7 +16,7 @@ from collections.abc import Sequence
 import numpy as np
 from scipy.ndimage import gaussian_filter, gaussian_laplace, median_filter
 from skimage.measure import regionprops
-from skimage.morphology import ball, binary_dilation, disk
+from skimage.morphology import ball, dilation, disk
 
 from .config import CellposeModelConfig
 
@@ -349,9 +349,9 @@ def _build_2d_shell(
 ) -> np.ndarray:
     """Build a 2D shell around one binary object mask."""
 
-    outer = binary_dilation(mask_yx, footprint=disk(outer_radius))
+    outer = dilation(mask_yx, footprint=disk(outer_radius))
     if inner_radius > 0:
-        inner = binary_dilation(mask_yx, footprint=disk(inner_radius))
+        inner = dilation(mask_yx, footprint=disk(inner_radius))
     else:
         inner = mask_yx
     return outer & ~inner
@@ -364,9 +364,9 @@ def _build_3d_shell(
 ) -> np.ndarray:
     """Build a 3D shell around one binary object mask."""
 
-    outer = binary_dilation(mask_zyx, footprint=ball(outer_radius))
+    outer = dilation(mask_zyx, footprint=ball(outer_radius))
     if inner_radius > 0:
-        inner = binary_dilation(mask_zyx, footprint=ball(inner_radius))
+        inner = dilation(mask_zyx, footprint=ball(inner_radius))
     else:
         inner = mask_zyx
     return outer & ~inner
