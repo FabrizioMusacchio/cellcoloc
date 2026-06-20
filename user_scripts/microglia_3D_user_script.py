@@ -64,7 +64,7 @@ DISPLAY_NAMES = DisplayNames(
 
 # Placeholder values. Replace with the true metadata-derived pixel sizes when
 # available for quantitative micrometer-scale interpretation.
-VOXEL_SCALE_ZYX = (1.0, 0.6239258, 0.6239258)
+VOXEL_SCALE_ZYX = None#(1.0, 0.6239258, 0.6239258)
 
 CELL_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
@@ -154,6 +154,7 @@ REFINEMENT_RESULT_LAYER_KEYS = [
     "cell_masks",
     "marker_masks",
     "positive_cells",
+    "rois",
 ]
 
 DATA_PATH = DATA_DIR / SELECTED_FILE_NAME
@@ -202,7 +203,7 @@ roi_ids = np.unique(roi_labels_2d)
 roi_ids = roi_ids[roi_ids != 0]
 print(f"ROI ids: {roi_ids}")
 result_viewer = None
-# %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION
+# %% RUN THE ROI-WISE SEGMENTATION AND COLOCALIZATION ANALYSIS
 run_result = run_roi_cellpose_colocalization(
     loaded_images=loaded_images,
     roi_labels_2d=roi_labels_2d,
@@ -211,7 +212,11 @@ run_result = run_roi_cellpose_colocalization(
     colocalization_config=COLOCALIZATION_CONFIG,
     runtime_config=RUNTIME_CONFIG,
     optional_region_result=None)
-print(run_result.tables.overview)
+print(
+    "Initial analysis finished. "
+    f"Overview rows: {len(run_result.tables.overview)}, "
+    f"summary rows: {len(run_result.tables.summary)}."
+)
 # %% VISUALIZE THE RESULT IN NAPARI
 if RUNTIME_CONFIG.open_results:
     result_viewer = None
@@ -229,22 +234,18 @@ if RUNTIME_CONFIG.open_results:
     print(f"Inspecting visualization for:\n{SELECTED_FILE_NAME}")
     napari.run()
 # %% OPTIONALLY SET OR UPDATE A GLOBAL Z CROP FOR SUBSEQUENT REFINEMENT
-REFINEMENT_ANALYSIS_Z_CROP = None
-# Example: (5, 24)
+REFINEMENT_ANALYSIS_Z_CROP = (5,20)
+# Example: (5, 24) or None
 # `None` keeps the current analysis z range unchanged.
 # A tuple such as `(z_start, z_stop)` restricts all subsequent internal
 # refinement calculations to that z interval for all channels and all ROIs.
 
 if REFINEMENT_ANALYSIS_Z_CROP is None:
-    print(
-        "No refinement z crop requested. Subsequent refinement will keep the "
-        f"current analysis z range: {run_result.analysis_z_bounds}."
-    )
+    print(f"No refinement z crop requested. Subsequent refinement will keep the "
+          f"current analysis z range: {run_result.analysis_z_bounds}.")
 else:
-    print(
-        "Subsequent refinement will use this global analysis z crop:\n"
-        f"{REFINEMENT_ANALYSIS_Z_CROP}"
-    )
+    print(f"Subsequent refinement will use this global analysis z crop:\n"
+          f"{REFINEMENT_ANALYSIS_Z_CROP}")
 # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
 
@@ -323,7 +324,11 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
         marker_flow_threshold=      REFINED_MARKER_FLOW_THRESHOLD,
         optional_region_result=     None)
 
-    print(run_result.tables.overview)
+    print(
+        "Refinement finished. "
+        f"Overview rows: {len(run_result.tables.overview)}, "
+        f"summary rows: {len(run_result.tables.summary)}."
+    )
 
     if RUNTIME_CONFIG.open_results:
         result_viewer = show_analysis_results(
