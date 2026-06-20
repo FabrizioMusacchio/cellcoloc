@@ -14,6 +14,100 @@ from .config import ChannelConfig
 from .schemas import ColocalizationRunResult, LoadedImageChannels, OptionalRegionSegmentationResult, ResultsPaths
 
 
+def _convert_length_to_microns(value: float, unit: str | None, axis_name: str) -> float:
+    """Convert one physical pixel-size value to micrometers.
+
+    Parameters
+    ----------
+    value:
+        Raw physical size from OMIO metadata.
+    unit:
+        Corresponding physical unit string from OMIO metadata.
+    axis_name:
+        Human-readable axis name used for error messages.
+    """
+
+    if value is None:
+        raise ValueError(f"Missing physical size value for axis {axis_name}.")
+    if float(value) <= 0:
+        raise ValueError(f"Physical size for axis {axis_name} must be positive, got {value!r}.")
+
+    normalized_unit = "micron" if unit is None else str(unit).strip().lower()
+    unit_to_micron_factor = {
+        "micron": 1.0,
+        "microns": 1.0,
+        "um": 1.0,
+        "µm": 1.0,
+        "micrometer": 1.0,
+        "micrometers": 1.0,
+        "micrometre": 1.0,
+        "micrometres": 1.0,
+        "nm": 1e-3,
+        "nanometer": 1e-3,
+        "nanometers": 1e-3,
+        "nanometre": 1e-3,
+        "nanometres": 1e-3,
+        "mm": 1e3,
+        "millimeter": 1e3,
+        "millimeters": 1e3,
+        "millimetre": 1e3,
+        "millimetres": 1e3,
+        "m": 1e6,
+        "meter": 1e6,
+        "meters": 1e6,
+        "metre": 1e6,
+        "metres": 1e6,
+    }
+
+    if normalized_unit not in unit_to_micron_factor:
+        raise ValueError(
+            f"Unsupported physical size unit for axis {axis_name}: {unit!r}. "
+            "Please provide `voxel_scale_zyx` explicitly for this dataset."
+        )
+
+    return float(value) * unit_to_micron_factor[normalized_unit]
+
+
+def _resolve_voxel_scale_zyx(
+    voxel_scale_zyx: tuple[float, float, float] | None,
+    metadata,
+) -> tuple[float, float, float]:
+    """Resolve voxel size in ZYX order from user input or OMIO metadata.
+
+    Resolution order:
+
+    1. Explicit user-provided ``voxel_scale_zyx``
+    2. OMIO metadata entries ``PhysicalSizeZ/Y/X`` and their units
+    3. Fallback to ``(1.0, 1.0, 1.0)`` with a warning
+    """
+
+    if voxel_scale_zyx is not None:
+        resolved = tuple(float(value) for value in voxel_scale_zyx)
+        if len(resolved) != 3 or any(value <= 0 for value in resolved):
+            raise ValueError(
+                "`voxel_scale_zyx` must be a tuple of three positive values in "
+                f"ZYX order, got {voxel_scale_zyx!r}."
+            )
+        print(f"Using user-provided voxel scale (ZYX, um): {resolved}")
+        return resolved
+
+    try:
+        resolved = (
+            _convert_length_to_microns(metadata["PhysicalSizeZ"], metadata.get("PhysicalSizeZUnit"), "Z"),
+            _convert_length_to_microns(metadata["PhysicalSizeY"], metadata.get("PhysicalSizeYUnit"), "Y"),
+            _convert_length_to_microns(metadata["PhysicalSizeX"], metadata.get("PhysicalSizeXUnit"), "X"),
+        )
+        print(f"Using voxel scale from OMIO metadata (ZYX, um): {resolved}")
+        return resolved
+    except Exception as exc:
+        fallback = (1.0, 1.0, 1.0)
+        print(
+            "Could not resolve voxel scale from user input or OMIO metadata. "
+            f"Falling back to {fallback} um in ZYX order. Reason: {exc}"
+        )
+        return fallback
+
+
 def build_results_paths(source_path: Path) -> ResultsPaths:
     """Create the standard results paths for one microscopy dataset.
 
@@ -80,7 +174,7 @@ def _extract_zyx_channel(image_tzcyx: np.ndarray, channel_index: int) -> np.ndar
 def load_analysis_images(
     source_path: Path,
     channel_config: ChannelConfig,
-    voxel_scale_zyx: tuple[float, float, float],
+    voxel_scale_zyx: tuple[float, float, float] | None,
     crop_for_testing: tuple[slice, slice, slice] | None = None,
     image_loading_mode: str = "memory",
 ) -> LoadedImageChannels:
@@ -120,6 +214,8 @@ def load_analysis_images(
     print(f"Raw image shape (expected TZCYX): {image_tzcyx.shape}")
     print(f"Detected dimensionality from Z axis: {'3D' if is_3d else '2D'} (Z={raw_z_size})")
 
+    resolved_voxel_scale_zyx = _resolve_voxel_scale_zyx(voxel_scale_zyx, metadata)
+
     cell_image = _extract_zyx_channel(image_tzcyx, channel_config.cell_channel)
     marker_image = _extract_zyx_channel(image_tzcyx, channel_config.marker_channel)
 
@@ -153,7 +249,7 @@ def load_analysis_images(
     return LoadedImageChannels(
         source_path=paths.source_path,
         paths=paths,
-        voxel_scale_zyx=voxel_scale_zyx,
+        voxel_scale_zyx=resolved_voxel_scale_zyx,
         cell_image=cell_image,
         marker_image=marker_image,
         optional_region_image=optional_region_image,
