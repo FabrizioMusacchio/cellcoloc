@@ -69,7 +69,7 @@ VOXEL_SCALE_ZYX = (1.0, 0.6239258, 0.6239258)
 CELL_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
-    segmentation_method="cellpose",
+    segmentation_method="cellpose", # choose between "cellpose", "otsu", "li", "percentile"
     anisotropy=True,
     flow3d_smooth=3,  # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
     prefilter="gaussian",  # available options: "gaussian", "laplacian_of_gaussian"/"log", "median", None
@@ -93,7 +93,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
 MARKER_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
-    segmentation_method="cellpose",
+    segmentation_method="otsu", # choose between "cellpose", "otsu", "li", "percentile"
     anisotropy=True,
     flow3d_smooth=3,
     prefilter="laplacian_of_gaussian",
@@ -126,7 +126,7 @@ RUNTIME_CONFIG = RuntimeConfig(
     open_results=True,
     use_gpu=True,
     crop_for_testing=None,
-    image_loading_mode="disk",  # available options: "memory", "memap"
+    image_loading_mode="memap",  # available options: "memory", "memap"
 )
 
 if not DATA_PATHS:
@@ -284,21 +284,20 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
         bright_pixel_measure=REFINED_MARKER_BRIGHT_PIXEL_MEASURE,
         bright_pixel_threshold=REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD,
         bright_pixel_min_count=REFINED_MARKER_BRIGHT_PIXEL_MIN_COUNT,
-        bright_pixel_min_fraction=REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION,
-    )
+        bright_pixel_min_fraction=REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION)
 
     run_result = refine_run_result_from_cellpose_cache(
         loaded_images=loaded_images,
         roi_labels_2d=roi_labels_2d,
         run_result=run_result,
-        colocalization_config=COLOCALIZATION_CONFIG,
-        cell_model_config=refined_cell_model_config,
-        marker_model_config=refined_marker_model_config,
-        cell_cellprob_threshold=REFINED_CELL_CELLPROB_THRESHOLD,
-        cell_flow_threshold=REFINED_CELL_FLOW_THRESHOLD,
-        marker_cellprob_threshold=REFINED_MARKER_CELLPROB_THRESHOLD,
-        marker_flow_threshold=REFINED_MARKER_FLOW_THRESHOLD,
-        optional_region_result=None)
+        colocalization_config=      COLOCALIZATION_CONFIG,
+        cell_model_config=          refined_cell_model_config,
+        marker_model_config=        None,#refined_marker_model_config,
+        cell_cellprob_threshold=    REFINED_CELL_CELLPROB_THRESHOLD,
+        cell_flow_threshold=        REFINED_CELL_FLOW_THRESHOLD,
+        marker_cellprob_threshold=  REFINED_MARKER_CELLPROB_THRESHOLD,
+        marker_flow_threshold=      REFINED_MARKER_FLOW_THRESHOLD,
+        optional_region_result=     None)
 
     print(run_result.tables.overview)
 
