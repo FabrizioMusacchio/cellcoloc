@@ -103,6 +103,12 @@ class CellposeModelConfig:
     prefilter_median_size_z:
         Median prefilter kernel size along z. If ``None``, the pipeline reuses
         ``prefilter_median_size_xy``. Only relevant for 3D data.
+    z_crop:
+        Optional global z-range restriction in ``(start, stop)`` form. When
+        set on any participating channel config, the pipeline applies this
+        crop consistently to all channels and all ROIs for the internal
+        segmentation and quantification steps. The full stack is still shown in
+        visualization outputs.
     threshold_percentile:
         Percentile used when ``segmentation_method="percentile"``.
     threshold_background_sigma:
@@ -165,6 +171,7 @@ class CellposeModelConfig:
     prefilter_sigma_z: float | None = None
     prefilter_median_size_xy: int = 3
     prefilter_median_size_z: int | None = None
+    z_crop: tuple[int | None, int | None] | None = None
     threshold_percentile: float = 98.0
     threshold_background_sigma: float | None = None
     threshold_min_object_voxels: int = 10

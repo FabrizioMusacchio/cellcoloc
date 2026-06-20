@@ -108,7 +108,8 @@ class ColocalizationRunResult:
     cell_masks: np.ndarray
     marker_masks: np.ndarray
     positive_cell_masks: np.ndarray
-    optional_region_masks: np.ndarray | None = None
     tables: ColocalizationTables
+    optional_region_masks: np.ndarray | None = None
+    analysis_z_bounds: tuple[int, int] | None = None
     cell_refinement_context: CellposeChannelRefinementContext | None = None
     marker_refinement_context: CellposeChannelRefinementContext | None = None

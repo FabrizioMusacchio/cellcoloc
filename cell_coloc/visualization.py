@@ -165,6 +165,27 @@ def _replace_or_add_points(
     viewer.add_points(data, name=name, **kwargs)
 
 
+def _build_roi_labels_3d(
+    roi_labels_2d: np.ndarray,
+    z_size: int,
+    analysis_z_bounds: tuple[int, int] | None = None,
+) -> np.ndarray:
+    """Expand 2D ROI labels to 3D, optionally only within one z interval."""
+
+    roi_labels_3d = np.zeros((z_size, *roi_labels_2d.shape), dtype=roi_labels_2d.dtype)
+    if analysis_z_bounds is None:
+        roi_labels_3d[:] = np.repeat(roi_labels_2d[np.newaxis, :, :], z_size, axis=0)
+        return roi_labels_3d
+
+    z_start, z_stop = analysis_z_bounds
+    roi_labels_3d[z_start:z_stop] = np.repeat(
+        roi_labels_2d[np.newaxis, :, :],
+        z_stop - z_start,
+        axis=0,
+    )
+    return roi_labels_3d
+
+
 def extract_label_masks_from_viewer(
     viewer,
     cell_layer_name: str = "Cellpose cell masks",
@@ -218,7 +239,10 @@ def show_optional_region_segmentation(
     )
 
     if roi_labels_2d is not None:
-        roi_labels_3d = np.repeat(roi_labels_2d[np.newaxis, :, :], loaded_images.cell_image.shape[0], axis=0)
+        roi_labels_3d = _build_roi_labels_3d(
+            roi_labels_2d,
+            loaded_images.cell_image.shape[0],
+        )
         viewer.add_labels(
             roi_labels_3d,
             name="ROIs",
@@ -320,7 +344,11 @@ def show_analysis_results(
             scale=loaded_images.voxel_scale_zyx,
         )
 
-    roi_labels_3d = np.repeat(roi_labels_2d[np.newaxis, :, :], loaded_images.cell_image.shape[0], axis=0)
+    roi_labels_3d = _build_roi_labels_3d(
+        roi_labels_2d,
+        loaded_images.cell_image.shape[0],
+        run_result.analysis_z_bounds,
+    )
     if _should_render_layer(selected_layers, "rois"):
         _replace_or_add_labels(
             viewer,

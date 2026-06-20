@@ -91,6 +91,77 @@ def build_positive_cell_mask(cell_masks: np.ndarray, summary_table: pd.DataFrame
     return lookup[cell_masks]
 
 
+def _normalize_z_crop_bounds(
+    z_crop: tuple[int | None, int | None],
+    z_size: int,
+) -> tuple[int, int]:
+    """Validate and normalize a user-supplied z crop against one stack size."""
+
+    start_raw, stop_raw = z_crop
+    start = 0 if start_raw is None else int(start_raw)
+    stop = z_size if stop_raw is None else int(stop_raw)
+
+    start = max(0, min(start, z_size))
+    stop = max(0, min(stop, z_size))
+    if start >= stop:
+        raise ValueError(
+            "Invalid z crop bounds. Expected a tuple like ``(start, stop)`` "
+            f"with start < stop after clipping to the stack size, got {z_crop!r} "
+            f"for z size {z_size}."
+        )
+
+    return start, stop
+
+
+def _resolve_analysis_z_bounds(
+    z_size: int,
+    *model_configs: CellposeModelConfig | None,
+    fallback: tuple[int, int] | None = None,
+) -> tuple[int, int] | None:
+    """Resolve one global analysis z crop from one or more channel configs.
+
+    The pipeline treats z cropping as a global analysis constraint. Individual
+    channel configs may expose the same ``z_crop`` field for user convenience,
+    but conflicting bounds across channels are rejected to keep all internal
+    computations aligned.
+    """
+
+    normalized_bounds: list[tuple[int, int]] = []
+    for model_config in model_configs:
+        if model_config is None or model_config.z_crop is None:
+            continue
+        normalized_bounds.append(_normalize_z_crop_bounds(model_config.z_crop, z_size))
+
+    if not normalized_bounds:
+        return fallback
+
+    first_bounds = normalized_bounds[0]
+    if any(bounds != first_bounds for bounds in normalized_bounds[1:]):
+        raise ValueError(
+            "Conflicting z-crop bounds were provided across channel configs. "
+            "Please use the same z crop for all participating channels."
+        )
+
+    return first_bounds
+
+
+def _apply_analysis_z_bounds(
+    label_image: np.ndarray | None,
+    analysis_z_bounds: tuple[int, int] | None,
+) -> np.ndarray | None:
+    """Zero label content outside the active analysis z range."""
+
+    if label_image is None:
+        return None
+    if analysis_z_bounds is None:
+        return np.asarray(label_image, dtype=np.uint32).copy()
+
+    cropped = np.zeros_like(label_image, dtype=np.uint32)
+    z_start, z_stop = analysis_z_bounds
+    cropped[z_start:z_stop] = np.asarray(label_image[z_start:z_stop], dtype=np.uint32)
+    return cropped
+
+
 def analyze_existing_masks(
     loaded_images: LoadedImageChannels,
     roi_labels_2d: np.ndarray,
@@ -99,6 +170,7 @@ def analyze_existing_masks(
     colocalization_config: ColocalizationConfig,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
     optional_region_masks: np.ndarray | None = None,
+    analysis_z_bounds: tuple[int, int] | None = None,
     cell_refinement_context: CellposeChannelRefinementContext | None = None,
     marker_refinement_context: CellposeChannelRefinementContext | None = None,
     cell_model_config: CellposeModelConfig | None = None,
@@ -110,8 +182,8 @@ def analyze_existing_masks(
     any later manual or threshold-based refinement of the label masks.
     """
 
-    full_cell_masks = np.asarray(cell_masks, dtype=np.uint32).copy()
-    full_marker_masks = np.asarray(marker_masks, dtype=np.uint32).copy()
+    full_cell_masks = _apply_analysis_z_bounds(cell_masks, analysis_z_bounds)
+    full_marker_masks = _apply_analysis_z_bounds(marker_masks, analysis_z_bounds)
 
     roi_ids = np.unique(roi_labels_2d)
     roi_ids = roi_ids[roi_ids != 0]
@@ -169,6 +241,10 @@ def analyze_existing_masks(
             else None
         )
     )
+    effective_optional_region_masks = _apply_analysis_z_bounds(
+        effective_optional_region_masks,
+        analysis_z_bounds,
+    )
     summary_table = _build_summary_table(
         detailed_table,
         full_cell_masks,
@@ -184,6 +260,7 @@ def analyze_existing_masks(
         marker_masks=full_marker_masks,
         summary_table=summary_table,
         optional_region_masks=effective_optional_region_masks,
+        analysis_z_bounds=analysis_z_bounds,
     )
     positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
 
@@ -192,6 +269,7 @@ def analyze_existing_masks(
         marker_masks=full_marker_masks,
         positive_cell_masks=positive_cell_masks,
         optional_region_masks=effective_optional_region_masks,
+        analysis_z_bounds=analysis_z_bounds,
         tables=ColocalizationTables(
             detailed=detailed_table,
             summary=summary_table,
@@ -273,6 +351,13 @@ def refine_run_result_from_cellpose_cache(
     in ``run_result``.
     """
 
+    analysis_z_bounds = _resolve_analysis_z_bounds(
+        loaded_images.cell_image.shape[0],
+        cell_model_config,
+        marker_model_config,
+        fallback=run_result.analysis_z_bounds,
+    )
+
     if cell_model_config is None:
         rebuilt_cell_masks = np.asarray(run_result.cell_masks, dtype=np.uint32).copy()
     else:
@@ -309,6 +394,13 @@ def refine_run_result_from_cellpose_cache(
             cellprob_threshold=marker_cellprob_threshold,
         )
 
+    rebuilt_cell_masks = _apply_analysis_z_bounds(rebuilt_cell_masks, analysis_z_bounds)
+    rebuilt_marker_masks = _apply_analysis_z_bounds(rebuilt_marker_masks, analysis_z_bounds)
+    rebuilt_optional_region_masks = _apply_analysis_z_bounds(
+        run_result.optional_region_masks,
+        analysis_z_bounds,
+    )
+
     return analyze_existing_masks(
         loaded_images=loaded_images,
         roi_labels_2d=roi_labels_2d,
@@ -316,7 +408,8 @@ def refine_run_result_from_cellpose_cache(
         marker_masks=rebuilt_marker_masks,
         colocalization_config=colocalization_config,
         optional_region_result=optional_region_result,
-        optional_region_masks=run_result.optional_region_masks,
+        optional_region_masks=rebuilt_optional_region_masks,
+        analysis_z_bounds=analysis_z_bounds,
         cell_refinement_context=run_result.cell_refinement_context,
         marker_refinement_context=run_result.marker_refinement_context,
         cell_model_config=cell_model_config,
@@ -506,6 +599,7 @@ def _build_overview_table(
     marker_masks: np.ndarray,
     summary_table: pd.DataFrame,
     optional_region_masks: np.ndarray | None,
+    analysis_z_bounds: tuple[int, int] | None,
 ) -> pd.DataFrame:
     """Create one ROI overview row per ROI."""
 
@@ -513,6 +607,8 @@ def _build_overview_table(
     pixel_area_um2 = y_size_um * x_size_um
     voxel_volume_um3 = z_size_um * y_size_um * x_size_um
     n_z = loaded_images.cell_image.shape[0]
+    z_start, z_stop = analysis_z_bounds if analysis_z_bounds is not None else (0, n_z)
+    analysis_depth = z_stop - z_start
 
     rows: list[dict[str, int | float]] = []
     for roi_id in np.unique(roi_labels_2d):
@@ -522,9 +618,14 @@ def _build_overview_table(
         roi_mask_2d = roi_labels_2d == roi_id
         roi_area_px = int(roi_mask_2d.sum())
         roi_area_um2 = float(roi_area_px * pixel_area_um2)
-        roi_volume_voxels = int(roi_area_px * n_z)
+        roi_volume_voxels = int(roi_area_px * analysis_depth)
         roi_volume_um3 = float(roi_volume_voxels * voxel_volume_um3)
-        roi_mask_3d = np.repeat(roi_mask_2d[np.newaxis, :, :], n_z, axis=0)
+        roi_mask_3d = np.zeros((n_z, *roi_mask_2d.shape), dtype=bool)
+        roi_mask_3d[z_start:z_stop] = np.repeat(
+            roi_mask_2d[np.newaxis, :, :],
+            analysis_depth,
+            axis=0,
+        )
 
         cell_labels_roi = np.unique(cell_masks[roi_mask_3d])
         cell_labels_roi = cell_labels_roi[cell_labels_roi != 0]
@@ -553,8 +654,24 @@ def _build_overview_table(
                 int(summary_roi["marker_and_optional_region_positive"].sum()) if not summary_roi.empty else 0
             )
 
-        row.update(_compute_mask_occupancy_metrics("cell", cell_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
-        row.update(_compute_mask_occupancy_metrics("marker", marker_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
+        row.update(
+            _compute_mask_occupancy_metrics(
+                "cell",
+                cell_masks,
+                roi_mask_2d,
+                loaded_images.voxel_scale_zyx,
+                analysis_z_bounds,
+            )
+        )
+        row.update(
+            _compute_mask_occupancy_metrics(
+                "marker",
+                marker_masks,
+                roi_mask_2d,
+                loaded_images.voxel_scale_zyx,
+                analysis_z_bounds,
+            )
+        )
 
         if optional_region_masks is not None:
             row.update(
@@ -563,6 +680,7 @@ def _build_overview_table(
                     optional_region_masks,
                     roi_mask_2d,
                     loaded_images.voxel_scale_zyx,
+                    analysis_z_bounds,
                 )
             )
 
@@ -576,6 +694,7 @@ def _compute_mask_occupancy_metrics(
     label_image: np.ndarray,
     roi_mask_2d: np.ndarray,
     voxel_scale_zyx: tuple[float, float, float],
+    analysis_z_bounds: tuple[int, int] | None,
 ) -> dict[str, int | float]:
     """Compute generic ROI occupancy metrics for one segmented channel."""
 
@@ -583,10 +702,13 @@ def _compute_mask_occupancy_metrics(
     pixel_area_um2 = y_size_um * x_size_um
     voxel_volume_um3 = z_size_um * y_size_um * x_size_um
     n_z = label_image.shape[0]
+    z_start, z_stop = analysis_z_bounds if analysis_z_bounds is not None else (0, n_z)
+    analysis_depth = z_stop - z_start
 
     roi_area_px = int(roi_mask_2d.sum())
-    roi_volume_voxels = int(roi_area_px * n_z)
-    roi_mask_3d = np.repeat(roi_mask_2d[np.newaxis, :, :], n_z, axis=0)
+    roi_volume_voxels = int(roi_area_px * analysis_depth)
+    roi_mask_3d = np.zeros((n_z, *roi_mask_2d.shape), dtype=bool)
+    roi_mask_3d[z_start:z_stop] = np.repeat(roi_mask_2d[np.newaxis, :, :], analysis_depth, axis=0)
     occupancy_mask = (label_image > 0) & roi_mask_3d
 
     occupied_volume_voxels = int(occupancy_mask.sum())
@@ -627,6 +749,13 @@ def run_roi_cellpose_colocalization(
     roi_ids = roi_ids[roi_ids != 0]
 
     print(f"Found {len(roi_ids)} ROIs: {roi_ids}")
+    analysis_z_bounds = _resolve_analysis_z_bounds(
+        loaded_images.cell_image.shape[0],
+        cell_model_config,
+        marker_model_config,
+        optional_region_model_config,
+    )
+    z_slice = slice(*analysis_z_bounds) if analysis_z_bounds is not None else slice(None)
 
     cell_model, marker_model = create_cellpose_models_for_channels(
         cell_model_config=cell_model_config,
@@ -665,8 +794,8 @@ def run_roi_cellpose_colocalization(
         y_slice, x_slice = bbox
         roi_mask_crop_2d = roi_mask_2d[y_slice, x_slice]
 
-        cell_crop = loaded_images.cell_image[:, y_slice, x_slice].copy()
-        marker_crop = loaded_images.marker_image[:, y_slice, x_slice].copy()
+        cell_crop = loaded_images.cell_image[z_slice, y_slice, x_slice].copy()
+        marker_crop = loaded_images.marker_image[z_slice, y_slice, x_slice].copy()
         cell_crop = apply_prefilter(cell_crop, cell_model_config)
         marker_crop = apply_prefilter(marker_crop, marker_model_config)
         cell_crop[:, ~roi_mask_crop_2d] = 0
@@ -678,7 +807,7 @@ def run_roi_cellpose_colocalization(
                     "An optional-region segmentation config was provided, but "
                     "no optional region channel was loaded."
                 )
-            optional_region_crop = loaded_images.optional_region_image[:, y_slice, x_slice].copy()
+            optional_region_crop = loaded_images.optional_region_image[z_slice, y_slice, x_slice].copy()
             optional_region_crop = apply_prefilter(optional_region_crop, optional_region_model_config)
             optional_region_crop[:, ~roi_mask_crop_2d] = 0
 
@@ -727,11 +856,17 @@ def run_roi_cellpose_colocalization(
         if marker_masks_roi.max() > 0:
             marker_label_offset = int(marker_masks_roi.max())
 
-        full_cell_masks[:, y_slice, x_slice] = np.maximum(full_cell_masks[:, y_slice, x_slice], cell_masks_roi)
-        full_marker_masks[:, y_slice, x_slice] = np.maximum(full_marker_masks[:, y_slice, x_slice], marker_masks_roi)
+        full_cell_masks[z_slice, y_slice, x_slice] = np.maximum(
+            full_cell_masks[z_slice, y_slice, x_slice],
+            cell_masks_roi,
+        )
+        full_marker_masks[z_slice, y_slice, x_slice] = np.maximum(
+            full_marker_masks[z_slice, y_slice, x_slice],
+            marker_masks_roi,
+        )
         if full_optional_region_masks is not None and optional_region_masks_roi is not None:
-            full_optional_region_masks[:, y_slice, x_slice] = np.maximum(
-                full_optional_region_masks[:, y_slice, x_slice],
+            full_optional_region_masks[z_slice, y_slice, x_slice] = np.maximum(
+                full_optional_region_masks[z_slice, y_slice, x_slice],
                 optional_region_masks_roi,
             )
 
@@ -758,6 +893,7 @@ def run_roi_cellpose_colocalization(
         colocalization_config=colocalization_config,
         optional_region_result=optional_region_result,
         optional_region_masks=full_optional_region_masks,
+        analysis_z_bounds=analysis_z_bounds,
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
         cell_model_config=cell_model_config,

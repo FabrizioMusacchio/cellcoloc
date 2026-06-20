@@ -70,6 +70,7 @@ CELL_MODEL_CONFIG = CellposeModelConfig(
     # diameter=15,
     model_name_or_path="cpsam",  # cpsam for Cellpose 4, cyto3 for Cellpose 3
     segmentation_method="cellpose", # choose between "cellpose", "otsu", "li", "percentile"
+    z_crop=None,  # optional global analysis z crop as (start, stop); applies to all channels and all ROIs
     anisotropy=True,
     flow3d_smooth=3,  # Gaussian smoothing for 3D flow fields; int, default: 0, range: 0-10
     prefilter="gaussian",  # available options: "gaussian", "laplacian_of_gaussian"/"log", "median", None
@@ -227,6 +228,23 @@ if RUNTIME_CONFIG.open_results:
 
     print(f"Inspecting visualization for:\n{SELECTED_FILE_NAME}")
     napari.run()
+# %% OPTIONALLY SET OR UPDATE A GLOBAL Z CROP FOR SUBSEQUENT REFINEMENT
+REFINEMENT_ANALYSIS_Z_CROP = None
+# Example: (5, 24)
+# `None` keeps the current analysis z range unchanged.
+# A tuple such as `(z_start, z_stop)` restricts all subsequent internal
+# refinement calculations to that z interval for all channels and all ROIs.
+
+if REFINEMENT_ANALYSIS_Z_CROP is None:
+    print(
+        "No refinement z crop requested. Subsequent refinement will keep the "
+        f"current analysis z range: {run_result.analysis_z_bounds}."
+    )
+else:
+    print(
+        "Subsequent refinement will use this global analysis z crop:\n"
+        f"{REFINEMENT_ANALYSIS_Z_CROP}"
+    )
 # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 REFINE_WITH_CACHED_CELLPOSE_OUTPUTS = True
 
@@ -259,9 +277,14 @@ REFINED_MARKER_BRIGHT_PIXEL_THRESHOLD = 120
 REFINED_MARKER_BRIGHT_PIXEL_MIN_COUNT = None
 REFINED_MARKER_BRIGHT_PIXEL_MIN_FRACTION = 0.09
 
+effective_refinement_z_crop = (
+    CELL_MODEL_CONFIG.z_crop if REFINEMENT_ANALYSIS_Z_CROP is None else REFINEMENT_ANALYSIS_Z_CROP
+)
+
 if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     refined_cell_model_config = replace(
         CELL_MODEL_CONFIG,
+        z_crop=effective_refinement_z_crop,
         postfilters=REFINED_CELL_POSTFILTERS,
         min_intensity_measure=REFINED_CELL_MIN_INTENSITY_MEASURE,
         min_intensity_threshold=REFINED_CELL_MIN_INTENSITY_THRESHOLD,
@@ -275,6 +298,7 @@ if REFINE_WITH_CACHED_CELLPOSE_OUTPUTS:
     )
     refined_marker_model_config = replace(
         MARKER_MODEL_CONFIG,
+        z_crop=effective_refinement_z_crop,
         postfilters=REFINED_MARKER_POSTFILTERS,
         min_intensity_measure=REFINED_MARKER_MIN_INTENSITY_MEASURE,
         min_intensity_threshold=REFINED_MARKER_MIN_INTENSITY_THRESHOLD,
