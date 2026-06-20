@@ -184,11 +184,28 @@ class CellposeModelConfig:
 
 @dataclass(slots=True)
 class ColocalizationConfig:
-    """Thresholds controlling how cell-to-marker overlap is interpreted."""
+    """Thresholds controlling how cell-to-marker overlap is interpreted.
+
+    Attributes
+    ----------
+    min_cell_voxels:
+        Minimum size required for cell labels after segmentation cleanup.
+    overlap_fraction_threshold:
+        Minimum fraction of the cell mask that must overlap a marker object for
+        the cell to be counted as positive.
+    min_overlap_voxels:
+        Minimum absolute overlap size required for positivity.
+    evaluate_optional_region_cell_positivity:
+        When ``True`` and an optional third channel has been segmented, the
+        pipeline additionally evaluates which cells overlap that third-channel
+        segmentation. This yields separate optional-region positivity columns
+        as well as a combined marker-and-optional-region double-positive flag.
+    """
 
     min_cell_voxels: int = 200
     overlap_fraction_threshold: float = 0.02
     min_overlap_voxels: int = 20
+    evaluate_optional_region_cell_positivity: bool = False
 
 
 @dataclass(slots=True)

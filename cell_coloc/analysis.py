@@ -160,7 +160,6 @@ def analyze_existing_masks(
             ascending=[True, True, False],
         )
 
-    summary_table = _build_summary_table(detailed_table, full_cell_masks, colocalization_config)
     effective_optional_region_masks = (
         np.asarray(optional_region_masks, dtype=np.uint32)
         if optional_region_masks is not None
@@ -170,6 +169,13 @@ def analyze_existing_masks(
             else None
         )
     )
+    summary_table = _build_summary_table(
+        detailed_table,
+        full_cell_masks,
+        colocalization_config,
+        roi_labels_2d,
+        effective_optional_region_masks,
+    )
 
     overview_table = _build_overview_table(
         roi_labels_2d=roi_labels_2d,
@@ -178,7 +184,6 @@ def analyze_existing_masks(
         marker_masks=full_marker_masks,
         summary_table=summary_table,
         optional_region_masks=effective_optional_region_masks,
-        display_names=None,
     )
     positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
 
@@ -323,6 +328,8 @@ def _build_summary_table(
     detailed_table: pd.DataFrame,
     cell_masks: np.ndarray,
     config: ColocalizationConfig,
+    roi_labels_2d: np.ndarray,
+    optional_region_masks: np.ndarray | None = None,
 ) -> pd.DataFrame:
     """Aggregate detailed overlap rows into one summary row per cell."""
 
@@ -391,7 +398,105 @@ def _build_summary_table(
 
     summary_table = pd.DataFrame(summary_rows).merge(props_table, on="cell_label", how="left")
     summary_table["cell_voxels_delta"] = summary_table["cell_voxels"] - summary_table["cell_voxels_props"]
+
+    if config.evaluate_optional_region_cell_positivity:
+        optional_region_summary = _build_optional_region_summary_table(
+            roi_labels_2d=roi_labels_2d,
+            cell_masks=cell_masks,
+            optional_region_masks=optional_region_masks,
+            config=config,
+        )
+        summary_table = summary_table.merge(
+            optional_region_summary,
+            on=["roi_id", "cell_label"],
+            how="left",
+        )
+        summary_table["optional_region_positive"] = summary_table["optional_region_positive"].fillna(False).astype(bool)
+        summary_table["n_overlapping_optional_region_objects"] = (
+            summary_table["n_overlapping_optional_region_objects"].fillna(0).astype(int)
+        )
+        summary_table["best_optional_region_overlap_voxels"] = (
+            summary_table["best_optional_region_overlap_voxels"].fillna(0).astype(int)
+        )
+        summary_table["best_optional_region_overlap_fraction"] = (
+            summary_table["best_optional_region_overlap_fraction"].fillna(0.0).astype(float)
+        )
+        summary_table["marker_and_optional_region_positive"] = (
+            summary_table["marker_positive"] & summary_table["optional_region_positive"]
+        )
+
     return summary_table
+
+
+def _build_optional_region_summary_table(
+    roi_labels_2d: np.ndarray,
+    cell_masks: np.ndarray,
+    optional_region_masks: np.ndarray | None,
+    config: ColocalizationConfig,
+) -> pd.DataFrame:
+    """Summarize which cells overlap an optional third-channel segmentation."""
+
+    if optional_region_masks is None:
+        return pd.DataFrame(
+            columns=[
+                "roi_id",
+                "cell_label",
+                "optional_region_positive",
+                "n_overlapping_optional_region_objects",
+                "best_optional_region_label",
+                "best_optional_region_overlap_voxels",
+                "best_optional_region_overlap_fraction",
+            ]
+        )
+
+    rows: list[dict[str, int | float | bool]] = []
+    roi_ids = np.unique(roi_labels_2d)
+    roi_ids = roi_ids[roi_ids != 0]
+
+    for roi_id in roi_ids:
+        roi_mask_2d = roi_labels_2d == roi_id
+        bbox = get_bbox_2d(roi_mask_2d)
+        if bbox is None:
+            continue
+
+        y_slice, x_slice = bbox
+        cell_roi = cell_masks[:, y_slice, x_slice]
+        optional_region_roi = optional_region_masks[:, y_slice, x_slice]
+        detailed_rows = analyze_label_overlaps(cell_roi, optional_region_roi, roi_id=int(roi_id))
+        detailed_table = pd.DataFrame(detailed_rows)
+        if detailed_table.empty:
+            continue
+
+        for cell_label in np.unique(detailed_table["cell_label"]):
+            detailed_cell = detailed_table[detailed_table["cell_label"] == cell_label]
+            n_overlapping_objects = int(detailed_cell["n_overlapping_markers"].max())
+            best_idx = detailed_cell["overlap_voxels"].idxmax()
+            best_overlap_voxels = int(detailed_cell.loc[best_idx, "overlap_voxels"])
+            best_overlap_fraction = float(detailed_cell.loc[best_idx, "overlap_fraction_of_cell"])
+            best_optional_region_label = detailed_cell.loc[best_idx, "marker_label"]
+            optional_region_positive = (
+                (n_overlapping_objects > 0)
+                and (best_overlap_voxels >= config.min_overlap_voxels)
+                and (best_overlap_fraction >= config.overlap_fraction_threshold)
+            )
+
+            rows.append(
+                {
+                    "roi_id": int(roi_id),
+                    "cell_label": int(cell_label),
+                    "optional_region_positive": bool(optional_region_positive),
+                    "n_overlapping_optional_region_objects": n_overlapping_objects,
+                    "best_optional_region_label": (
+                        int(best_optional_region_label)
+                        if not pd.isna(best_optional_region_label)
+                        else np.nan
+                    ),
+                    "best_optional_region_overlap_voxels": best_overlap_voxels,
+                    "best_optional_region_overlap_fraction": best_overlap_fraction,
+                }
+            )
+
+    return pd.DataFrame(rows)
 
 
 def _build_overview_table(
@@ -438,6 +543,15 @@ def _build_overview_table(
             "roi_volume_voxels": roi_volume_voxels,
             "roi_volume_um3": roi_volume_um3,
         }
+
+        if "optional_region_positive" in summary_roi.columns:
+            row["n_optional_region_positive_cells"] = (
+                int(summary_roi["optional_region_positive"].sum()) if not summary_roi.empty else 0
+            )
+        if "marker_and_optional_region_positive" in summary_roi.columns:
+            row["n_marker_and_optional_region_positive_cells"] = (
+                int(summary_roi["marker_and_optional_region_positive"].sum()) if not summary_roi.empty else 0
+            )
 
         row.update(_compute_mask_occupancy_metrics("cell", cell_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
         row.update(_compute_mask_occupancy_metrics("marker", marker_masks, roi_mask_2d, loaded_images.voxel_scale_zyx))
