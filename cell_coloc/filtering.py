@@ -4,8 +4,11 @@ This module keeps optional signal-processing steps out of the project-specific
 user scripts. Prefilters operate on image intensities before Cellpose is run,
 while postfilters remove suspicious label masks after segmentation by
 comparing them against the original image intensities.
-"""
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -17,7 +20,7 @@ from skimage.morphology import ball, binary_dilation, disk
 
 from .config import CellposeModelConfig
 
-
+# %%FILTERING HELPERS
 def apply_prefilter(
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
@@ -367,3 +370,4 @@ def _build_3d_shell(
     else:
         inner = mask_zyx
     return outer & ~inner
+# %% END

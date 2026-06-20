@@ -3,14 +3,17 @@
 This module groups all user-adjustable settings into small dataclasses so that
 project-specific scripts only need to define parameters and then call the core
 pipeline functions exposed by :mod:`cell_coloc`.
-"""
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Sequence
 
-
+# %% CONFIG CLASSES
 @dataclass(slots=True)
 class ChannelConfig:
     """Describe which channels should be used for the analysis.
@@ -265,3 +268,4 @@ class RuntimeConfig:
     use_gpu: bool = True
     crop_for_testing: tuple[slice, slice, slice] | None = None
     image_loading_mode: str = "memory"
+# %% END

@@ -4,6 +4,9 @@ The package is intentionally structured so that project-specific user scripts
 can stay small: they define settings, call the imported pipeline functions cell
 by cell, and write all outputs to a standardized ``results`` directory located
 next to the source dataset.
+
+author: Fabrizio Musacchio
+date: May/June 2026
 """
 
 from __future__ import annotations

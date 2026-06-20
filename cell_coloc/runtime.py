@@ -3,8 +3,11 @@
 This module keeps user-facing scripts lightweight by centralizing small
 environment workarounds that are only needed when default cache or config
 locations are not writable. In normal local use nothing is redirected.
-"""
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 import os
@@ -17,7 +20,7 @@ try:
 except ImportError:  # pragma: no cover - optional import guard
     appdirs = None
 
-
+# %% RUNTIME ENVIRONMENT HELPERS
 def get_runtime_cache_root() -> Path:
     """Return the temporary fallback directory used for runtime caches.
 
@@ -156,3 +159,4 @@ def prepare_runtime_environment() -> dict[str, str]:
         applied_fallbacks["NAPARI_CONFIG"] = os.environ["NAPARI_CONFIG"]
 
     return applied_fallbacks
+# %% END

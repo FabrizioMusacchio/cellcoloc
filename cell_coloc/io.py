@@ -1,5 +1,10 @@
-"""Input and output helpers for the cell colocalization pipeline."""
+"""
+Input and output helpers for the cell colocalization pipeline.
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,7 +18,7 @@ import tifffile
 from .config import ChannelConfig
 from .schemas import ColocalizationRunResult, LoadedImageChannels, OptionalRegionSegmentationResult, ResultsPaths
 
-
+#% UTILITY FUNCTIONS
 def _convert_length_to_microns(value: float, unit: str | None, axis_name: str) -> float:
     """Convert one physical pixel-size value to micrometers.
 
@@ -387,3 +392,4 @@ def export_analysis_outputs(
 
     if optional_region_labels_to_export is not None:
         print(f"Saved optional region mask to:\n{paths.optional_region_mask_path}")
+# %% END

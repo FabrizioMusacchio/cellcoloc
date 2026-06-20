@@ -1,5 +1,9 @@
-"""Segmentation utilities used by the reusable colocalization pipeline."""
+"""Segmentation utilities used by the reusable colocalization pipeline.
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
@@ -14,7 +18,7 @@ from skimage.morphology import ball, closing, disk, remove_small_holes, remove_s
 from .config import CellposeModelConfig, OptionalRegionSegmentationConfig
 from .schemas import CellposeRefinementRoiCache, OptionalRegionSegmentationResult
 
-
+# %% SEGMENTATION HELPERS
 def normalize_segmentation_method(method: str) -> str:
     """Normalize and validate a configured segmentation method name."""
 
@@ -564,3 +568,4 @@ def segment_optional_region(
         threshold=threshold,
         corrected_image=np.asarray(image_corrected),
     )
+# %% END

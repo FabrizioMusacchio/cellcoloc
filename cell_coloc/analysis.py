@@ -1,5 +1,10 @@
-"""Core Cellpose colocalization analysis logic."""
+"""
+Core Cellpose colocalization analysis logic.
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 import numpy as np
@@ -26,7 +31,7 @@ from .segmentation import (
     relabel_with_offset,
 )
 
-
+# %% MAIN ANALYSIS LOGIC
 def analyze_label_overlaps(
     cell_masks: np.ndarray,
     marker_masks: np.ndarray,
@@ -998,3 +1003,4 @@ def run_roi_cellpose_colocalization(
         cell_model_config=cell_model_config,
         marker_model_config=marker_model_config,
     )
+# %% END

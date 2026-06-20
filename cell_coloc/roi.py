@@ -1,5 +1,10 @@
-"""ROI helpers for napari-based interactive analysis workflows."""
+"""
+ROI helpers for napari-based interactive analysis workflows.
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,7 +16,7 @@ from .config import DisplayNames
 from .io import save_roi_labels
 from .schemas import LoadedImageChannels
 
-
+# %% ROI HELPERS
 def rasterize_shapes_to_labelmask(
     shapes_layer,
     image_shape_yx: tuple[int, int],
@@ -161,3 +166,4 @@ def create_full_image_roi_labels(image_shape_yx: tuple[int, int]) -> np.ndarray:
     """
 
     return np.ones(image_shape_yx, dtype=np.uint16)
+# %% END

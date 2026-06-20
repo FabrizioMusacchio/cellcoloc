@@ -3,8 +3,11 @@
 The dataclasses in this module make it easier to pass structured analysis state
 between notebook-style script cells without leaking implementation details into
 project-specific user scripts.
-"""
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,7 +17,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
+# %% SCHEMAS
 @dataclass(slots=True)
 class ResultsPaths:
     """Collect all output locations for one input dataset."""
@@ -130,3 +133,4 @@ class ColocalizationRunResult:
     analysis_z_bounds: tuple[int, int] | None = None
     cell_refinement_context: CellposeChannelRefinementContext | None = None
     marker_refinement_context: CellposeChannelRefinementContext | None = None
+# %% END

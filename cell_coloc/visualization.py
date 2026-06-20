@@ -1,5 +1,9 @@
-"""napari visualization helpers for the interactive user workflow."""
+"""napari visualization helpers for the interactive user workflow.
 
+author: Fabrizio Musacchio
+date: May/June 2026
+"""
+# %% IMPORTS
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -10,7 +14,7 @@ from .config import DisplayNames
 from .roi import get_roi_label_points
 from .schemas import ColocalizationRunResult, LoadedImageChannels, OptionalRegionSegmentationResult
 
-
+# %% VISUALIZATION HELPERS
 def _get_or_create_viewer(existing_viewer=None):
     """Return an existing napari viewer or create a new one."""
 
@@ -433,3 +437,4 @@ def show_analysis_results(
     _hide_layer_if_present(viewer, f"{display_names.optional_region} max projection for ROI drawing")
     _hide_layer_if_present(viewer, "Draw ROIs here")
     return viewer
+# %% END
