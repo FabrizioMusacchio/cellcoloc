@@ -36,7 +36,6 @@ from cell_coloc import (
     ChannelConfig,
     ColocalizationConfig,
     DisplayNames,
-    OptionalRegionSegmentationConfig,
     RuntimeConfig,
     create_roi_drawing_viewer,
     export_analysis_outputs,
@@ -44,7 +43,6 @@ from cell_coloc import (
     load_roi_labels,
     run_roi_cellpose_colocalization,
     save_roi_labels_from_shapes,
-    segment_optional_region,
     show_analysis_results,
 )
 
@@ -86,21 +84,22 @@ MARKER_MODEL_CONFIG = CellposeModelConfig(
     flow3d_smooth=0,
 )
 
+OPTIONAL_REGION_MODEL_CONFIG = CellposeModelConfig(
+    model_name_or_path="cpsam",
+    segmentation_method="li",
+    prefilter="gaussian",
+    prefilter_sigma_xy=1.0,
+    prefilter_sigma_z=1.0,
+    threshold_background_sigma=None,
+    threshold_min_object_voxels=10,
+    threshold_min_hole_voxels=10,
+    threshold_apply_closing=True,
+)
+
 COLOCALIZATION_CONFIG = ColocalizationConfig(
     min_cell_voxels=200,
     overlap_fraction_threshold=0.02,
     min_overlap_voxels=20,
-)
-
-OPTIONAL_REGION_CONFIG = OptionalRegionSegmentationConfig(
-    enabled=True,
-    method="li",
-    percentile=98.0,
-    gaussian_sigma=1.0,
-    background_sigma=None,
-    min_object_voxels=10,
-    min_hole_voxels=10,
-    apply_closing=True,
 )
 
 RUNTIME_CONFIG = RuntimeConfig(
@@ -150,26 +149,6 @@ roi_ids = np.unique(roi_labels_2d)
 roi_ids = roi_ids[roi_ids != 0]
 print(f"ROI ids: {roi_ids}")
 
-
-# %% OPTIONAL THIRD-CHANNEL SEGMENTATION
-optional_region_result = None
-if OPTIONAL_REGION_CONFIG.enabled:
-    if loaded_images.optional_region_image is None:
-        raise ValueError(
-            "The optional third-channel analysis is enabled, but no optional "
-            "region channel was configured."
-        )
-
-    optional_region_result = segment_optional_region(
-        image_zyx=loaded_images.optional_region_image,
-        roi_labels_2d=roi_labels_2d,
-        config=OPTIONAL_REGION_CONFIG,
-    )
-    print(f"Optional region threshold: {optional_region_result.threshold}")
-else:
-    print("Optional third-channel analysis is disabled. Continuing with the two-channel workflow only.")
-
-
 # %% RUN THE ROI-WISE CELLPOSE COLOCALIZATION AND EXPORT RESULTS
 if RUNTIME_CONFIG.process_rois:
     run_result = run_roi_cellpose_colocalization(
@@ -177,15 +156,14 @@ if RUNTIME_CONFIG.process_rois:
         roi_labels_2d       =roi_labels_2d,
         cell_model_config   =CELL_MODEL_CONFIG,
         marker_model_config =MARKER_MODEL_CONFIG,
+        optional_region_model_config=OPTIONAL_REGION_MODEL_CONFIG,
         colocalization_config=COLOCALIZATION_CONFIG,
         runtime_config      =RUNTIME_CONFIG,
-        optional_region_result=optional_region_result,
     )
 
     export_analysis_outputs(
         run_result=run_result,
         paths=loaded_images.paths,
-        optional_region_result=optional_region_result,
     )
 
     print(run_result.tables.overview)
@@ -201,7 +179,6 @@ if RUNTIME_CONFIG.open_results and RUNTIME_CONFIG.process_rois:
         roi_labels_2d=roi_labels_2d,
         run_result=run_result,
         display_names=DISPLAY_NAMES,
-        optional_region_result=optional_region_result,
     )
     print("Inspect the final layers in napari and close the window when finished.")
     napari.run()
