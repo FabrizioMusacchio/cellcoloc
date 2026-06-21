@@ -8,6 +8,11 @@ scripts that configure real datasets and then call the reusable package step
 by step. Those user-facing walkthrough pages will be added later after the
 example scripts have been finalized and cleaned up for documentation.
 
+.. toctree::
+   :maxdepth: 2
+
+   usage_example_datasets
+
 
 Planned usage topics
 --------------------
@@ -35,4 +40,5 @@ For now, the best usage examples are the interactive scripts in the repository's
 - run the pipeline cell by cell,
 - inspect results in napari,
 - and export reproducible outputs.
+
 
