@@ -10,7 +10,7 @@ Zenodo archive:
 
 ---
 
-## CellColoc v0.0.1
+## 🚀 CellColoc v0.0.1
 
 June 21, 2026
 
