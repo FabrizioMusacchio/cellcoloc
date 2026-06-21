@@ -45,4 +45,5 @@ post hoc refinement, and interactive napari inspection.
    usage
    api
    changelog
+   contributing
 
