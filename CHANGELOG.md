@@ -11,6 +11,28 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ---
 
+## 🚀 CellColoc v0.0.3
+
+June 21, 2026
+
+This release adds the first project-wide archival and example-data publication
+records on Zenodo for **CellColoc**.
+
+This release provides:
+
+- an official Zenodo archive for **CellColoc** that can now be used for
+  software citation:
+  - DOI: `10.5281/zenodo.20787509`
+  - Citation: Musacchio, F. (2026). *CellColoc: A Python package for
+    interactive segmentation-based colocalization analysis in microscopy
+    images*. Zenodo. https://doi.org/10.5281/zenodo.20787509
+- a dedicated Zenodo example-data record for **CellColoc**:
+  - DOI: `10.5281/zenodo.20788293`
+- updated release metadata to reflect the new citable software archive and
+  externally hosted example dataset
+
+---
+
 ## 🚀 CellColoc v0.0.2
 
 June 21, 2026

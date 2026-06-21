@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cellcoloc"
-version = "0.0.2"
+version = "0.0.3"
 description = "Interactive segmentation-based colocalization analysis for microscopy images"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -53,6 +53,8 @@ Homepage = "https://github.com/FabrizioMusacchio/CellColoc"
 Repository = "https://github.com/FabrizioMusacchio/CellColoc"
 Issues = "https://github.com/FabrizioMusacchio/CellColoc/issues"
 Changelog = "https://github.com/FabrizioMusacchio/CellColoc/blob/main/CHANGELOG.md"
+Zenodo = "https://doi.org/10.5281/zenodo.20787509"
+Example Data = "https://doi.org/10.5281/zenodo.20788293"
 
 [tool.setuptools]
 include-package-data = true
