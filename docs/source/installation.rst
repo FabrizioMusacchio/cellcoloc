@@ -1,6 +1,18 @@
 Installation
 ============
 
+Python environment
+------------------
+Either way you choose below, first create and activate a Python 
+3.12 environment, for example:
+
+.. code-block:: bash
+
+   conda create -n cellcoloc python=3.12 -y
+   conda activate cellcoloc
+
+
+
 PyPI
 ----
 
