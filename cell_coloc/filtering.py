@@ -25,7 +25,7 @@ def apply_prefilter(
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
 ) -> np.ndarray:
-    """Apply the configured optional prefilter to a ``ZYX`` image volume.
+    """Apply the configured optional prefilter chain to a ``ZYX`` image volume.
 
     Parameters
     ----------
@@ -34,7 +34,8 @@ def apply_prefilter(
         singleton-z volume ``(1, Y, X)``.
     model_config:
         Per-channel Cellpose configuration that carries the optional prefilter
-        settings.
+        settings. ``model_config.prefilter`` may be ``None``, one filter name,
+        or a sequence of filter names executed in order.
 
     Returns
     -------
@@ -42,74 +43,80 @@ def apply_prefilter(
         Filtered image with the same shape and dtype as a float array.
     """
 
-    prefilter = _normalize_prefilter_name(model_config.prefilter)
     image_float = np.asarray(image_zyx, dtype=np.float32)
     is_3d = image_float.shape[0] > 1
 
-    if prefilter is None:
-        return image_float
+    prefilters = _normalize_prefilters(model_config.prefilter)
+    filtered = image_float
 
-    if prefilter == "gaussian":
-        sigma_xy = model_config.prefilter_sigma_xy
-        sigma_z = (
-            model_config.prefilter_sigma_xy
-            if model_config.prefilter_sigma_z is None
-            else model_config.prefilter_sigma_z
-        )
-        if sigma_xy < 0 or sigma_z < 0:
-            raise ValueError(
-                "Gaussian prefilter sigmas must be non-negative, got "
-                f"sigma_xy={sigma_xy}, sigma_z={sigma_z}."
+    for prefilter in prefilters:
+        if prefilter == "gaussian":
+            sigma_xy = model_config.prefilter_sigma_xy
+            sigma_z = (
+                model_config.prefilter_sigma_xy
+                if model_config.prefilter_sigma_z is None
+                else model_config.prefilter_sigma_z
             )
-        if is_3d:
-            return gaussian_filter(image_float, sigma=(sigma_z, sigma_xy, sigma_xy))
-        return gaussian_filter(image_float[0], sigma=(sigma_xy, sigma_xy))[np.newaxis, :, :]
+            if sigma_xy < 0 or sigma_z < 0:
+                raise ValueError(
+                    "Gaussian prefilter sigmas must be non-negative, got "
+                    f"sigma_xy={sigma_xy}, sigma_z={sigma_z}."
+                )
+            if is_3d:
+                filtered = gaussian_filter(filtered, sigma=(sigma_z, sigma_xy, sigma_xy))
+            else:
+                filtered = gaussian_filter(filtered[0], sigma=(sigma_xy, sigma_xy))[np.newaxis, :, :]
+            continue
 
-    if prefilter == "laplacian_of_gaussian":
-        sigma_xy = model_config.prefilter_sigma_xy
-        sigma_z = (
-            model_config.prefilter_sigma_xy
-            if model_config.prefilter_sigma_z is None
-            else model_config.prefilter_sigma_z
-        )
-        if sigma_xy < 0 or sigma_z < 0:
-            raise ValueError(
-                "Laplacian-of-Gaussian prefilter sigmas must be non-negative, "
-                f"got sigma_xy={sigma_xy}, sigma_z={sigma_z}."
+        if prefilter == "laplacian_of_gaussian":
+            sigma_xy = model_config.prefilter_sigma_xy
+            sigma_z = (
+                model_config.prefilter_sigma_xy
+                if model_config.prefilter_sigma_z is None
+                else model_config.prefilter_sigma_z
             )
+            if sigma_xy < 0 or sigma_z < 0:
+                raise ValueError(
+                    "Laplacian-of-Gaussian prefilter sigmas must be non-negative, "
+                    f"got sigma_xy={sigma_xy}, sigma_z={sigma_z}."
+                )
 
-        # We invert the LoG response so that bright blob-like structures remain
-        # positive and intuitive for downstream Cellpose normalization.
-        if is_3d:
-            filtered = -gaussian_laplace(
-                image_float,
-                sigma=(sigma_z, sigma_xy, sigma_xy),
+            # We invert the LoG response so that bright blob-like structures remain
+            # positive and intuitive for downstream Cellpose normalization.
+            if is_3d:
+                filtered = -gaussian_laplace(
+                    filtered,
+                    sigma=(sigma_z, sigma_xy, sigma_xy),
+                )
+            else:
+                filtered_2d = -gaussian_laplace(
+                    filtered[0],
+                    sigma=(sigma_xy, sigma_xy),
+                )
+                filtered = filtered_2d[np.newaxis, :, :]
+            continue
+
+        if prefilter == "median":
+            size_xy = model_config.prefilter_median_size_xy
+            size_z = (
+                model_config.prefilter_median_size_xy
+                if model_config.prefilter_median_size_z is None
+                else model_config.prefilter_median_size_z
             )
-            return filtered
+            if size_xy < 1 or size_z < 1:
+                raise ValueError(
+                    "Median prefilter sizes must be positive integers, got "
+                    f"size_xy={size_xy}, size_z={size_z}."
+                )
+            if is_3d:
+                filtered = median_filter(filtered, size=(size_z, size_xy, size_xy))
+            else:
+                filtered = median_filter(filtered[0], size=(size_xy, size_xy))[np.newaxis, :, :]
+            continue
 
-        filtered_2d = -gaussian_laplace(
-            image_float[0],
-            sigma=(sigma_xy, sigma_xy),
-        )
-        return filtered_2d[np.newaxis, :, :]
+        raise ValueError(f"Unsupported prefilter option: {prefilter!r}.")
 
-    if prefilter == "median":
-        size_xy = model_config.prefilter_median_size_xy
-        size_z = (
-            model_config.prefilter_median_size_xy
-            if model_config.prefilter_median_size_z is None
-            else model_config.prefilter_median_size_z
-        )
-        if size_xy < 1 or size_z < 1:
-            raise ValueError(
-                "Median prefilter sizes must be positive integers, got "
-                f"size_xy={size_xy}, size_z={size_z}."
-            )
-        if is_3d:
-            return median_filter(image_float, size=(size_z, size_xy, size_xy))
-        return median_filter(image_float[0], size=(size_xy, size_xy))[np.newaxis, :, :]
-
-    raise ValueError(f"Unsupported prefilter option: {model_config.prefilter!r}.")
+    return filtered
 
 
 def apply_postfilters(
@@ -141,19 +148,31 @@ def apply_postfilters(
     return filtered
 
 
-def _normalize_prefilter_name(prefilter: str | None) -> str | None:
-    """Return a normalized prefilter name or ``None`` when disabled."""
+def _normalize_prefilters(prefilters: str | Sequence[str] | None) -> list[str]:
+    """Normalize prefilter configuration to a lowercase ordered list."""
 
-    if prefilter is None:
-        return None
-    normalized = prefilter.strip().lower()
-    if normalized in {"gaussian", "median", "laplacian_of_gaussian", "log"}:
-        return "laplacian_of_gaussian" if normalized == "log" else normalized
-    raise ValueError(
-        "`CellposeModelConfig.prefilter` must be None, 'gaussian', "
-        "'laplacian_of_gaussian'/'log', or 'median', "
-        f"got {prefilter!r}."
-    )
+    if prefilters is None:
+        return []
+    if isinstance(prefilters, str):
+        values = [prefilters]
+    else:
+        values = list(prefilters)
+
+    normalized: list[str] = []
+    for value in values:
+        normalized_value = value.strip().lower()
+        if normalized_value in {"gaussian", "median", "laplacian_of_gaussian", "log"}:
+            normalized.append(
+                "laplacian_of_gaussian" if normalized_value == "log" else normalized_value
+            )
+            continue
+        raise ValueError(
+            "`CellposeModelConfig.prefilter` must contain only None, "
+            "'gaussian', 'laplacian_of_gaussian'/'log', or 'median', "
+            f"got {value!r}."
+        )
+
+    return normalized
 
 
 def _normalize_postfilters(postfilters: str | Sequence[str] | None) -> list[str]:

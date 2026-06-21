@@ -91,9 +91,11 @@ class CellposeModelConfig:
         fields. This setting only has an effect for true 3D runs and is
         ignored for 2D data. Keep the default ``0`` to disable smoothing.
     prefilter:
-        Optional image prefilter applied before Cellpose. Supported values are
-        ``None``, ``"gaussian"``, ``"laplacian_of_gaussian"`` (alias
-        ``"log"``), and ``"median"``.
+        Optional image prefilter or ordered prefilter chain applied before
+        segmentation. Supported values are ``None``, a single string such as
+        ``"gaussian"``, ``"laplacian_of_gaussian"`` (alias ``"log"``), or
+        ``"median"``, or a sequence combining these filters in the requested
+        execution order.
     prefilter_sigma_xy:
         Gaussian prefilter sigma in the in-plane directions. Used when
         ``prefilter="gaussian"``.
@@ -175,7 +177,7 @@ class CellposeModelConfig:
     flow_threshold: float = 0.4
     anisotropy: bool | float = False
     flow3d_smooth: int = 0
-    prefilter: str | None = None
+    prefilter: str | Sequence[str] | None = None
     prefilter_sigma_xy: float = 1.0
     prefilter_sigma_z: float | None = None
     prefilter_median_size_xy: int = 3
