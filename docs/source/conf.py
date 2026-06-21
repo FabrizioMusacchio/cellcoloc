@@ -49,6 +49,10 @@ extensions = [
     "myst_parser",
     "sphinx_copybutton",
 ]
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
 autosummary_generate = True
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
