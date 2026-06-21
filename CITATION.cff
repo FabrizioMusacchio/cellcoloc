@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use CellColoc in your research, please cite it using the metadata below."
 title: "CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images"
-version: 0.0.1
+version: 0.0.2
 date-released: 2026-06-21
 
 authors:
@@ -12,6 +12,18 @@ authors:
 repository-code: https://github.com/FabrizioMusacchio/CellColoc
 doi: 10.5281/zenodo.18030883
 license: GPL-3.0-or-later
+
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Musacchio
+      given-names: Fabrizio
+      orcid: https://orcid.org/0000-0002-9043-3349
+  title: "CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images"
+  publisher: Zenodo
+  year: 2026
+  doi: 10.5281/zenodo.20787509
+  url: https://doi.org/10.5281/zenodo.20787509
 
 keywords:
   - microscopy

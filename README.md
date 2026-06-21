@@ -279,5 +279,9 @@ The optional interactive extra adds:
 - `ipykernel`
 
 ## Citation
-If you use CellColoc in your work, please cite the package using the information in [CITATION.cff](/Users/husker/Science/Python/Projekte/Cell%20Colocalization/CITATION.cff).
+If you use CellColoc in scientific work, please cite:
 
+> Musacchio, F. (2026). *CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images*. Zenodo. https://doi.org/10.5281/zenodo.20787509
+
+Zenodo record:
+[https://doi.org/10.5281/zenodo.20787509](https://doi.org/10.5281/zenodo.20787509)

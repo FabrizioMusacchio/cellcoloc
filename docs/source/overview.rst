@@ -6,6 +6,8 @@ Overview
    :align: center
    :figwidth: 100%
 
+­
+
 CellColoc is a Python package for interactive, segmentation-based
 colocalization analysis in microscopy images.
 
@@ -103,3 +105,12 @@ License
 CellColoc is distributed under the terms of the GNU General Public License v3.0
 or later (GPL-3.0-or-later).
 
+
+Citation
+--------
+
+If you use CellColoc in scientific work, please cite:
+
+Musacchio, F. (2026). *CellColoc: A Python package for interactive
+segmentation-based colocalization analysis in microscopy images*. Zenodo.
+https://doi.org/10.5281/zenodo.20787509
