@@ -4,7 +4,7 @@ Overview
 .. figure:: _static/CellColoc_2.png
    :alt: CellColoc overview
    :align: center
-   :figwidth: 100%
+   :figwidth: 70%
 
 ­
 
@@ -114,3 +114,15 @@ If you use CellColoc in scientific work, please cite:
 Musacchio, F. (2026). *CellColoc: A Python package for interactive
 segmentation-based colocalization analysis in microscopy images*. Zenodo.
 https://doi.org/10.5281/zenodo.20787509
+
+.. raw:: html
+
+   <hr>
+
+For questions, suggestions or bug reports, please refer to the
+`GitHub issue tracker <https://github.com/FabrizioMusacchio/cellcoloc/issues>`_ of 
+the `CellColoc repository <https://github.com/FabrizioMusacchio/cellcoloc>`_ or contact the maintainer 
+directly:
+
+| **Fabrizio Musacchio**: `Email <mailto:fabrizio.musacchio@dzne.de>`_ | `GitHub <https://github.com/FabrizioMusacchio>`_ | `Website <https://www.fabriziomusacchio.com>`_
+
