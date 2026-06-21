@@ -303,6 +303,8 @@ def load_analysis_images(
         raw_z_size=raw_z_size,
         is_3d=is_3d,
         metadata=metadata,
+        analysis_z_bounds=None,
+        z_projection_method=None,
     )
 
 

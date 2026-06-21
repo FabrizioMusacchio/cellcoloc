@@ -18,6 +18,7 @@ prepare_runtime_environment()
 from .analysis import (
     analyze_existing_masks,
     build_positive_cell_mask,
+    prepare_loaded_images_for_analysis,
     refine_run_result_from_cellpose_cache,
     run_roi_cellpose_colocalization,
 )
@@ -84,6 +85,7 @@ __all__ = [
     "try_load_roi_labels",
     "export_analysis_outputs",
     "analyze_existing_masks",
+    "prepare_loaded_images_for_analysis",
     "prepare_runtime_environment",
     "get_runtime_cache_root",
     "create_full_image_roi_labels",

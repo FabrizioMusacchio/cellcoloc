@@ -35,7 +35,12 @@ class ResultsPaths:
 
 @dataclass(slots=True)
 class LoadedImageChannels:
-    """Store the loaded analysis channels and related metadata."""
+    """Store the loaded analysis channels and related metadata.
+
+    The stored image arrays may either represent the original ``ZYX`` channels
+    loaded from disk or a derived analysis view, for example a z projection
+    prepared before ROI drawing and segmentation.
+    """
 
     source_path: Path
     paths: ResultsPaths
@@ -47,6 +52,8 @@ class LoadedImageChannels:
     raw_z_size: int
     is_3d: bool
     metadata: Any
+    analysis_z_bounds: tuple[int, int] | None = None
+    z_projection_method: str | None = None
 
 
 @dataclass(slots=True)

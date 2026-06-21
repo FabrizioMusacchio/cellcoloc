@@ -169,6 +169,149 @@ def _resolve_analysis_z_bounds(
     return first_bounds
 
 
+def _normalize_z_projection_method(z_projection: str | None) -> str | None:
+    """Normalize and validate an optional global z-projection method.
+
+    Supported methods are ``"max"``, ``"mean"``, ``"median"``, ``"std"``,
+    and ``"var"``. ``None`` disables projection.
+    """
+
+    if z_projection is None:
+        return None
+
+    normalized = str(z_projection).strip().lower()
+    allowed = {"max", "mean", "median", "std", "var"}
+    if normalized not in allowed:
+        raise ValueError(
+            "`z_projection` must be one of None, 'max', 'mean', 'median', "
+            f"'std', or 'var', got {z_projection!r}."
+        )
+    return normalized
+
+
+def _resolve_analysis_z_projection_method(
+    *model_configs: CellposeModelConfig | None,
+) -> str | None:
+    """Resolve one global z-projection method from one or more channel configs.
+
+    The pipeline treats z projection as a global preprocessing choice. Channel
+    configs may expose the same field for convenience, but conflicting methods
+    across channels are rejected.
+    """
+
+    normalized_methods: list[str] = []
+    for model_config in model_configs:
+        if model_config is None:
+            continue
+        normalized_method = _normalize_z_projection_method(model_config.z_projection)
+        if normalized_method is not None:
+            normalized_methods.append(normalized_method)
+
+    if not normalized_methods:
+        return None
+
+    first_method = normalized_methods[0]
+    if any(method != first_method for method in normalized_methods[1:]):
+        raise ValueError(
+            "Conflicting z-projection methods were provided across channel "
+            "configs. Please use the same z projection for all participating "
+            "channels."
+        )
+
+    return first_method
+
+
+def _project_zyx_volume(
+    image_zyx: np.ndarray,
+    projection_method: str,
+) -> np.ndarray:
+    """Project one ``ZYX`` image volume along z and keep singleton-z shape.
+
+    Returns a float ``(1, Y, X)`` array so downstream code can continue to use
+    the same ``ZYX`` interface even after a nominally 2D projection step.
+    """
+
+    image_float = np.asarray(image_zyx, dtype=np.float32)
+    if projection_method == "max":
+        projection_yx = np.max(image_float, axis=0)
+    elif projection_method == "mean":
+        projection_yx = np.mean(image_float, axis=0)
+    elif projection_method == "median":
+        projection_yx = np.median(image_float, axis=0)
+    elif projection_method == "std":
+        projection_yx = np.std(image_float, axis=0)
+    elif projection_method == "var":
+        projection_yx = np.var(image_float, axis=0)
+    else:
+        raise ValueError(f"Unsupported z projection method: {projection_method!r}.")
+
+    return np.asarray(projection_yx, dtype=np.float32)[np.newaxis, :, :]
+
+
+def prepare_loaded_images_for_analysis(
+    loaded_images: LoadedImageChannels,
+    *model_configs: CellposeModelConfig | None,
+) -> LoadedImageChannels:
+    """Prepare a loaded dataset for downstream analysis according to configs.
+
+    This helper currently resolves an optional global z projection from the
+    provided channel configs. When no projection method is configured, the
+    original ``loaded_images`` object is returned unchanged. When a projection
+    is requested, the helper optionally applies the globally configured z crop
+    first, projects every available channel along z, and returns a new
+    ``LoadedImageChannels`` bundle that behaves like a 2D dataset with
+    singleton-z image arrays. All later ROI drawing, segmentation,
+    quantification, and visualization steps should use this prepared bundle.
+
+    Parameters
+    ----------
+    loaded_images:
+        Previously loaded channel bundle from :func:`cell_coloc.io.load_analysis_images`.
+    *model_configs:
+        One or more participating channel configs. Any configured ``z_crop``
+        and ``z_projection`` values are resolved globally across them.
+
+    Returns
+    -------
+    LoadedImageChannels
+        Either the original loaded image bundle or a projected analysis view.
+    """
+
+    projection_method = _resolve_analysis_z_projection_method(*model_configs)
+    if projection_method is None:
+        return loaded_images
+
+    analysis_z_bounds = _resolve_analysis_z_bounds(
+        loaded_images.cell_image.shape[0],
+        *model_configs,
+    )
+    z_slice = slice(*analysis_z_bounds) if analysis_z_bounds is not None else slice(None)
+
+    projected_cell_image = _project_zyx_volume(loaded_images.cell_image[z_slice], projection_method)
+    projected_marker_image = _project_zyx_volume(loaded_images.marker_image[z_slice], projection_method)
+    projected_optional_region_image = None
+    if loaded_images.optional_region_image is not None:
+        projected_optional_region_image = _project_zyx_volume(
+            loaded_images.optional_region_image[z_slice],
+            projection_method,
+        )
+
+    return LoadedImageChannels(
+        source_path=loaded_images.source_path,
+        paths=loaded_images.paths,
+        voxel_scale_zyx=(1.0, loaded_images.voxel_scale_zyx[1], loaded_images.voxel_scale_zyx[2]),
+        cell_image=projected_cell_image,
+        marker_image=projected_marker_image,
+        optional_region_image=projected_optional_region_image,
+        raw_shape_tzcyx=loaded_images.raw_shape_tzcyx,
+        raw_z_size=loaded_images.raw_z_size,
+        is_3d=False,
+        metadata=loaded_images.metadata,
+        analysis_z_bounds=analysis_z_bounds,
+        z_projection_method=projection_method,
+    )
+
+
 def _apply_analysis_z_bounds(
     label_image: np.ndarray | None,
     analysis_z_bounds: tuple[int, int] | None,
@@ -242,8 +385,12 @@ def analyze_existing_masks(
         Structured masks and tables reflecting the provided segmentation state.
     """
 
-    full_cell_masks = _apply_analysis_z_bounds(cell_masks, analysis_z_bounds)
-    full_marker_masks = _apply_analysis_z_bounds(marker_masks, analysis_z_bounds)
+    effective_analysis_z_bounds = (
+        None if loaded_images.z_projection_method is not None else analysis_z_bounds
+    )
+
+    full_cell_masks = _apply_analysis_z_bounds(cell_masks, effective_analysis_z_bounds)
+    full_marker_masks = _apply_analysis_z_bounds(marker_masks, effective_analysis_z_bounds)
 
     roi_ids = np.unique(roi_labels_2d)
     roi_ids = roi_ids[roi_ids != 0]
@@ -303,7 +450,7 @@ def analyze_existing_masks(
     )
     effective_optional_region_masks = _apply_analysis_z_bounds(
         effective_optional_region_masks,
-        analysis_z_bounds,
+        effective_analysis_z_bounds,
     )
     summary_table = _build_summary_table(
         detailed_table,
@@ -320,7 +467,7 @@ def analyze_existing_masks(
         marker_masks=full_marker_masks,
         summary_table=summary_table,
         optional_region_masks=effective_optional_region_masks,
-        analysis_z_bounds=analysis_z_bounds,
+        analysis_z_bounds=effective_analysis_z_bounds,
     )
     positive_cell_masks = build_positive_cell_mask(full_cell_masks, summary_table)
 
@@ -329,7 +476,7 @@ def analyze_existing_masks(
         marker_masks=full_marker_masks,
         positive_cell_masks=positive_cell_masks,
         optional_region_masks=effective_optional_region_masks,
-        analysis_z_bounds=analysis_z_bounds,
+        analysis_z_bounds=effective_analysis_z_bounds,
         tables=ColocalizationTables(
             detailed=detailed_table,
             summary=summary_table,
@@ -418,15 +565,20 @@ def refine_run_result_from_cellpose_cache(
     Any z crop defined in the supplied refinement configs is interpreted as one
     global analysis z range and applied consistently across all channels. When
     no refinement config specifies a z crop, the function preserves the
-    z-bounds stored in ``run_result``.
+    z-bounds stored in ``run_result``. When the loaded images already represent
+    a z projection, additional z cropping is ignored because the data have
+    already been collapsed to a singleton-z analysis view.
     """
 
-    analysis_z_bounds = _resolve_analysis_z_bounds(
-        loaded_images.cell_image.shape[0],
-        cell_model_config,
-        marker_model_config,
-        fallback=run_result.analysis_z_bounds,
-    )
+    if loaded_images.z_projection_method is not None:
+        analysis_z_bounds = None
+    else:
+        analysis_z_bounds = _resolve_analysis_z_bounds(
+            loaded_images.cell_image.shape[0],
+            cell_model_config,
+            marker_model_config,
+            fallback=run_result.analysis_z_bounds,
+        )
 
     if cell_model_config is None:
         rebuilt_cell_masks = np.asarray(run_result.cell_masks, dtype=np.uint32).copy()
@@ -838,7 +990,9 @@ def run_roi_cellpose_colocalization(
     one global analysis z crop resolved from the participating channel configs.
     That z crop affects all channels, all ROIs, and all downstream
     quantification consistently, while the exported and visualized arrays keep
-    full-stack shape.
+    full-stack shape. When the input ``loaded_images`` bundle already
+    represents a prepared z projection, segmentation and quantification operate
+    on that projected 2D analysis view instead of the original full stack.
 
     The two primary analysis channels can each use either Cellpose or one of
     the supported threshold-based backends. An optional third channel can be
@@ -853,12 +1007,15 @@ def run_roi_cellpose_colocalization(
     roi_ids = roi_ids[roi_ids != 0]
 
     print(f"Found {len(roi_ids)} ROIs: {roi_ids}")
-    analysis_z_bounds = _resolve_analysis_z_bounds(
-        loaded_images.cell_image.shape[0],
-        cell_model_config,
-        marker_model_config,
-        optional_region_model_config,
-    )
+    if loaded_images.z_projection_method is not None:
+        analysis_z_bounds = None
+    else:
+        analysis_z_bounds = _resolve_analysis_z_bounds(
+            loaded_images.cell_image.shape[0],
+            cell_model_config,
+            marker_model_config,
+            optional_region_model_config,
+        )
     z_slice = slice(*analysis_z_bounds) if analysis_z_bounds is not None else slice(None)
 
     cell_model, marker_model = create_cellpose_models_for_channels(

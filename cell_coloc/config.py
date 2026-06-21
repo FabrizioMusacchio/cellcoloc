@@ -112,6 +112,12 @@ class CellposeModelConfig:
         crop consistently to all channels and all ROIs for the internal
         segmentation and quantification steps. The full stack is still shown in
         visualization outputs.
+    z_projection:
+        Optional global projection method applied along the z axis before any
+        later ROI drawing, segmentation, quantification, or visualization.
+        Supported values are ``None`` (default), ``"max"``, ``"mean"``,
+        ``"median"``, ``"std"``, and ``"var"``. When used together with
+        ``z_crop``, only the cropped z interval is projected.
     threshold_percentile:
         Percentile used when ``segmentation_method="percentile"``.
     threshold_background_sigma:
@@ -175,6 +181,7 @@ class CellposeModelConfig:
     prefilter_median_size_xy: int = 3
     prefilter_median_size_z: int | None = None
     z_crop: tuple[int | None, int | None] | None = None
+    z_projection: str | None = None
     threshold_percentile: float = 98.0
     threshold_background_sigma: float | None = None
     threshold_min_object_voxels: int = 10

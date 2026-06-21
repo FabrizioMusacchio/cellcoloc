@@ -218,14 +218,29 @@ def segment_threshold_channel(
     image_zyx: np.ndarray,
     model_config: CellposeModelConfig,
 ) -> np.ndarray:
-    """Segment one analysis channel via thresholding and connected components."""
+    """Segment one analysis channel via thresholding and connected components.
+
+    True 2D data may enter this function either as a raw ``(Y, X)`` image or
+    as the pipeline's normalized singleton-z representation ``(1, Y, X)``. In
+    both cases, thresholding and morphology are executed in 2D and the final
+    label image is returned in ``(1, Y, X)`` form.
+    """
 
     method = normalize_segmentation_method(model_config.segmentation_method)
     if method == "cellpose":
         raise ValueError("Threshold segmentation was requested with the 'cellpose' method.")
 
     image_float = np.asarray(image_zyx, dtype=np.float32, copy=False)
-    is_3d = image_float.shape[0] > 1
+    is_singleton_z_2d = image_float.ndim == 3 and image_float.shape[0] == 1
+    if image_float.ndim == 2:
+        image_working = image_float
+        is_3d = False
+    elif is_singleton_z_2d:
+        image_working = image_float[0]
+        is_3d = False
+    else:
+        image_working = image_float
+        is_3d = image_working.shape[0] > 1
 
     if model_config.threshold_background_sigma is not None and model_config.threshold_background_sigma > 0:
         print(
@@ -233,19 +248,22 @@ def segment_threshold_channel(
             f"{model_config.threshold_background_sigma}..."
         )
         background = gaussian(
-            image_float,
+            image_working,
             sigma=model_config.threshold_background_sigma,
             preserve_range=True,
         )
-        image_work = image_float - background
+        image_work = image_working - background
         image_work[image_work < 0] = 0
     else:
-        image_work = image_float
+        image_work = image_working
 
     values = image_work[np.isfinite(image_work)]
     values = values[values > 0]
     if values.size == 0:
-        return np.zeros_like(image_float, dtype=np.uint32)
+        zero_labels = np.zeros_like(image_work, dtype=np.uint32)
+        if zero_labels.ndim == 2:
+            zero_labels = zero_labels[np.newaxis, :, :]
+        return zero_labels
 
     print(f"Threshold segmentation: computing threshold with method='{method}'...")
     if method == "otsu":
