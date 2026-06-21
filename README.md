@@ -1,6 +1,6 @@
-# Cell Coloc: A Python package for Cellpose-based colocalization analysis in microscopy images
+# CellColoc: A Python package for Cellpose-based colocalization analysis in microscopy images
 
-*Cell Coloc* is a Python workflow for (optional) ROI-based colocalization analysis in 3D microscopy images using Cellpose for segmentation. 
+*CellColoc* is a Python workflow for (optional) ROI-based colocalization analysis in 3D microscopy images using Cellpose for segmentation. 
 
 It is designed for experiments where you want to:
 
