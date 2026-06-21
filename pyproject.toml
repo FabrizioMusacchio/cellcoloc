@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cellcoloc"
+version = "0.0.1"
+description = "Interactive segmentation-based colocalization analysis for microscopy images"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "Fabrizio Musacchio" },
+]
+keywords = [
+  "microscopy",
+  "bioimaging",
+  "colocalization",
+  "segmentation",
+  "cellpose",
+  "napari",
+  "omio",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+  "cellpose",
+  "omio-microscopy",
+  "matplotlib",
+  "pandas",
+  "openpyxl",
+  "scikit-image",
+  "appdirs",
+]
+
+[project.optional-dependencies]
+interactive = [
+  "ipykernel",
+]
+cellpose3 = [
+  "cellpose==3.1.1.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/FabrizioMusacchio/CellColoc"
+Repository = "https://github.com/FabrizioMusacchio/CellColoc"
+Issues = "https://github.com/FabrizioMusacchio/CellColoc/issues"
+Changelog = "https://github.com/FabrizioMusacchio/CellColoc/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["cellcoloc*"]
