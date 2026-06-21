@@ -266,7 +266,7 @@ def prepare_loaded_images_for_analysis(
     Parameters
     ----------
     loaded_images:
-        Previously loaded channel bundle from :func:`cell_coloc.io.load_analysis_images`.
+        Previously loaded channel bundle from :func:`cellcoloc.io.load_analysis_images`.
     *model_configs:
         One or more participating channel configs. Any configured ``z_crop``
         and ``z_projection`` values are resolved globally across them.

@@ -204,7 +204,7 @@ def extract_label_masks_from_viewer(
     """Extract the current cell and marker label layers from a napari viewer.
 
     This is primarily used after manual label editing so the modified napari
-    layers can be fed back into :func:`cell_coloc.analysis.analyze_existing_masks`.
+    layers can be fed back into :func:`cellcoloc.analysis.analyze_existing_masks`.
     """
 
     if cell_layer_name not in viewer.layers:

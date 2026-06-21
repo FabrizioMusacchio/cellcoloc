@@ -28,7 +28,7 @@ def get_runtime_cache_root() -> Path:
     config locations turns out to be unavailable for writing.
     """
 
-    return Path(tempfile.gettempdir()) / "cell_coloc_runtime_cache"
+    return Path(tempfile.gettempdir()) / "cellcoloc_runtime_cache"
 
 
 def _ensure_directory_and_probe_write(directory: Path) -> bool:
@@ -36,7 +36,7 @@ def _ensure_directory_and_probe_write(directory: Path) -> bool:
 
     try:
         directory.mkdir(parents=True, exist_ok=True)
-        probe_path = directory / f".cell_coloc_write_probe_{uuid.uuid4().hex}"
+        probe_path = directory / f".cellcoloc_write_probe_{uuid.uuid4().hex}"
         probe_path.write_text("ok", encoding="utf-8")
         probe_path.unlink()
         return True

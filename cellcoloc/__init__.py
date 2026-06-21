@@ -1,4 +1,4 @@
-"""Reusable core pipeline for interactive Cellpose-based colocalization.
+"""Reusable core pipeline for interactive segmentation-based colocalization.
 
 The package is intentionally structured so that project-specific user scripts
 can stay small: they define settings, call the imported pipeline functions cell

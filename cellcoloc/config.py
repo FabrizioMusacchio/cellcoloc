@@ -2,7 +2,7 @@
 
 This module groups all user-adjustable settings into small dataclasses so that
 project-specific scripts only need to define parameters and then call the core
-pipeline functions exposed by :mod:`cell_coloc`.
+pipeline functions exposed by :mod:`cellcoloc`.
 
 author: Fabrizio Musacchio
 date: May/June 2026
