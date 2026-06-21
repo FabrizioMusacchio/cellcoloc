@@ -10,6 +10,32 @@ Zenodo archive:
 
 ---
 
+## 🚀 CellColoc v0.0.2
+
+June 21, 2026
+
+This release adds the initial Read the Docs documentation structure for **CellColoc**.
+
+This release provides:
+
+- a first Sphinx / Read the Docs documentation scaffold under ``docs/``
+- initial documentation pages for:
+  - project overview
+  - installation
+  - usage landing page
+  - API reference
+  - changelog
+- automatic API-reference structuring based on the public ``cellcoloc`` package
+- a prepared usage section that will later be expanded with dedicated
+  user-script walkthroughs
+
+Notes:
+
+- the detailed user-script usage pages are intentionally still pending and will
+  follow in a later documentation update
+
+---
+
 ## 🚀 CellColoc v0.0.1
 
 June 21, 2026

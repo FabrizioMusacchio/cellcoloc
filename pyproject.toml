@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cellcoloc"
-version = "0.0.1"
+version = "0.0.2"
 description = "Interactive segmentation-based colocalization analysis for microscopy images"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
