@@ -1,12 +1,13 @@
-## CellColoc Changelog
+## CellColoc changelog
 
-This file documents notable user-facing releases of CellColoc.
+See here for a detailed list of changes made in each release of *CellColoc*.
+Please, also refer to the Repository [Releases page](https://github.com/FabrizioMusacchio/cellcoloc/releases).
 
-Repository releases:
-[https://github.com/FabrizioMusacchio/CellColoc/releases](https://github.com/FabrizioMusacchio/CellColoc/releases)
+Each release is also archived on Zenodo for long-term preservation and citation purposes:
 
-Zenodo archive:
-[https://doi.org/10.5281/zenodo.18030883](https://doi.org/10.5281/zenodo.18030883)
+[![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
+
+
 
 ---
 
