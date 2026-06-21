@@ -1,4 +1,6 @@
-# CellColoc
+# CellColoc: A Python package for interactive, segmentation-based colocalization analysis in microscopy images
+
+![img](/figures/CellColoc_2.png)
 
 *CellColoc* is a Python package for interactive, segmentation-based colocalization analysis in microscopy images.
 
