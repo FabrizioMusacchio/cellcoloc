@@ -525,18 +525,182 @@ This means:
 If you want to refine the marker channel as well, pass
 ``refined_marker_model_config`` instead of ``None``.
 
-Refinement settings
+
+
+The script exposes several groups of refinement parameters. These let you keep
+the initial segmentation run unchanged while iteratively exploring better final
+settings:
+
+Cellpose refinements
 ~~~~~~~~~~~~~~~~~~~
 
-The script exposes:
+These settings control cache-based rebuilding of Cellpose masks:
 
-- new Cellpose thresholds for the cell channel,
-- nominal marker thresholds,
-- optional postfilters for both channels,
-- and a possible refinement-time z-crop.
+- ``REFINE_WITH_CACHED_CELLPOSE_OUTPUTS``:
+  master switch for the refinement step. If this is ``False``, the script keeps
+  the current result unchanged and skips the cache-based rebuilding.
+- ``REFINED_CELL_CELLPROB_THRESHOLD``:
+  updated Cellpose cell-probability threshold for the cell channel.
+- ``REFINED_CELL_FLOW_THRESHOLD``:
+  updated flow-consistency threshold for the cell channel.
+- ``REFINED_MARKER_CELLPROB_THRESHOLD``:
+  nominal marker-channel Cellpose probability threshold.
+- ``REFINED_MARKER_FLOW_THRESHOLD``:
+  nominal marker-channel flow threshold.
 
-This makes the refinement stage a convenient place for final tuning after the
-first qualitative 3D inspection.
+How to interpret these values:
+
+- lower ``cellprob_threshold``:
+  generally more permissive, often yielding more candidate masks, including
+  weaker or partially missed cells,
+- higher ``cellprob_threshold``:
+  more conservative, usually yielding fewer but cleaner masks,
+- higher ``flow_threshold``:
+  more tolerant with respect to flow inconsistency, which can keep masks that
+  would otherwise be discarded,
+- lower ``flow_threshold``:
+  stricter, which can remove questionable masks but may also discard difficult
+  true positives.
+
+In practice, these thresholds are often tuned together:
+
+- if a true cell is missing, you may try lowering
+  ``REFINED_CELL_CELLPROB_THRESHOLD`` first,
+- if Cellpose proposes a mask but seems to discard it too aggressively, you may
+  then increase ``REFINED_CELL_FLOW_THRESHOLD`` slightly,
+- if too many false positives appear, move the settings back toward stricter
+  values.
+
+Even when the marker channel is not actively refined in this script, the marker
+threshold variables are still shown for completeness and to make it easy to
+switch to marker refinement later.
+
+Postfilters
+~~~~~~~~~~~~~~~~~~~
+
+The script also exposes post-hoc mask cleanup settings for both channels. These
+are applied after segmentation and are especially useful for removing false
+positive soma-like artifacts or over-permissive threshold fragments.
+
+General postfilter selector
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``REFINED_CELL_POSTFILTERS``
+- ``REFINED_MARKER_POSTFILTERS``
+
+These can be set to:
+
+- ``None``:
+  disable postfiltering,
+- ``"min_intensity"``
+- ``"local_contrast"``
+- ``"bright_pixel_support"``
+- or a list such as
+  ``["min_intensity", "bright_pixel_support", "local_contrast"]``
+
+When a list is used, the filters are applied in that exact order.
+
+Minimum intensity threshold ``min_intensity``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Relevant parameters:
+
+- ``REFINED_*_MIN_INTENSITY_MEASURE``
+- ``REFINED_*_MIN_INTENSITY_THRESHOLD``
+
+Supported measures are:
+
+- ``"mean"``
+- ``"median"``
+- ``"max"``
+
+Interpretation:
+
+- ``mean``:
+  stricter on weak, diffuse masks, but can remove real objects when they are
+  only moderately bright overall,
+- ``median``:
+  more robust to a few outlier pixels and often a good compromise,
+- ``max``:
+  most permissive, because a single bright region can keep an object alive.
+
+This filter asks:
+
+- is the signal inside the object strong enough in the original image at all?
+
+Local contrast threshold ``local_contrast``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Relevant parameters:
+
+- ``REFINED_*_LOCAL_CONTRAST_K``
+- ``REFINED_*_LOCAL_CONTRAST_SHELL_INNER_RADIUS``
+- ``REFINED_*_LOCAL_CONTRAST_SHELL_OUTER_RADIUS``
+
+Interpretation:
+
+- ``local_contrast_k``:
+  controls how much brighter an object must be than its local neighborhood,
+- ``shell_inner_radius`` and ``shell_outer_radius``:
+  define the background shell around the object that is used for comparison.
+
+This filter asks:
+
+- is this mask locally object-like, that is, clearly brighter than its
+  immediate surroundings?
+
+It is particularly useful for rejecting masks that sit on flat or noisy
+background regions without representing a convincing local soma signal.
+
+Bright pixel support ``bright_pixel_support``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Relevant parameters:
+
+- ``REFINED_*_BRIGHT_PIXEL_MEASURE``
+- ``REFINED_*_BRIGHT_PIXEL_THRESHOLD``
+- ``REFINED_*_BRIGHT_PIXEL_MIN_COUNT``
+- ``REFINED_*_BRIGHT_PIXEL_MIN_FRACTION``
+
+Supported measures are:
+
+- ``"count"``
+- ``"fraction"``
+
+Interpretation:
+
+- ``count``:
+  require at least a minimum absolute number of bright pixels or voxels,
+- ``fraction``:
+  require that at least a certain fraction of the object is above the chosen
+  brightness threshold.
+
+This filter asks:
+
+- does the segmented object contain enough genuinely bright support pixels to
+  look biologically plausible?
+
+This is often especially helpful for removing false-positive soma masks that
+touch only a few bright process pixels.
+
+Z-cropping
+~~~~~~~~~~
+
+The refinement stage also respects the earlier
+``REFINEMENT_ANALYSIS_Z_CROP`` setting.
+
+This means you can:
+
+- inspect the full stack first,
+- then decide to exclude weak or blurry upper/lower slices,
+- and finally refine only inside that analysis z range.
+
+That is often a very effective last tuning step in 3D datasets because it
+reduces ambiguity without changing the raw ROI definition in XY.
+
+Taken together, these Cellpose and postfilter settings make the refinement
+stage a convenient place for final tuning after the first qualitative 3D
+inspection.
 
 
 Optionally reanalyze manually edited label layers from napari
