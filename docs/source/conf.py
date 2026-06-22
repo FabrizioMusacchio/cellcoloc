@@ -76,8 +76,9 @@ mathjax3_config = {
     }
 }
 
-# allow copy button only for Python highlights:
-copybutton_selector = "div.highlight-python pre"
+# Show copy buttons on all standard highlighted code blocks. The previous
+# Python-only selector hid the button on shell/bash installation snippets.
+copybutton_selector = "div.highlight pre"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
