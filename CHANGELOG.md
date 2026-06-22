@@ -8,6 +8,14 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
 
+## 🔜 Next version
+
+### 📃 Changes
+
+- allow ``VOXEL_SCALE_ZYX`` to be provided either as a full ``(Z, Y, X)``
+  tuple or, for 2D workflows, as a shorter ``(Y, X)`` tuple that is expanded
+  internally to ``(1.0, Y, X)``
+
 
 ---
 
@@ -86,8 +94,8 @@ This initial release provides:
 - occupancy metrics for every segmented channel
 - optional third-channel segmentation and occupancy quantification
 - optional third-channel cell-positivity analysis and double-positive reporting
-- optional global z cropping for internal analysis
-- optional global z projection using:
+- optional global z-cropping for internal analysis
+- optional global z-projection using:
   - `max`
   - `mean`
   - `median`

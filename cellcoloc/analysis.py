@@ -105,7 +105,7 @@ def _normalize_z_crop_bounds(
     z_crop: tuple[int | None, int | None],
     z_size: int,
 ) -> tuple[int, int]:
-    """Validate and normalize one user-supplied z crop against a stack size.
+    """Validate and normalize one user-supplied z-crop against a stack size.
 
     Parameters
     ----------
@@ -129,7 +129,7 @@ def _normalize_z_crop_bounds(
     stop = max(0, min(stop, z_size))
     if start >= stop:
         raise ValueError(
-            "Invalid z crop bounds. Expected a tuple like ``(start, stop)`` "
+            "Invalid z-crop bounds. Expected a tuple like ``(start, stop)`` "
             f"with start < stop after clipping to the stack size, got {z_crop!r} "
             f"for z size {z_size}."
         )
@@ -142,9 +142,9 @@ def _resolve_analysis_z_bounds(
     *model_configs: CellposeModelConfig | None,
     fallback: tuple[int, int] | None = None,
 ) -> tuple[int, int] | None:
-    """Resolve one global analysis z crop from one or more channel configs.
+    """Resolve one global analysis z-crop from one or more channel configs.
 
-    The pipeline treats z cropping as a global analysis constraint. Individual
+    The pipeline treats z-cropping as a global analysis constraint. Individual
     channel configs may expose the same ``z_crop`` field for user convenience,
     but conflicting bounds across channels are rejected to keep all internal
     computations aligned.
@@ -163,7 +163,7 @@ def _resolve_analysis_z_bounds(
     if any(bounds != first_bounds for bounds in normalized_bounds[1:]):
         raise ValueError(
             "Conflicting z-crop bounds were provided across channel configs. "
-            "Please use the same z crop for all participating channels."
+            "Please use the same z-crop for all participating channels."
         )
 
     return first_bounds
@@ -194,7 +194,7 @@ def _resolve_analysis_z_projection_method(
 ) -> str | None:
     """Resolve one global z-projection method from one or more channel configs.
 
-    The pipeline treats z projection as a global preprocessing choice. Channel
+    The pipeline treats z-projection as a global preprocessing choice. Channel
     configs may expose the same field for convenience, but conflicting methods
     across channels are rejected.
     """
@@ -214,7 +214,7 @@ def _resolve_analysis_z_projection_method(
     if any(method != first_method for method in normalized_methods[1:]):
         raise ValueError(
             "Conflicting z-projection methods were provided across channel "
-            "configs. Please use the same z projection for all participating "
+            "configs. Please use the same z-projection for all participating "
             "channels."
         )
 
@@ -243,7 +243,7 @@ def _project_zyx_volume(
     elif projection_method == "var":
         projection_yx = np.var(image_float, axis=0)
     else:
-        raise ValueError(f"Unsupported z projection method: {projection_method!r}.")
+        raise ValueError(f"Unsupported z-projection method: {projection_method!r}.")
 
     return np.asarray(projection_yx, dtype=np.float32)[np.newaxis, :, :]
 
@@ -254,10 +254,10 @@ def prepare_loaded_images_for_analysis(
 ) -> LoadedImageChannels:
     """Prepare a loaded dataset for downstream analysis according to configs.
 
-    This helper currently resolves an optional global z projection from the
+    This helper currently resolves an optional global z-projection from the
     provided channel configs. When no projection method is configured, the
     original ``loaded_images`` object is returned unchanged. When a projection
-    is requested, the helper optionally applies the globally configured z crop
+    is requested, the helper optionally applies the globally configured z-crop
     first, projects every available channel along z, and returns a new
     ``LoadedImageChannels`` bundle that behaves like a 2D dataset with
     singleton-z image arrays. All later ROI drawing, segmentation,
@@ -562,11 +562,11 @@ def refine_run_result_from_cellpose_cache(
     leaves the respective channel unchanged and reuses the masks already stored
     in ``run_result``.
 
-    Any z crop defined in the supplied refinement configs is interpreted as one
+    Any z-crop defined in the supplied refinement configs is interpreted as one
     global analysis z range and applied consistently across all channels. When
-    no refinement config specifies a z crop, the function preserves the
+    no refinement config specifies a z-crop, the function preserves the
     z-bounds stored in ``run_result``. When the loaded images already represent
-    a z projection, additional z cropping is ignored because the data have
+    a z-projection, additional z-cropping is ignored because the data have
     already been collapsed to a singleton-z analysis view.
     """
 
@@ -838,7 +838,7 @@ def _build_overview_table(
 
     The overview combines ROI geometry, counts of segmented objects, counts of
     positive cells, and channel-wise occupancy metrics. When a global analysis
-    z crop is active, ROI volume and all 3D occupancy metrics are computed only
+    z-crop is active, ROI volume and all 3D occupancy metrics are computed only
     inside that z interval.
     """
 
@@ -987,11 +987,11 @@ def run_roi_cellpose_colocalization(
     """Run the configured ROI-wise segmentation workflow and build result tables.
 
     The pipeline always segments ROI crops in ``XY`` and may additionally apply
-    one global analysis z crop resolved from the participating channel configs.
-    That z crop affects all channels, all ROIs, and all downstream
+    one global analysis z-crop resolved from the participating channel configs.
+    That z-crop affects all channels, all ROIs, and all downstream
     quantification consistently, while the exported and visualized arrays keep
     full-stack shape. When the input ``loaded_images`` bundle already
-    represents a prepared z projection, segmentation and quantification operate
+    represents a prepared z-projection, segmentation and quantification operate
     on that projected 2D analysis view instead of the original full stack.
 
     The two primary analysis channels can each use either Cellpose or one of

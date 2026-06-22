@@ -35,7 +35,7 @@ For each analysis run, the package can:
 
 1. load microscopy images through `omio-microscopy`,
 2. resolve voxel size either from user input or OMIO metadata,
-3. optionally prepare a global analysis view using z cropping and/or z projection,
+3. optionally prepare a global analysis view using z-cropping and/or z-projection,
 4. let the user draw 2D ROIs in napari or reuse existing ROI masks,
 5. segment each configured channel with *Cellpose* or threshold-based methods,
 6. measure overlap between segmented cells and marker objects,
@@ -59,8 +59,8 @@ For each analysis run, the package can:
 - Optional mask postfilters such as `min_intensity`, `local_contrast`, and `bright_pixel_support`
 - Optional anisotropy handling for true 3D *Cellpose* runs
 - Optional 3D flow smoothing for *Cellpose*
-- Optional global z crop for internal analysis
-- Optional global z projection using `max`, `mean`, `median`, `std`, or `var`
+- Optional global z-crop for internal analysis
+- Optional global z-projection using `max`, `mean`, `median`, `std`, or `var`
 - Fast *Cellpose* cache-based threshold refinement without rerunning the network forward pass
 - Optional manual mask editing in napari followed by table recomputation
 - Standardized export of masks, CSV tables, and Excel workbooks
@@ -81,7 +81,7 @@ Typical steps are:
 
 1. define paths, channels, and display names,
 2. set segmentation methods and model parameters,
-3. optionally define z cropping or z projection,
+3. optionally define z-cropping or z-projection,
 4. load and prepare the analysis channels,
 5. draw or reload ROIs,
 6. run segmentation and colocalization,
@@ -116,10 +116,10 @@ By default:
 
 In addition, *CellColoc* now supports:
 
-- global analysis z cropping via `z_crop=(start, stop)`,
-- global z projection via `z_projection="max"` or related methods.
+- global analysis z-cropping via `z_crop=(start, stop)`,
+- global z-projection via `z_projection="max"` or related methods.
 
-If a z projection is enabled, all later analysis and visualization steps operate on the projected 2D analysis view.
+If a z-projection is enabled, all later analysis and visualization steps operate on the projected 2D analysis view.
 
 ## Marker positivity logic
 Cells are segmented from the configured `cell` channel. Marker objects are segmented independently from the configured `marker` channel.

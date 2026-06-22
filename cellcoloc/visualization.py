@@ -228,7 +228,7 @@ def show_optional_region_segmentation(
 
     This helper is mainly intended for standalone inspection of threshold- or
     Cellpose-based third-channel masks. ROI overlays are shown across the full
-    stack because no run-specific analysis z crop is available in this
+    stack because no run-specific analysis z-crop is available in this
     interface.
     """
 

@@ -74,8 +74,8 @@ CellColoc currently provides:
 - ROI-wise segmentation and overlap analysis
 - occupancy metrics for every segmented channel
 - optional third-channel cell-positivity analysis
-- optional global z cropping
-- optional global z projection
+- optional global z-cropping
+- optional global z-projection
 - optional prefilter chains and postfilter chains
 - fast `Cellpose <https://www.cellpose.org>`_ cache-based refinement
 - optional manual mask editing followed by table recomputation

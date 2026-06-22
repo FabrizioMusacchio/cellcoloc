@@ -38,7 +38,7 @@ class LoadedImageChannels:
     """Store the loaded analysis channels and related metadata.
 
     The stored image arrays may either represent the original ``ZYX`` channels
-    loaded from disk or a derived analysis view, for example a z projection
+    loaded from disk or a derived analysis view, for example a z-projection
     prepared before ROI drawing and segmentation.
     """
 
