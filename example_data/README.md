@@ -1,0 +1,1 @@
+Put the downloaded example data in the same folder as this README, and unzip it. Download the example data form Zenodo: https://doi.org/10.5281/zenodo.20788293
