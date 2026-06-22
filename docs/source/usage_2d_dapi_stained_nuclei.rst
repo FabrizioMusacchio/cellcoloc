@@ -363,6 +363,14 @@ What happens here:
 - positive and negative cells are classified,
 - detailed, summary, and overview tables are assembled.
 
+.. figure:: _static/cellpose_running_on_gpu.png
+   :alt: Cellpose running on GPU on macOS, showing GPU activity window.
+   :align: center
+   :figwidth: 90%
+   
+   You can cross-check that Cellpose is running on GPU by looking at the console output or the task manager during this step. If you have a compatible GPU and the necessary drivers, you should see messages indicating that Cellpose is using CUDA for segmentation. On macos with Apple Silicon, Cellpose uses the MPS backend, and you should see messages about MPS usage instead. 
+
+
 The function returns a ``run_result`` object that contains:
 
 - the full label masks,
