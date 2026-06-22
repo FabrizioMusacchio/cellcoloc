@@ -61,7 +61,7 @@ The associated user-script
 ``user_scripts/dapi_stained_nuclei_2D_user_script.ipynb`` 
 
 is organized in cells, reflecting the structure of this tutorial. The same
-accounts for the alternative Python script 
+accounts for the alternative Python script (there: ``# %%`` cells) 
 
 ``user_scripts/dapi_stained_nuclei_2D_user_script.py``.
 
@@ -534,6 +534,147 @@ Typical outputs include:
 The export is intentionally placed at the end of the interactive workflow so
 that the saved outputs reflect the final accepted analysis state rather than an
 early intermediate result.
+
+
+Understanding the exported Excel workbook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the CSV export, CellColoc writes one Excel workbook with three
+worksheets:
+
+- ``detailed_overlaps``:
+  one row per concrete cell-marker overlap event. This is the most granular
+  table and is useful if you want to inspect exactly which cell object
+  overlapped which marker object and by how much.
+- ``cell_summary``:
+  one row per segmented cell. This table aggregates overlap events to the cell
+  level and contains the final positive or negative classification of each
+  cell.
+- ``roi_overview``:
+  one row per ROI. This table summarizes the analysis at the region level and
+  is usually the best starting point for comparing different ROIs or different
+  files at a glance.
+
+For many downstream analyses, ``roi_overview`` is the most compact result
+table because it combines ROI geometry, object counts, positivity counts, and
+occupancy metrics in one place.
+
+
+Understanding the ``roi_overview`` columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The exact set of columns depends on whether you analyze only the two primary
+channels or also an optional third analysis channel. The groups below explain
+the meaning of the standard columns.
+
+ROI identity and object counts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``roi_id``:
+  integer ID of the ROI in the ROI label image.
+- ``n_cells``:
+  number of segmented cell objects inside the ROI.
+- ``n_marker_positive_cells``:
+  number of cells in that ROI that satisfy the configured marker-positivity
+  rule.
+- ``n_marker_objects``:
+  number of segmented marker objects inside the ROI.
+
+If an optional third analysis channel is configured with additional
+cell-positivity evaluation, the following columns may also appear:
+
+- ``n_optional_region_positive_cells``:
+  number of cells that are positive with respect to the optional third channel.
+- ``n_marker_and_optional_region_positive_cells``:
+  number of double-positive cells, that is, cells that are positive for both
+  the main marker channel and the optional third channel.
+
+ROI geometry
+^^^^^^^^^^^^
+
+- ``drawn_roi_area_px``:
+  2D ROI area in pixels.
+- ``drawn_roi_area_um2``:
+  2D ROI area converted to square micrometers using ``VOXEL_SCALE_ZYX``.
+- ``roi_volume_voxels``:
+  analysis ROI volume in voxels. In a pure 2D workflow this is effectively the
+  ROI area multiplied by the analyzed z-depth, which is usually one plane.
+- ``roi_volume_um3``:
+  physical ROI volume in cubic micrometers.
+
+These geometry values are the denominators for the occupancy metrics described
+below.
+
+Cell-channel occupancy
+^^^^^^^^^^^^^^^^^^^^^^
+
+These columns quantify how much of the ROI is occupied by the segmented
+``cell`` channel:
+
+- ``cell_occupancy_area_px_2d_projection``
+- ``cell_occupancy_area_um2_2d_projection``
+- ``cell_occupancy_coverage_2d_percent``
+- ``cell_occupancy_volume_voxels_3d``
+- ``cell_occupancy_volume_um3_3d``
+- ``cell_occupancy_coverage_3d_percent``
+
+Interpretation:
+
+- the ``*_2d_projection`` columns describe the occupied area after projecting
+  the segmented channel along z,
+- the ``*_3d`` columns describe the occupied voxel volume in the analyzed
+  stack.
+
+For true 2D datasets, the volumetric values are still reported for consistency,
+but they effectively correspond to a single analyzed z-plane.
+
+Marker-channel occupancy
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The same metric family is reported for the segmented ``marker`` channel:
+
+- ``marker_occupancy_area_px_2d_projection``
+- ``marker_occupancy_area_um2_2d_projection``
+- ``marker_occupancy_coverage_2d_percent``
+- ``marker_occupancy_volume_voxels_3d``
+- ``marker_occupancy_volume_um3_3d``
+- ``marker_occupancy_coverage_3d_percent``
+
+These columns are especially helpful when you want to compare how strongly the
+marker channel fills each ROI independently of the object-based positivity
+classification.
+
+Optional third-channel occupancy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If an optional third analysis channel is enabled, a third block of occupancy
+columns is added with the prefix ``optional_region_``:
+
+- ``optional_region_occupancy_area_px_2d_projection``
+- ``optional_region_occupancy_area_um2_2d_projection``
+- ``optional_region_occupancy_coverage_2d_percent``
+- ``optional_region_occupancy_volume_voxels_3d``
+- ``optional_region_occupancy_volume_um3_3d``
+- ``optional_region_occupancy_coverage_3d_percent``
+
+These columns are useful for lesion coverage, infiltration coverage, tissue
+occupancy, or any other third-channel segmentation that should be summarized at
+the ROI level.
+
+How to read the table in practice
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As a simple reading strategy:
+
+1. start with ``roi_id`` to identify the ROI,
+2. check ``n_cells`` and ``n_marker_positive_cells`` to understand the object
+   counts,
+3. use ``drawn_roi_area_*`` and ``roi_volume_*`` to understand the ROI size,
+4. compare the different ``*_occupancy_*`` blocks to quantify how strongly
+   each segmented channel fills the ROI.
+
+This makes ``roi_overview`` the most useful sheet for quick ROI-level quality
+control and for compact downstream statistics.
 
 
 Adapting this tutorial to your own data
