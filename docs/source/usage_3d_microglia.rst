@@ -43,6 +43,18 @@ treat:
 - channel 2 as an additional image channel for orientation and optional
   visualization (``DAPI``).
 
+.. figure:: _static/microglia_3D_00.png
+   :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_01.png
+   :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
+   :align: center
+   :figwidth: 100%
+   
+   The 3D multi-channel image stack with the raw microglia (magenta), Iba1 (cyan), and DAPI (yellow) channels shown in Napari. Top shows 2D representation, bottom shows 3D representation. The DAPI channel is used for anatomical orientation but not segmented in this tutorial. The microglia channel is segmented with Cellpose, while the Iba1 channel is segmented with Otsu thresholding. The tutorial also demonstrates how to use napari for manual editing of the segmented label layers, and how to reanalyze those edits with CellColoc's reanalysis function.
+
+
 .. note::
 
    In the current script, the DAPI channel is loaded and visualized but not
@@ -299,6 +311,13 @@ The next cell controls whether ROIs are drawn or skipped:
    :start-after: # %% DRAW ROIS INTERACTIVELY IN NAPARI
    :end-before: # %% SAVE THE DRAWN ROIS OR LOAD AN EXISTING ROI MASK
 
+.. figure:: _static/microglia_3D_02.png
+   :alt: Napari viewer showing the raw image channels and the shape layer for ROI drawing, with one drawn ROI.
+   :align: center
+   :figwidth: 100%
+   
+   The three image layers (=channels) and the shape layer. Napari allows to draw any arbitrary 2D ROI shapes on top of the image layers. In this tutorial, we draw one ROI in 2D. CellColoc will then apply that ROI across the z dimension for the internal analysis (unless no z-cropping is defined), but the original 3D shape of the ROI is defined in 2D. The ROI drawing step is optional and can be skipped by setting ``USE_FULL_IMAGE_AS_SINGLE_ROI = True``. In that case, the whole image will be treated as one single ROI, and no shape layers will be added to the viewer.
+
 The logic is:
 
 - whole-image mode skips ROI drawing,
@@ -366,6 +385,17 @@ The next cell opens the current result in napari:
    :start-after: # %% VISUALIZE THE RESULT IN NAPARI
    :end-before: # %% OPTIONALLY SET OR UPDATE A GLOBAL Z CROP FOR SUBSEQUENT REFINEMENT
 
+.. figure:: _static/microglia_3D_03.png
+   :alt: Napari viewer showing the raw image channels together with the derived label layers for ROIs, cell masks, marker masks, and positive-cell masks.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_04.png
+   :alt: Napari viewer showing the raw image channels together with the derived label layers for ROIs, cell masks, marker masks, and positive-cell masks.
+   :align: center
+   :figwidth: 100%
+
+   Results of the initial analysis run shown in napari (top: 2D view, bottom: 3D zoomed view of the analyzed ROI). The raw image channels are shown together with the derived label layers for ROIs, cell masks, marker masks, and positive-cell masks. This viewer is the main interactive checkpoint of the 3D workflow. 
+
 This viewer is the main interactive checkpoint of the 3D workflow. It can show:
 
 - the raw microglia channel,
@@ -378,6 +408,29 @@ This viewer is the main interactive checkpoint of the 3D workflow. It can show:
 
 Because the script reuses ``result_viewer`` later on, this is also the viewer
 you can edit manually before the manual reanalysis step at the end.
+
+.. figure:: _static/microglia_3D_05.png
+   :alt: Napari viewer showing the raw image channels together with the derived label layers for ROIs, cell masks, marker masks, and positive-cell masks.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_06.png
+   :alt: Napari viewer showing the raw image channels together with the derived label layers for ROIs, cell masks, marker masks, and positive-cell masks.
+   :align: center
+   :figwidth: 100%
+
+   Inspecting the microglia channel results. Top: Overlay of raw microglia channel (magenta) and segmented cell mask. Bottom: 3D rendering of the same. This is a good time to check whether the Cellpose segmentation worked well across the z dimension, or whether some slices should be excluded from the analysis with a global z-crop before refinement. Also, note that the segmentation of the microglia channel is not perfect: We miss at least one microglial soma in the upper center. In the next refinement step, we will see how to use the Cellpose cache to adjust the cell-channel thresholds and postfilters in order to recover that missed cell without having to rerun Cellpose from scratch on the full 3D stack.
+
+
+.. figure:: _static/microglia_3D_08.png
+   :alt: Segmentation of the Iba1 marker channel with Otsu thresholding, shown in napari.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_09_positive_ch0_1.png
+   :alt: Positive-cell mask showing the microglia that were classified as Iba1-positive based on their overlap with the marker mask, shown in napari.
+   :align: center
+   :figwidth: 100%
+
+   Top: The segmentation mask of the Iba1 marker channel. Bottom: The resulting colocalization calls. The positive-cell mask shows the microglia that were classified as Iba1-positive based on their overlap with the marker mask. In this example, we have chosen to segment the marker channel with Otsu thresholding, which is not perfect. You may see that the segmentation of the marker channel is resulted into too broad and thick cell processes, which can lead to some false positive colocalization calls in the positive-cell mask. However, for demonstration purposes, this is still a good result as we are at first glance interested in the overall workflow and the overall Iba1-positivity rate of the microglia, rather than in the perfect segmentation of every single cell process in this channel. For a real project, you would of course want to optimize the marker-channel segmentation and the colocalization settings to get the best possible result for your specific data and question.
 
 
 Optionally set or update a global z-crop for subsequent refinement
@@ -430,6 +483,28 @@ The cell demonstrates several advanced ideas at once:
 - selective viewer-layer refresh,
 - and channel-specific refinement control.
 
+.. figure:: _static/microglia_3D_10.png
+   :alt: Overlay of raw microglia channel (magenta) and segmented cell mask after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_11.png
+   :alt: Segmentation of the microglia channel after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+
+   First refinement attempt in order to recover the missed microglial soma in the upper center. In this case, we adjust Cellpose's `cellprob_threshold` and `flow_threshold` to be more permissive, which allows Cellpose to generate a new candidate mask that includes the missed cell. However, the refined thresholds resulted into a too permissive segmentation with many false positives. 
+
+.. figure:: _static/microglia_3D_16.png
+   :alt: Overlay of raw microglia channel (magenta) and segmented cell mask after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_15.png
+   :alt: Segmentation of the microglia channel after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+
+   Final refinement attempt in order to recover the missed microglial soma in the upper center, further fine-tuning Cellpose's `cellprob_threshold` and `flow_threshold`. This time, we find a better balance between sensitivity and specificity, which allows us to recover the missed cell while keeping the false positives at a more manageable level. However, some false positives still remain, which is not ideal. In the next step, we will therefore see how to use napari for manual editing of the segmented label layers, and how to reanalyze those edits with CellColoc's reanalysis function in order to delete some of the false positives while keeping the recovered true positive cell in place.
+
 Channel-selective refinement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -474,6 +549,25 @@ segmentation truth:
    :language: python
    :start-after: # %% OPTIONALLY REANALYZE MANUALLY EDITED LABEL LAYERS FROM NAPARI
    :end-before: # %% EXPORT RESULTS
+
+.. figure:: _static/microglia_3D_17.png
+   :alt: Overlay of raw microglia channel (magenta) and segmented cell mask after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+.. figure:: _static/microglia_3D_18.png
+   :alt: Segmentation of the microglia channel after refinement, shown in napari.
+   :align: center
+   :figwidth: 100%
+
+   After manually re-assigning falsely split cell compartments and deleting false positive cells using napari's layer tools, we finally have a clean segmentation of the microglia channel with all true positive cells correctly labeled and most false positives removed. The next step is to let CellColoc treat these manual edits as the new segmentation truth and re-run the colocalization analysis based on those edits. This way, we can keep the manually edited cell masks in place while automatically updating the marker masks, the colocalization calls, and all result tables based on those edits. 
+   
+.. note::
+   **Important: First use the napari viewer opened in the previous cell to manually edit the 
+   label layers**, and after you are done with the editing, then run this cell to let CellColoc 
+   extract the edited label arrays from the viewer and re-run the analysis based on those edits. 
+   **Do not run this cell before you have made your manual edits in napari**, otherwise your edits 
+   will not be included in the reanalysis.
+
 
 This is useful when:
 
