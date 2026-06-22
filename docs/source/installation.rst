@@ -11,6 +11,12 @@ Either way you choose below, first create and activate a Python
    conda create -n cellcoloc python=3.12 -y
    conda activate cellcoloc
 
+.. note::
+   We have tested CellColoc with Python 3.12. Newer versions may work but 
+   are not guaranteed to be compatible. Older Python version are not supported,
+   as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
+   reading microscopy data, and OMIO requires Python 3.12 or newer.
+   
 
 
 PyPI
