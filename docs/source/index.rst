@@ -61,8 +61,8 @@ CellColoc Documentation
 ..    :target: https://pepy.tech/projects/cellcoloc
 ..    :alt: PyPI Total Downloads
 
-.. image:: https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20788294-blue
-   :target: https://doi.org/10.5281/zenodo.20788294
+.. image:: https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20788293-blue
+   :target: https://doi.org/10.5281/zenodo.20788293
    :alt: CellColoc example datasets on Zenodo
 
 .. image:: https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue
