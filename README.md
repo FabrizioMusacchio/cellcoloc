@@ -132,6 +132,51 @@ A cell is counted as marker-positive only if:
 
 This rule is explicit and configurable through `ColocalizationConfig`.
 
+## Mathematical definition of colocalization
+CellColoc determines colocalization from segmented objects, not from raw
+intensity correlation.
+
+For one ROI $R$, let:
+
+- $C_i \subseteq R$ be the pixel or voxel set of segmented cell object $i$,
+- $M_j \subseteq R$ be the pixel or voxel set of segmented marker object $j$,
+- $M = \bigcup_j M_j$ be the union of all marker-positive pixels or voxels in
+  that ROI.
+
+For each cell object $C_i$, CellColoc computes the overlap with the marker
+segmentation as:
+
+$$
+O_i = \left| C_i \cap M \right|
+$$
+
+where $|\cdot|$ denotes the number of pixels in 2D or voxels in 3D.
+
+In addition, the overlap fraction of the cell object is computed as:
+
+$$
+f_i = \frac{\left| C_i \cap M \right|}{\left| C_i \right|}
+$$
+
+A cell is classified as marker-positive only if both conditions are fulfilled:
+
+$$
+O_i \geq O_{\min}
+$$
+
+and
+
+$$
+f_i \geq \tau
+$$
+
+Here, $O_{\min}$ corresponds to `min_overlap_voxels` and $\tau$ corresponds to
+`overlap_fraction_threshold`.
+
+This means a cell is called positive only if the overlap is both absolutely
+large enough and sufficiently large relative to the size of the segmented cell
+object.
+
 ## Optional third-channel analysis
 An optional third channel can be included for additional analysis.
 
@@ -147,6 +192,16 @@ For each segmented channel, *CellColoc* can report:
 - 2D occupancy percentage,
 - 3D occupied volume,
 - 3D occupancy percentage.
+
+If $S \subseteq R$ is the union of all positive pixels or voxels of one
+segmented channel inside ROI $R$, the occupancy coverage is defined as:
+
+$$
+\mathrm{coverage}(S, R) = \frac{|S|}{|R|} \times 100
+$$
+
+For projected analyses, the same definition is applied to the resulting 2D
+analysis image.
 
 ## Outputs
 All outputs are written to a `results/` subfolder next to the raw dataset.
