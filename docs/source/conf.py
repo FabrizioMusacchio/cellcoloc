@@ -61,6 +61,13 @@ napoleon_use_rtype = False
 
 html_theme = "sphinx_rtd_theme"
 
+html_theme_options = {
+    "navigation_depth": 5,
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+}
+
+
 templates_path = ['_templates']
 exclude_patterns = []
 
