@@ -82,11 +82,6 @@ classical threshold-based segmentation on a per-channel basis, including ROI-
 wise analysis, occupancy quantification, optional third-channel logic, fast
 post hoc refinement, and interactive napari inspection.
 
-.. note::
-   CellColoc is under active development. The workflow and public API are
-   already usable, but additional examples, usage guides, and packaging polish
-   will continue to evolve.
-
 
 .. toctree::
    :maxdepth: 3
