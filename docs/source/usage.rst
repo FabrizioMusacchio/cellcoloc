@@ -1,26 +1,29 @@
 Usage
 =====
 
-This section is the entry point for future usage guides and workflow examples.
+This section contains practical workflow tutorials based on the interactive
+user scripts provided with CellColoc.
 
-CellColoc is intended to be used through project-specific interactive user
-scripts that configure real datasets and then call the reusable package step
-by step. Those user-facing walkthrough pages will be added later after the
-example scripts have been finalized and cleaned up for documentation.
+CellColoc is intended to be used through project-specific scripts that
+configure real datasets and then call the reusable package cell by cell in a
+VS Code interactive window or notebook-like environment.
 
 .. toctree::
    :maxdepth: 2
 
    usage_example_datasets
+   usage_2d_dapi_stained_nuclei
+   
 
 
-Planned usage topics
+Current usage topics
 --------------------
 
-The future usage section is expected to cover topics such as:
+The documentation currently covers or prepares topics such as:
 
 - configuring channels and display names
 - loading microscopy datasets
+- whole-image analysis versus ROI-based analysis
 - ROI drawing and ROI reuse
 - choosing segmentation backends
 - using z cropping and z projection
@@ -30,15 +33,19 @@ The future usage section is expected to cover topics such as:
 - adapting the provided user scripts for new projects
 
 
-Current recommendation
-----------------------
+Recommended starting point
+--------------------------
 
-For now, the best usage examples are the interactive scripts in the repository's
-``user_scripts/`` directory. They show how to:
+If you are new to CellColoc, start with the 2D tutorial first. It introduces
+the interactive analysis model with the least amount of complexity and shows
+how a complete run is structured from configuration to export.
+
+The interactive scripts in the repository's ``user_scripts/`` directory show
+the same structure on real datasets and can be adapted directly for new
+projects. They show how to:
 
 - configure a project,
 - run the pipeline cell by cell,
 - inspect results in napari,
 - and export reproducible outputs.
-
 

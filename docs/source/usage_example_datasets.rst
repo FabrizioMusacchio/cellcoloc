@@ -4,8 +4,8 @@ Example data set
 In order to follow along with the examples provided in this documentation,
 you may download the following example data sets from Zenodo:
 
-.. image:: https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20788294-blue
-   :target: https://doi.org/10.5281/zenodo.20788294
+.. image:: https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20788293-blue
+   :target: https://doi.org/10.5281/zenodo.20788293
    :alt: CellColoc example dataset on Zenodo
 
 
@@ -40,7 +40,7 @@ Version 1.0.0, 2018. DOI: `10.5281/zenodo.1304211. <https://doi.org/10.5281/zeno
 When using files from the redistributed Rathar data set, please cite the
 original Zenodo record in addition to citing CellColoc where appropriate.
 
-The remaining files in the *CellColoc* example data set were 
+The remaining files in the *CellColoc* example data set were
 provided as example data for this documentation. Please refer to the
-`Zenodo record <https://doi.org/10.5281/zenodo.20788294>`_ for file-level licensing and
+`Zenodo record <https://doi.org/10.5281/zenodo.20788293>`_ for file-level licensing and
 attribution information.
