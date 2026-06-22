@@ -79,7 +79,7 @@ def _convert_length_to_microns(value: float, unit: str | None, axis_name: str) -
 
 
 def _resolve_voxel_scale_zyx(
-    voxel_scale_zyx: tuple[float, float, float] | None,
+    voxel_scale_zyx: tuple[float, float] | tuple[float, float, float] | None,
     metadata,
 ) -> tuple[float, float, float]:
     """Resolve voxel size in ZYX order from user input or OMIO metadata.
@@ -94,16 +94,36 @@ def _resolve_voxel_scale_zyx(
     -------
     tuple[float, float, float]
         Resolved voxel size in ``(Z, Y, X)`` order expressed in micrometers.
+
+    Notes
+    -----
+    User input may be provided either as a full ``(Z, Y, X)`` tuple or, for
+    2D-oriented convenience, as a ``(Y, X)`` tuple. In the latter case, the
+    missing z spacing is filled with ``1.0``.
     """
 
     if voxel_scale_zyx is not None:
-        resolved = tuple(float(value) for value in voxel_scale_zyx)
+        provided = tuple(float(value) for value in voxel_scale_zyx)
+        if len(provided) == 2:
+            resolved = (1.0, provided[0], provided[1])
+        elif len(provided) == 3:
+            resolved = provided
+        else:
+            resolved = provided
+
         if len(resolved) != 3 or any(value <= 0 for value in resolved):
             raise ValueError(
-                "`voxel_scale_zyx` must be a tuple of three positive values in "
-                f"ZYX order, got {voxel_scale_zyx!r}."
+                "`voxel_scale_zyx` must be a tuple of either two positive "
+                "values in YX order or three positive values in ZYX order, "
+                f"got {voxel_scale_zyx!r}."
             )
-        print(f"Using user-provided voxel scale (ZYX, um): {resolved}")
+        if len(provided) == 2:
+            print(
+                "Using user-provided pixel scale from YX input and expanding "
+                f"to ZYX with z=1.0 um: {resolved}"
+            )
+        else:
+            print(f"Using user-provided voxel scale (ZYX, um): {resolved}")
         return resolved
 
     try:
@@ -194,7 +214,7 @@ def _extract_zyx_channel(image_tzcyx: np.ndarray, channel_index: int) -> np.ndar
 def load_analysis_images(
     source_path: Path,
     channel_config: ChannelConfig,
-    voxel_scale_zyx: tuple[float, float, float] | None,
+    voxel_scale_zyx: tuple[float, float] | tuple[float, float, float] | None,
     crop_for_testing: tuple[slice, slice, slice] | None = None,
     image_loading_mode: str = "memory",
 ) -> LoadedImageChannels:
@@ -216,8 +236,10 @@ def load_analysis_images(
         Zero-based channel mapping defining which raw channels correspond to
         the cell, marker, and optional third channel.
     voxel_scale_zyx:
-        Optional explicit voxel size in micrometers and ``(Z, Y, X)`` order.
-        When this is ``None``, the loader first tries to derive physical pixel
+        Optional explicit voxel size in micrometers. This may be passed either
+        in full ``(Z, Y, X)`` order or, for 2D convenience, as ``(Y, X)``. A
+        two-value input is internally expanded to ``(1.0, Y, X)``. When this
+        argument is ``None``, the loader first tries to derive physical pixel
         sizes from OMIO metadata entries such as ``PhysicalSizeZ`` and falls
         back to ``(1.0, 1.0, 1.0)`` with a warning when no usable metadata are
         available.
