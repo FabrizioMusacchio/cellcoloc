@@ -37,8 +37,8 @@ notebook-like workflow, install the interactive extra:
 Cellpose 3
 ----------
 
-CellColoc is designed to work with both older Cellpose 3 installations and
-newer Cellpose 4 installations.
+CellColoc is designed to work with both older `Cellpose 3 <https://www.cellpose.org>`_ installations and
+newer `Cellpose 4 <https://www.cellpose.org>`_ installations.
 
 If you specifically want the tested Cellpose 3 variant, install:
 

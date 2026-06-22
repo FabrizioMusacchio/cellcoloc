@@ -12,11 +12,10 @@ It is designed for experiments where you want to:
 - optionally segment a third channel for ROI occupancy quantification and, if desired, third-channel cell positivity,
 - inspect and refine results interactively in napari.
 
-The package supports both 2D and 3D data, including optional ROI-based analysis, optional global z cropping, optional z projection, and fast post hoc Cellpose threshold refinement.
+The package supports both 2D and 3D data, flexible segmentation backends (we support both [*Cellpose*](https://www.cellpose.org) and classical thresholding), and a range of optional features including optional ROI-based analysis, optional global z-cropping, optional z-projection, and fast post hoc *Cellpose* threshold refinement.
 
 ## Core idea
-
-CellColoc is built around a simple but flexible model:
+*CellColoc* is built around a simple but flexible model:
 
 - one primary `cell` channel,
 - one primary `marker` channel,
@@ -29,17 +28,16 @@ Each analysis channel can use one of several segmentation backends:
 - `li`
 - `percentile`
 
-This means CellColoc is not limited to Cellpose-only workflows. You can mix neural-network segmentation and classical intensity-threshold segmentation channel by channel within the same analysis script.
+This means *CellColoc* is not limited to [*Cellpose*](https://www.cellpose.org)-only workflows. You can mix neural-network segmentation and classical intensity-threshold segmentation channel by channel within the same analysis script.
 
 ## What CellColoc does
-
 For each analysis run, the package can:
 
 1. load microscopy images through `omio-microscopy`,
 2. resolve voxel size either from user input or OMIO metadata,
 3. optionally prepare a global analysis view using z cropping and/or z projection,
 4. let the user draw 2D ROIs in napari or reuse existing ROI masks,
-5. segment each configured channel with Cellpose or threshold-based methods,
+5. segment each configured channel with *Cellpose* or threshold-based methods,
 6. measure overlap between segmented cells and marker objects,
 7. classify each cell as marker-positive or marker-negative,
 8. optionally quantify occupancy metrics for every segmented channel,
@@ -59,11 +57,11 @@ For each analysis run, the package can:
 - Channel-wise segmentation method selection
 - Optional prefilter chains such as `["median", "gaussian"]`
 - Optional mask postfilters such as `min_intensity`, `local_contrast`, and `bright_pixel_support`
-- Optional anisotropy handling for true 3D Cellpose runs
-- Optional 3D flow smoothing for Cellpose
+- Optional anisotropy handling for true 3D *Cellpose* runs
+- Optional 3D flow smoothing for *Cellpose*
 - Optional global z crop for internal analysis
 - Optional global z projection using `max`, `mean`, `median`, `std`, or `var`
-- Fast Cellpose cache-based threshold refinement without rerunning the network forward pass
+- Fast *Cellpose* cache-based threshold refinement without rerunning the network forward pass
 - Optional manual mask editing in napari followed by table recomputation
 - Standardized export of masks, CSV tables, and Excel workbooks
 
@@ -77,7 +75,6 @@ For each analysis run, the package can:
   Example datasets and example results.
 
 ## Analysis workflow
-
 The recommended workflow is to run a user script cell by cell.
 
 Typical steps are:
@@ -95,8 +92,7 @@ Typical steps are:
 This structure keeps project settings in the user scripts while the reusable analysis logic stays inside the package.
 
 ## Segmentation backends
-
-CellColoc currently supports the following segmentation approaches for analysis channels:
+*CellColoc* currently supports the following segmentation approaches for analysis channels:
 
 - `cellpose`
   Useful for object-centric segmentation of cells, somata, nuclei, or similar structures.
@@ -110,7 +106,6 @@ CellColoc currently supports the following segmentation approaches for analysis 
 These methods can be chosen independently for each channel.
 
 ## ROIs and 3D behavior
-
 ROIs are drawn as 2D polygons in napari. They are then reused for all downstream computations.
 
 By default:
@@ -119,7 +114,7 @@ By default:
 - segmentation is run only inside the ROI crop bounding box,
 - everything outside the ROI mask is zeroed before segmentation.
 
-In addition, CellColoc now supports:
+In addition, *CellColoc* now supports:
 
 - global analysis z cropping via `z_crop=(start, stop)`,
 - global z projection via `z_projection="max"` or related methods.
@@ -127,7 +122,6 @@ In addition, CellColoc now supports:
 If a z projection is enabled, all later analysis and visualization steps operate on the projected 2D analysis view.
 
 ## Marker positivity logic
-
 Cells are segmented from the configured `cell` channel. Marker objects are segmented independently from the configured `marker` channel.
 
 A cell is counted as marker-positive only if:
@@ -139,7 +133,6 @@ A cell is counted as marker-positive only if:
 This rule is explicit and configurable through `ColocalizationConfig`.
 
 ## Optional third-channel analysis
-
 An optional third channel can be included for additional analysis.
 
 Supported use cases include:
@@ -148,7 +141,7 @@ Supported use cases include:
 - separate third-channel cell positivity,
 - derived double-positive counts for cells that are positive for both the main marker and the third segmented channel.
 
-For each segmented channel, CellColoc can report:
+For each segmented channel, *CellColoc* can report:
 
 - projected 2D occupied area,
 - 2D occupancy percentage,
@@ -156,7 +149,6 @@ For each segmented channel, CellColoc can report:
 - 3D occupancy percentage.
 
 ## Outputs
-
 All outputs are written to a `results/` subfolder next to the raw dataset.
 
 Typical mask outputs include:
@@ -213,7 +205,7 @@ pip install -e ".[interactive]"
 ```
 
 ## Upgrading CellColoc
-To upgrade an existing CellColoc installation to the latest version, you can use pip's upgrade flag:
+To upgrade an existing *CellColoc* installation to the latest version, you can use pip's upgrade flag:
 
 ```bash
 pip install --upgrade cellcoloc
@@ -240,7 +232,7 @@ pip install -e ".[interactive]"
 ```
 
 ## Cellpose 3 and Cellpose 4
-CellColoc is designed to work with both older Cellpose 3 installations and newer Cellpose 4 installations.
+*CellColoc* is designed to work with both older [*Cellpose* 3](https://www.cellpose.org) installations and newer [*Cellpose* 4](https://www.cellpose.org) installations.
 
 Default install:
 
@@ -248,13 +240,13 @@ Default install:
 pip install cellcoloc
 ```
 
-If you specifically want the tested Cellpose 3 variant:
+If you specifically want the tested *Cellpose* 3 variant:
 
 ```bash
 pip install "cellcoloc[cellpose3]"
 ```
 
-Alternatively, users can also install CellColoc first and then pin Cellpose manually:
+Alternatively, users can also install *CellColoc* first and then pin *Cellpose* manually:
 
 ```bash
 pip install cellcoloc
@@ -279,7 +271,7 @@ The optional interactive extra adds:
 - `ipykernel`
 
 ## Citation
-If you use CellColoc in scientific work, please cite:
+If you use *CellColoc* in scientific work, please cite:
 
 > Musacchio, F. (2026). *CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images*. Zenodo. https://doi.org/10.5281/zenodo.20787509
 

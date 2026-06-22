@@ -24,7 +24,7 @@ The future usage section is expected to cover topics such as:
 - ROI drawing and ROI reuse
 - choosing segmentation backends
 - using z cropping and z projection
-- refining Cellpose results post hoc
+- refining `Cellpose <https://www.cellpose.org>`_ results post hoc
 - recomputing tables after manual mask edits
 - understanding exported result tables and masks
 - adapting the provided user scripts for new projects
