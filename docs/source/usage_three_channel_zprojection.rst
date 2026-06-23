@@ -4,7 +4,7 @@ Three-channel analysis with z-projection tutorial
 This tutorial walks through a three-channel CellColoc workflow based on the
 interactive Jupyter notebook
 
-``user_scripts/microglia_3D_three_channel_zproject_user_script.ipynb``,
+``user_scripts/nb_microglia_3D_three_channel_zproject_user_script.ipynb``,
 
 which is identical to the interactive Python script
 
@@ -89,7 +89,7 @@ How to use this tutorial
 
 The associated user script
 
-``user_scripts/microglia_3D_three_channel_zproject_user_script.ipynb``
+``user_scripts/nb_microglia_3D_three_channel_zproject_user_script.ipynb``
 
 is organized in cells, reflecting the structure of this tutorial. The same
 applies to the alternative Python script (there: ``# %%`` cells)
@@ -99,7 +99,7 @@ applies to the alternative Python script (there: ``# %%`` cells)
 The recommended way to follow this tutorial is:
 
 1. open
-   ``user_scripts/microglia_3D_three_channel_zproject_user_script.ipynb`` or
+   ``user_scripts/nb_microglia_3D_three_channel_zproject_user_script.ipynb`` or
    ``user_scripts/microglia_3D_three_channel_zproject_user_script.py``,
 2. run the cells from top to bottom,
 3. adapt the configuration values for your own dataset only where needed.
