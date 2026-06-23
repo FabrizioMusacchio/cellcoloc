@@ -345,8 +345,10 @@ def analyze_existing_masks(
     analysis_z_bounds: tuple[int, int] | None = None,
     cell_refinement_context: CellposeChannelRefinementContext | None = None,
     marker_refinement_context: CellposeChannelRefinementContext | None = None,
+    optional_region_refinement_context: CellposeChannelRefinementContext | None = None,
     cell_model_config: CellposeModelConfig | None = None,
     marker_model_config: CellposeModelConfig | None = None,
+    optional_region_model_config: CellposeModelConfig | None = None,
 ) -> ColocalizationRunResult:
     """Recompute colocalization tables from existing label masks.
 
@@ -375,7 +377,7 @@ def analyze_existing_masks(
     cell_refinement_context, marker_refinement_context:
         Optional cached Cellpose network outputs used for later threshold-only
         refinement.
-    cell_model_config, marker_model_config:
+    cell_model_config, marker_model_config, optional_region_model_config:
         Optional channel configs reused here mainly so postfilters can be
         applied consistently when masks are reanalyzed.
 
@@ -452,6 +454,17 @@ def analyze_existing_masks(
         effective_optional_region_masks,
         effective_analysis_z_bounds,
     )
+    if (
+        optional_region_model_config is not None
+        and optional_region_model_config.postfilters is not None
+        and effective_optional_region_masks is not None
+    ):
+        print("Applying configured postfilters to optional third-channel masks...")
+        effective_optional_region_masks = apply_postfilters(
+            effective_optional_region_masks,
+            loaded_images.optional_region_image,
+            optional_region_model_config,
+        )
     summary_table = _build_summary_table(
         detailed_table,
         full_cell_masks,
@@ -484,6 +497,7 @@ def analyze_existing_masks(
         ),
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
+        optional_region_refinement_context=optional_region_refinement_context,
     )
 
 
@@ -548,19 +562,22 @@ def refine_run_result_from_cellpose_cache(
     colocalization_config: ColocalizationConfig,
     cell_model_config: CellposeModelConfig | None = None,
     marker_model_config: CellposeModelConfig | None = None,
+    optional_region_model_config: CellposeModelConfig | None = None,
     cell_cellprob_threshold: float | None = None,
     cell_flow_threshold: float | None = None,
     marker_cellprob_threshold: float | None = None,
     marker_flow_threshold: float | None = None,
+    optional_region_cellprob_threshold: float | None = None,
+    optional_region_flow_threshold: float | None = None,
     optional_region_result: OptionalRegionSegmentationResult | None = None,
 ) -> ColocalizationRunResult:
     """Recompute masks and tables from cached Cellpose outputs.
 
     This avoids rerunning the neural network forward pass and only recomputes
     the mask generation stage from cached ``dP`` and ``cellprob`` arrays.
-    Passing ``cell_model_config=None`` and/or ``marker_model_config=None``
-    leaves the respective channel unchanged and reuses the masks already stored
-    in ``run_result``.
+    Passing ``cell_model_config=None``, ``marker_model_config=None``, and/or
+    ``optional_region_model_config=None`` leaves the respective channel
+    unchanged and reuses the masks already stored in ``run_result``.
 
     Any z-crop defined in the supplied refinement configs is interpreted as one
     global analysis z range and applied consistently across all channels. When
@@ -577,6 +594,7 @@ def refine_run_result_from_cellpose_cache(
             loaded_images.cell_image.shape[0],
             cell_model_config,
             marker_model_config,
+            optional_region_model_config,
             fallback=run_result.analysis_z_bounds,
         )
 
@@ -616,12 +634,31 @@ def refine_run_result_from_cellpose_cache(
             cellprob_threshold=marker_cellprob_threshold,
         )
 
+    if optional_region_model_config is None:
+        rebuilt_optional_region_masks = (
+            None
+            if run_result.optional_region_masks is None
+            else np.asarray(run_result.optional_region_masks, dtype=np.uint32).copy()
+        )
+    else:
+        if run_result.optional_region_refinement_context is None:
+            raise ValueError(
+                "Optional third-channel refinement was requested, but this run "
+                "result does not contain Cellpose refinement caches for that "
+                "channel. Threshold-only refinement is currently available "
+                "only when the initial third-channel segmentation was produced "
+                "with a supported Cellpose 4 run."
+            )
+        rebuilt_optional_region_masks = _rebuild_masks_from_refinement_context(
+            image_shape=loaded_images.optional_region_image.shape,
+            refinement_context=run_result.optional_region_refinement_context,
+            flow_threshold=optional_region_flow_threshold,
+            cellprob_threshold=optional_region_cellprob_threshold,
+        )
+
     rebuilt_cell_masks = _apply_analysis_z_bounds(rebuilt_cell_masks, analysis_z_bounds)
     rebuilt_marker_masks = _apply_analysis_z_bounds(rebuilt_marker_masks, analysis_z_bounds)
-    rebuilt_optional_region_masks = _apply_analysis_z_bounds(
-        run_result.optional_region_masks,
-        analysis_z_bounds,
-    )
+    rebuilt_optional_region_masks = _apply_analysis_z_bounds(rebuilt_optional_region_masks, analysis_z_bounds)
 
     return analyze_existing_masks(
         loaded_images=loaded_images,
@@ -634,8 +671,10 @@ def refine_run_result_from_cellpose_cache(
         analysis_z_bounds=analysis_z_bounds,
         cell_refinement_context=run_result.cell_refinement_context,
         marker_refinement_context=run_result.marker_refinement_context,
+        optional_region_refinement_context=run_result.optional_region_refinement_context,
         cell_model_config=cell_model_config,
         marker_model_config=marker_model_config,
+        optional_region_model_config=optional_region_model_config,
     )
 
 
@@ -1041,6 +1080,7 @@ def run_roi_cellpose_colocalization(
         full_optional_region_masks = np.zeros(loaded_images.optional_region_image.shape, dtype=np.uint32)
     cell_roi_caches: list[CellposeRefinementRoiCache] = []
     marker_roi_caches: list[CellposeRefinementRoiCache] = []
+    optional_region_roi_caches: list[CellposeRefinementRoiCache] = []
 
     cell_label_offset = 0
     marker_label_offset = 0
@@ -1062,6 +1102,7 @@ def run_roi_cellpose_colocalization(
         cell_crop[:, ~roi_mask_crop_2d] = 0
         marker_crop[:, ~roi_mask_crop_2d] = 0
         optional_region_masks_roi = None
+        optional_region_refinement_cache = None
         if optional_region_model_config is not None:
             if loaded_images.optional_region_image is None:
                 raise ValueError(
@@ -1085,7 +1126,7 @@ def run_roi_cellpose_colocalization(
             loaded_images.voxel_scale_zyx,
         )
         if optional_region_model_config is not None:
-            optional_region_masks_roi, _ = evaluate_segmentation_method(
+            optional_region_masks_roi, optional_region_refinement_cache = evaluate_segmentation_method(
                 optional_region_model,
                 optional_region_crop,
                 optional_region_model_config,
@@ -1108,6 +1149,14 @@ def run_roi_cellpose_colocalization(
             marker_refinement_cache.x_max = int(x_slice.stop)
             marker_refinement_cache.roi_mask_crop_2d = roi_mask_crop_2d.copy()
             marker_roi_caches.append(marker_refinement_cache)
+        if optional_region_refinement_cache is not None:
+            optional_region_refinement_cache.roi_id = int(roi_id)
+            optional_region_refinement_cache.y_min = int(y_slice.start)
+            optional_region_refinement_cache.y_max = int(y_slice.stop)
+            optional_region_refinement_cache.x_min = int(x_slice.start)
+            optional_region_refinement_cache.x_max = int(x_slice.stop)
+            optional_region_refinement_cache.roi_mask_crop_2d = roi_mask_crop_2d.copy()
+            optional_region_roi_caches.append(optional_region_refinement_cache)
 
         cell_masks_roi = relabel_with_offset(cell_masks_roi, cell_label_offset)
         marker_masks_roi = relabel_with_offset(marker_masks_roi, marker_label_offset)
@@ -1145,6 +1194,13 @@ def run_roi_cellpose_colocalization(
             model_name_or_path=marker_model_config.model_name_or_path,
             roi_caches=marker_roi_caches,
         )
+    optional_region_refinement_context = None
+    if optional_region_roi_caches and optional_region_model_config is not None:
+        optional_region_refinement_context = CellposeChannelRefinementContext(
+            model=optional_region_model,
+            model_name_or_path=optional_region_model_config.model_name_or_path,
+            roi_caches=optional_region_roi_caches,
+        )
 
     return analyze_existing_masks(
         loaded_images=loaded_images,
@@ -1157,7 +1213,9 @@ def run_roi_cellpose_colocalization(
         analysis_z_bounds=analysis_z_bounds,
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
+        optional_region_refinement_context=optional_region_refinement_context,
         cell_model_config=cell_model_config,
         marker_model_config=marker_model_config,
+        optional_region_model_config=optional_region_model_config,
     )
 # %% END

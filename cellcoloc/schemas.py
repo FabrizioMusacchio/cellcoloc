@@ -127,7 +127,8 @@ class ColocalizationRunResult:
     analysis_z_bounds:
         Optional global z interval actually used for internal segmentation and
         quantification. Arrays remain full-stack sized even when this is set.
-    cell_refinement_context, marker_refinement_context:
+    cell_refinement_context, marker_refinement_context,
+    optional_region_refinement_context:
         Optional cached Cellpose network outputs that allow later threshold-only
         refinement without rerunning the neural network forward pass.
     """
@@ -140,4 +141,5 @@ class ColocalizationRunResult:
     analysis_z_bounds: tuple[int, int] | None = None
     cell_refinement_context: CellposeChannelRefinementContext | None = None
     marker_refinement_context: CellposeChannelRefinementContext | None = None
+    optional_region_refinement_context: CellposeChannelRefinementContext | None = None
 # %% END
