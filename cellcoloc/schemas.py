@@ -109,9 +109,25 @@ class ColocalizationTables:
 
 @dataclass(slots=True)
 class SingleChannelTables:
-    """Bundle per-object and per-ROI tables for one-channel analyses."""
+    """Bundle tables produced by one-channel analyses.
+
+    Attributes
+    ----------
+    objects:
+        Main per-object summary table containing biologically meaningful size
+        and shape descriptors such as area, volume, surface area, roundness,
+        or sphericity, depending on whether the analysis view is effectively
+        2D or 3D.
+    voxel_plausibility:
+        Technical cross-check table comparing direct voxel counts against
+        ``regionprops``-derived voxel counts for each object.
+    overview:
+        Per-ROI overview table containing object counts, occupancy metrics,
+        and per-ROI means of the object-summary shape descriptors.
+    """
 
     objects: pd.DataFrame
+    voxel_plausibility: pd.DataFrame
     overview: pd.DataFrame
 
 

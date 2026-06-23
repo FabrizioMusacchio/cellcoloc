@@ -19,7 +19,7 @@ import numpy as np
 import omio as om
 import pandas as pd
 import tifffile
-from skimage.measure import regionprops_table
+from skimage.measure import regionprops, regionprops_table
 
 from .analysis import (
     _apply_analysis_z_bounds,
@@ -168,13 +168,25 @@ def export_single_channel_outputs(
     run_result: SingleChannelRunResult,
     paths: SingleChannelResultsPaths,
 ) -> None:
-    """Write standard tables and masks for one completed single-channel run."""
+    """Write standard tables and masks for one completed single-channel run.
+
+    The Excel workbook contains three sheets:
+
+    - ``object_summary`` for biologically relevant size and shape metrics
+    - ``voxel_plausibility_check`` for technical voxel-count cross-checks
+    - ``roi_overview`` for ROI-level counts, occupancies, and mean metrics
+    """
 
     run_result.tables.objects.to_csv(paths.object_csv_path, index=False)
     tifffile.imwrite(paths.mask_path, run_result.masks.astype(np.uint32))
 
     with pd.ExcelWriter(paths.excel_path) as writer:
         run_result.tables.objects.to_excel(writer, sheet_name="object_summary", index=False)
+        run_result.tables.voxel_plausibility.to_excel(
+            writer,
+            sheet_name="voxel_plausibility_check",
+            index=False,
+        )
         run_result.tables.overview.to_excel(writer, sheet_name="roi_overview", index=False)
 
     print(f"Saved object CSV analysis to:\n{paths.object_csv_path}")
@@ -220,11 +232,61 @@ def prepare_loaded_single_channel_image_for_analysis(
 
 
 # %% TABLE BUILDERS
-def _build_single_channel_object_table(
+def _compute_3d_surface_area_um2(
+    object_mask_zyx: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> float:
+    """Compute voxel-surface area of one 3D object in squared micrometers."""
+
+    z_size_um, y_size_um, x_size_um = voxel_scale_zyx
+    padded = np.pad(np.asarray(object_mask_zyx, dtype=bool), 1, mode="constant", constant_values=False)
+    transitions_z = np.count_nonzero(padded[1:, :, :] != padded[:-1, :, :])
+    transitions_y = np.count_nonzero(padded[:, 1:, :] != padded[:, :-1, :])
+    transitions_x = np.count_nonzero(padded[:, :, 1:] != padded[:, :, :-1])
+
+    face_area_z = y_size_um * x_size_um
+    face_area_y = z_size_um * x_size_um
+    face_area_x = z_size_um * y_size_um
+    return float(
+        transitions_z * face_area_z
+        + transitions_y * face_area_y
+        + transitions_x * face_area_x
+    )
+
+
+def _compute_3d_ellipticity(
+    object_mask_zyx: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> float:
+    """Estimate a 3D ellipticity-like elongation score from voxel coordinates."""
+
+    coordinates = np.column_stack(np.where(object_mask_zyx))
+    if coordinates.shape[0] < 3:
+        return np.nan
+
+    spacing = np.asarray(voxel_scale_zyx, dtype=float)
+    coordinates_um = coordinates * spacing
+    centered = coordinates_um - coordinates_um.mean(axis=0, keepdims=True)
+    covariance = np.cov(centered, rowvar=False)
+    eigenvalues = np.sort(np.linalg.eigvalsh(covariance))[::-1]
+    eigenvalues = np.clip(eigenvalues, 0.0, None)
+
+    if eigenvalues[0] <= 0:
+        return np.nan
+
+    major_axis = np.sqrt(eigenvalues[0])
+    minor_axis = np.sqrt(eigenvalues[-1])
+    if major_axis <= 0:
+        return np.nan
+
+    return float(1.0 - (minor_axis / major_axis))
+
+
+def _build_single_channel_plausibility_table(
     masks: np.ndarray,
     roi_labels_2d: np.ndarray,
 ) -> pd.DataFrame:
-    """Create one object-summary row per segmented label."""
+    """Create a technical voxel-consistency table for segmented objects."""
 
     if np.max(masks) == 0:
         return pd.DataFrame(
@@ -233,22 +295,16 @@ def _build_single_channel_object_table(
                 "object_label",
                 "object_voxels",
                 "object_voxels_props",
-                "centroid_z",
-                "centroid_y",
-                "centroid_x",
-                "object_voxels_delta",
+                "object_voxels - object_voxels_props",
             ]
         )
 
     props_table = pd.DataFrame(
-        regionprops_table(masks, properties=("label", "area", "centroid"))
+        regionprops_table(masks, properties=("label", "area"))
     ).rename(
         columns={
             "label": "object_label",
             "area": "object_voxels_props",
-            "centroid-0": "centroid_z",
-            "centroid-1": "centroid_y",
-            "centroid-2": "centroid_x",
         }
     )
     props_table["object_label"] = props_table["object_label"].astype(int)
@@ -269,11 +325,142 @@ def _build_single_channel_object_table(
             }
         )
 
-    object_table = pd.DataFrame(rows).merge(props_table, on="object_label", how="left")
-    object_table["object_voxels_delta"] = (
-        object_table["object_voxels"] - object_table["object_voxels_props"]
+    plausibility_table = pd.DataFrame(rows).merge(props_table, on="object_label", how="left")
+    plausibility_table["object_voxels - object_voxels_props"] = (
+        plausibility_table["object_voxels"] - plausibility_table["object_voxels_props"]
     )
-    return object_table.sort_values(by=["roi_id", "object_label"]).reset_index(drop=True)
+    return plausibility_table.sort_values(by=["roi_id", "object_label"]).reset_index(drop=True)
+
+
+def _build_single_channel_object_table(
+    masks: np.ndarray,
+    loaded_image: LoadedSingleChannelImage,
+    roi_labels_2d: np.ndarray,
+) -> pd.DataFrame:
+    """Create one object-summary row per segmented label.
+
+    Effective 2D analyses report area, perimeter, roundness, and eccentricity.
+    Effective 3D analyses report volume, voxel-surface area, sphericity, and a
+    simple ellipticity-like elongation score derived from object coordinates.
+    """
+
+    if np.max(masks) == 0:
+        return pd.DataFrame(
+            columns=[
+                "roi_id",
+                "object_label",
+                "centroid_z",
+                "centroid_y",
+                "centroid_x",
+                "object_area_px_2d",
+                "object_area_um2_2d",
+                "object_perimeter_px_2d",
+                "object_perimeter_um_2d",
+                "object_roundness_2d",
+                "object_eccentricity_2d",
+                "object_volume_voxels_3d",
+                "object_volume_um3_3d",
+                "object_surface_area_um2_3d",
+                "object_sphericity_3d",
+                "object_ellipticity_3d",
+            ]
+        )
+
+    is_effective_2d = masks.shape[0] == 1
+    z_size_um, y_size_um, x_size_um = loaded_image.voxel_scale_zyx
+    pixel_area_um2 = y_size_um * x_size_um
+    voxel_volume_um3 = z_size_um * y_size_um * x_size_um
+    rows: list[dict[str, int | float]] = []
+    roi_labels_3d = np.broadcast_to(roi_labels_2d, masks.shape)
+
+    if is_effective_2d:
+        for region in regionprops(masks[0]):
+            object_label = int(region.label)
+            object_mask = masks == object_label
+            roi_values = roi_labels_3d[object_mask]
+            roi_values = roi_values[roi_values != 0]
+            roi_id = int(np.unique(roi_values)[0]) if roi_values.size > 0 else 0
+
+            object_area_px = float(region.area)
+            object_area_um2 = float(object_area_px * pixel_area_um2)
+            perimeter_px = float(getattr(region, "perimeter", np.nan))
+            perimeter_um = (
+                float(perimeter_px * ((y_size_um + x_size_um) / 2.0))
+                if np.isfinite(perimeter_px)
+                else np.nan
+            )
+            roundness = (
+                float((4.0 * np.pi * object_area_px) / (perimeter_px ** 2))
+                if np.isfinite(perimeter_px) and perimeter_px > 0
+                else np.nan
+            )
+            rows.append(
+                {
+                    "roi_id": roi_id,
+                    "object_label": object_label,
+                    "centroid_z": 0.0,
+                    "centroid_y": float(region.centroid[0]),
+                    "centroid_x": float(region.centroid[1]),
+                    "object_area_px_2d": object_area_px,
+                    "object_area_um2_2d": object_area_um2,
+                    "object_perimeter_px_2d": perimeter_px,
+                    "object_perimeter_um_2d": perimeter_um,
+                    "object_roundness_2d": roundness,
+                    "object_eccentricity_2d": float(getattr(region, "eccentricity", np.nan)),
+                    "object_volume_voxels_3d": np.nan,
+                    "object_volume_um3_3d": np.nan,
+                    "object_surface_area_um2_3d": np.nan,
+                    "object_sphericity_3d": np.nan,
+                    "object_ellipticity_3d": np.nan,
+                }
+            )
+    else:
+        for region in regionprops(masks):
+            object_label = int(region.label)
+            object_mask = masks == object_label
+            roi_values = roi_labels_3d[object_mask]
+            roi_values = roi_values[roi_values != 0]
+            roi_id = int(np.unique(roi_values)[0]) if roi_values.size > 0 else 0
+
+            object_volume_voxels = float(region.area)
+            object_volume_um3 = float(object_volume_voxels * voxel_volume_um3)
+            object_surface_area_um2 = _compute_3d_surface_area_um2(
+                object_mask,
+                loaded_image.voxel_scale_zyx,
+            )
+            object_sphericity = (
+                float(
+                    (np.pi ** (1.0 / 3.0)) * ((6.0 * object_volume_um3) ** (2.0 / 3.0))
+                    / object_surface_area_um2
+                )
+                if object_surface_area_um2 > 0 and object_volume_um3 > 0
+                else np.nan
+            )
+            rows.append(
+                {
+                    "roi_id": roi_id,
+                    "object_label": object_label,
+                    "centroid_z": float(region.centroid[0]),
+                    "centroid_y": float(region.centroid[1]),
+                    "centroid_x": float(region.centroid[2]),
+                    "object_area_px_2d": np.nan,
+                    "object_area_um2_2d": np.nan,
+                    "object_perimeter_px_2d": np.nan,
+                    "object_perimeter_um_2d": np.nan,
+                    "object_roundness_2d": np.nan,
+                    "object_eccentricity_2d": np.nan,
+                    "object_volume_voxels_3d": object_volume_voxels,
+                    "object_volume_um3_3d": object_volume_um3,
+                    "object_surface_area_um2_3d": object_surface_area_um2,
+                    "object_sphericity_3d": object_sphericity,
+                    "object_ellipticity_3d": _compute_3d_ellipticity(
+                        object_mask,
+                        loaded_image.voxel_scale_zyx,
+                    ),
+                }
+            )
+
+    return pd.DataFrame(rows).sort_values(by=["roi_id", "object_label"]).reset_index(drop=True)
 
 
 def _build_single_channel_overview_table(
@@ -283,7 +470,12 @@ def _build_single_channel_overview_table(
     object_table: pd.DataFrame,
     analysis_z_bounds: tuple[int, int] | None,
 ) -> pd.DataFrame:
-    """Create one ROI overview row per ROI for one-channel analyses."""
+    """Create one ROI overview row per ROI for one-channel analyses.
+
+    In addition to object counts and occupancy metrics, the overview reports
+    per-ROI averages of the object-summary morphology metrics that are
+    applicable to the current effective dimensionality.
+    """
 
     z_size_um, y_size_um, x_size_um = loaded_image.voxel_scale_zyx
     pixel_area_um2 = y_size_um * x_size_um
@@ -321,6 +513,25 @@ def _build_single_channel_overview_table(
                 analysis_z_bounds,
             )
         )
+        average_metric_columns = [
+            "object_area_px_2d",
+            "object_area_um2_2d",
+            "object_perimeter_px_2d",
+            "object_perimeter_um_2d",
+            "object_roundness_2d",
+            "object_eccentricity_2d",
+            "object_volume_voxels_3d",
+            "object_volume_um3_3d",
+            "object_surface_area_um2_3d",
+            "object_sphericity_3d",
+            "object_ellipticity_3d",
+        ]
+        for column_name in average_metric_columns:
+            if column_name in object_rows.columns:
+                mean_value = object_rows[column_name].dropna().mean()
+                row[f"average_{column_name}"] = (
+                    float(mean_value) if pd.notna(mean_value) else np.nan
+                )
         rows.append(row)
 
     return pd.DataFrame(rows)
@@ -354,7 +565,8 @@ def analyze_existing_single_channel_masks(
             model_config,
         )
 
-    object_table = _build_single_channel_object_table(full_masks, roi_labels_2d)
+    object_table = _build_single_channel_object_table(full_masks, loaded_image, roi_labels_2d)
+    plausibility_table = _build_single_channel_plausibility_table(full_masks, roi_labels_2d)
     overview_table = _build_single_channel_overview_table(
         roi_labels_2d=roi_labels_2d,
         loaded_image=loaded_image,
@@ -367,6 +579,7 @@ def analyze_existing_single_channel_masks(
         masks=full_masks,
         tables=SingleChannelTables(
             objects=object_table,
+            voxel_plausibility=plausibility_table,
             overview=overview_table,
         ),
         analysis_z_bounds=effective_analysis_z_bounds,

@@ -24,6 +24,12 @@ Each release is also archived on Zenodo for long-term preservation and citation 
   - standardized mask and table export
 - add a dedicated 2D DAPI nuclei demo script for the new single-channel
   workflow
+- extend the single-channel object export with morphology metrics:
+  - 2D area, perimeter, roundness, and eccentricity
+  - 3D volume, voxel-surface area, sphericity, and ellipticity-like
+    elongation
+  - a separate voxel plausibility sheet in the Excel export
+  - per-ROI averages of the new morphology metrics
 
 ### 📃 Changes
 
