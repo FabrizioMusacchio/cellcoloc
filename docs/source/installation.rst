@@ -105,6 +105,21 @@ or, for interactive development:
 
    pip install --upgrade -e ".[interactive]"
 
+User-scripts
+------------
+
+Please visit CellColoc's `GitHub repository <https://github.com/FabrizioMusacchio/cellcoloc/tree/main>`_ 
+for the latest user-scripts. The repository contains a ``user_scripts/`` directory with example scripts 
+for 2D and 3D datasets, including single-channel and three-channel analyses. We
+discuss them in detail in the `Usage <usage.html>`_ section of the documentation.
+
+Example datasets
+----------------
+
+In order to run the example user-scripts, you will need to download the example datasets. 
+Please refer to the  `Example data set section <usage_example_datasets.html>`_ 
+and follow the download instructions there. 
+
 Dependencies
 ------------
 
