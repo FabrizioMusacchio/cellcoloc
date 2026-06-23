@@ -13,6 +13,8 @@ colocalization analysis in microscopy images.
 
 The package is designed for workflows in which a user wants to:
 
+- analyze a single microscopy channel when no colocalization step is needed
+  and the goal is object counting, occupancy, or morphology analysis,
 - segment a larger biological object in one channel,
 - segment or threshold a marker-defining structure in a second channel,
 - classify cells as marker-positive or marker-negative based on overlap,
@@ -44,6 +46,8 @@ Core design
 
 CellColoc is built around a generic channel model:
 
+- an optional dedicated single-channel workflow for pure segmentation,
+  counting, occupancy, and morphology analysis,
 - one primary ``cell`` channel,
 - one primary ``marker`` channel,
 - one optional third analysis channel.
@@ -68,6 +72,8 @@ CellColoc currently provides:
 - OMIO-based microscopy loading
 - automatic 2D versus 3D detection
 - optional voxel-size resolution from OMIO metadata
+- dedicated single-channel workflow for segmentation, object counting,
+  occupancy, and morphology analysis without a colocalization step
 - optional ROI drawing in napari
 - optional whole-image analysis as a single ROI
 - optional reuse of saved ROI masks

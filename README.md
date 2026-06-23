@@ -6,6 +6,7 @@
 
 It is designed for experiments where you want to:
 
+- analyze a single microscopy channel when no colocalization step is needed and the main goal is object counting, sizing, and morphology,
 - segment a larger biological object in one channel, such as soma, cytoplasm, neurites, or another cellular compartment,
 - segment or threshold a second channel that defines marker positivity,
 - classify cells as marker-positive or marker-negative based on overlap,
@@ -17,6 +18,7 @@ The package supports both 2D and 3D data, flexible segmentation backends (we sup
 ## Core idea
 *CellColoc* is built around a simple but flexible model:
 
+- an optional single-channel workflow for pure segmentation, counting, occupancy, and morphology analysis,
 - one primary `cell` channel,
 - one primary `marker` channel,
 - an optional third channel for additional occupancy quantification or optional third-marker positivity analysis.
@@ -37,8 +39,8 @@ For each analysis run, the package can:
 2. resolve voxel size either from user input or OMIO metadata,
 3. optionally prepare a global analysis view using z-cropping and/or z-projection,
 4. let the user draw 2D ROIs in napari or reuse existing ROI masks,
-5. segment each configured channel with *Cellpose* or threshold-based methods,
-6. measure overlap between segmented cells and marker objects,
+5. segment a single configured channel for pure object counting and morphology analysis, or segment each configured colocalization channel with *Cellpose* or threshold-based methods,
+6. measure overlap between segmented cells and marker objects when a multi-channel colocalization workflow is used,
 7. classify each cell as marker-positive or marker-negative,
 8. optionally quantify occupancy metrics for every segmented channel,
 9. optionally classify cells as positive for the third channel as well,
@@ -51,6 +53,7 @@ For each analysis run, the package can:
 - Reusable core package separated from project-specific scripts
 - 2D and 3D image handling
 - Automatic dimensionality detection from OMIO-loaded `TZCYX` data
+- Dedicated single-channel workflow for segmentation, object counting, occupancy, and morphology analysis without colocalization
 - Optional ROI drawing in napari
 - Optional whole-image analysis as one ROI
 - Optional reuse of previously saved ROI masks
