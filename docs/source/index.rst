@@ -57,9 +57,9 @@ CellColoc Documentation
    :target: https://pypistats.org/packages/cellcoloc
    :alt: PyPI Downloads
 
-.. .. image:: https://static.pepy.tech/personalized-badge/cellcoloc?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=BLUE&left_text=PiPY+total+downloads
-..    :target: https://pepy.tech/projects/cellcoloc
-..    :alt: PyPI Total Downloads
+.. image:: https://static.pepy.tech/personalized-badge/cellcoloc?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=BLUE&left_text=PiPY+total+downloads
+   :target: https://pepy.tech/projects/cellcoloc
+   :alt: PyPI Total Downloads
 
 .. image:: https://img.shields.io/badge/Example%20Datasets-10.5281%2Fzenodo.20788293-blue
    :target: https://doi.org/10.5281/zenodo.20788293
