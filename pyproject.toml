@@ -60,3 +60,9 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["cellcoloc*"]
+
+[tool.flit.sdist]
+exclude = [
+  "docs/source/_static",
+  "user_scripts/figures",
+]

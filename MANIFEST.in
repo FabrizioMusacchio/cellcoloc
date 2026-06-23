@@ -1,0 +1,2 @@
+prune docs/source/_static
+prune user_scripts/figures
