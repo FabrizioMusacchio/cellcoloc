@@ -9,6 +9,11 @@
 import os
 import sys
 from datetime import datetime
+
+# Prevent numba-backed optional dependencies from trying to JIT/cache during
+# autodoc imports on documentation builds.
+os.environ.setdefault("NUMBA_DISABLE_JIT", "1")
+
 sys.path.insert(0, os.path.abspath("../.."))
 from importlib.metadata import version as pkg_version, PackageNotFoundError, packages_distributions
 

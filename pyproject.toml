@@ -74,3 +74,6 @@ exclude = [
 [tool.pytest.ini_options]
 addopts = "-ra -p no:napari -p no:napari-plugin-engine -p no:npe2"
 testpaths = ["tests"]
+filterwarnings = [
+  "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+]
