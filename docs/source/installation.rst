@@ -11,11 +11,47 @@ Either way you choose below, first create and activate a Python
    conda create -n cellcoloc python=3.12 -y
    conda activate cellcoloc
 
-.. note::
-   We have tested CellColoc with Python 3.12. Newer versions may work but 
-   are not guaranteed to be compatible. Older Python version are not supported,
-   as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
-   reading microscopy data, and OMIO requires Python 3.12 or newer.
+Installation on Windows with GPU-support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On Windows and in case you have a **CUDA-ready GPU**, we recommend to install 
+PyTorch prior to CellColoc in order to prevent the installation of the CPU-only 
+PyTorch version for Cellpose. Thus, in case you want to use Cellpose with GPU 
+acceleration on your Windows PC,  please follow these steps instead of the 
+standard installation above:
+
+1. If not already done, install the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx>`_, the `CUDA Toolkit <https://developer.nvidia.com/cuda-downloads>`_ and `cuDNN <https://developer.nvidia.com/cudnn>`_.
+2. Find out your CUDA version by running ``nvidia-smi`` in the terminal.
+3. Visit the `PyTorch website <https://pytorch.org/get-started/locally/>`_ and copy the correct command for your system. 
+   **Important: Do not execute the PyTorch installation command yet!** We first need to create a virtual environment for CellColoc and then install PyTorch in that environment! 
+4. Create a virtual environment for CellColoc using Python 3.12, e.g.,
+
+   .. code-block:: bash
+
+      conda create -n cellcoloc python=3.12 -y
+      conda activate cellcoloc
+
+5. In that environment, paste the PyTorch installation command you found in step 3. For example, for a system with CUDA 13.0, you would use:
+
+   .. code-block:: bash
+
+      pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+
+6. Verify that PyTorch can access your GPU:
+
+   .. code-block:: bash
+
+      python -c "import torch; print(torch.cuda.is_available())"
+
+Now you can follow on of the installation methods described below. 
+
+Python version
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We have tested CellColoc with Python 3.12. Newer versions may work but 
+are not guaranteed to be compatible. Older Python version are not supported,
+as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
+reading microscopy data, and OMIO requires Python 3.12 or newer.
    
 
 
@@ -104,6 +140,18 @@ or, for interactive development:
 .. code-block:: bash
 
    pip install --upgrade -e ".[interactive]"
+
+Removing the CellColoc environment
+------------------------------------
+
+In case you want to remove the CellColoc conda environment you have created 
+in the steps above, e.g., for a fresh reinstallation, simply execute the following 
+command *after* deactivating the environment:
+
+.. code-block:: bash
+
+   conda env remove -n cellcoloc
+
 
 User-scripts
 ------------
