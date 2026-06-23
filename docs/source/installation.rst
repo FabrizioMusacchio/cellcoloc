@@ -11,16 +11,17 @@ Either way you choose below, first create and activate a Python
    conda create -n cellcoloc python=3.12 -y
    conda activate cellcoloc
 
-Installation on Windows with GPU-support
+Installation on Windows with GPU support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On Windows and in case you have a **CUDA-ready GPU**, we recommend to install 
+On Windows and in case you have a **CUDA-ready GPU**, we recommend installing
 PyTorch prior to CellColoc in order to prevent the installation of the CPU-only 
 PyTorch version for Cellpose. Thus, in case you want to use Cellpose with GPU 
-acceleration on your Windows PC,  please follow these steps instead of the 
+acceleration on your Windows PC, please follow these steps instead of the 
 standard installation above:
 
-1. If not already done, install the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx>`_, the `CUDA Toolkit <https://developer.nvidia.com/cuda-downloads>`_ and `cuDNN <https://developer.nvidia.com/cudnn>`_.
+1. If not already done, install or update the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx>`_.  
+   For the standard PyTorch wheels from the PyTorch website, a separate `CUDA Toolkit <https://developer.nvidia.com/cuda-downloads>`_ or `cuDNN <https://developer.nvidia.com/cudnn>`_ installation is often **not** required, because the wheel already bundles the needed CUDA runtime components. If you use a custom CUDA or PyTorch setup, however, those additional installations may still be relevant.
 2. Find out your CUDA version by running ``nvidia-smi`` in the terminal.
 3. Visit the `PyTorch website <https://pytorch.org/get-started/locally/>`_ and copy the correct command for your system. 
    **Important: Do not execute the PyTorch installation command yet!** We first need to create a virtual environment for CellColoc and then install PyTorch in that environment! 
@@ -43,13 +44,13 @@ standard installation above:
 
       python -c "import torch; print(torch.cuda.is_available())"
 
-Now you can follow on of the installation methods described below. 
+Now you can follow one of the installation methods described below.
 
 Python version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We have tested CellColoc with Python 3.12. Newer versions may work but 
-are not guaranteed to be compatible. Older Python version are not supported,
+are not guaranteed to be compatible. Older Python versions are not supported,
 as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
 reading microscopy data, and OMIO requires Python 3.12 or newer.
    
@@ -184,4 +185,3 @@ The core package currently depends on:
 The optional interactive extra additionally provides:
 
 - ``ipykernel``
-
