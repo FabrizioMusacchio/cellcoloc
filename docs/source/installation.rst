@@ -1,8 +1,8 @@
 Installation
 ============
 
-Python environment
-------------------
+Python environment and Python version
+-------------------------------------
 Either way you choose below, first create and activate a Python 
 3.12 environment, for example:
 
@@ -77,12 +77,33 @@ For interactive development:
 
    pip install -e ".[interactive]"
 
+Updating CellColoc
+------------------
 
-Python version
---------------
+To update an existing installation, run:
 
-CellColoc is currently prepared for Python 3.12 and newer.
+.. code-block:: bash
 
+   pip install --upgrade cellcoloc
+
+If you are using the interactive extra, run:
+
+.. code-block:: bash
+
+   pip install --upgrade "cellcoloc[interactive]"
+
+If you are using the development install, run, after 
+pulling the latest changes from the repository:
+
+.. code-block:: bash
+
+   pip install --upgrade -e .
+
+or, for interactive development:
+
+.. code-block:: bash
+
+   pip install --upgrade -e ".[interactive]"
 
 Dependencies
 ------------
