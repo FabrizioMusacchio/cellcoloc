@@ -43,7 +43,7 @@ This is a true 2D OME-TIFF file with two channels. In this tutorial, we do
 *not* use both channels for a colocalization analysis. Instead, we deliberately
 pick just one channel and count its segmented nuclei-like objects.
 
-.. figure:: _static/dapi_stained_nuclei_2D_01.png
+.. figure:: _static/dapi_stained_nuclei_2D_01.jpg
    :alt: The DAPI-stained nuclei example dataset shown in napari with the two channels.
    :align: center
    :figwidth: 100%
@@ -379,11 +379,11 @@ The next cell opens the current result in napari:
    :start-after: # %% VISUALIZE THE RESULT IN NAPARI
    :end-before: # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 
-.. figure:: _static/2D_dapi_single_cell_count_01.png
+.. figure:: _static/2D_dapi_single_cell_count_01.jpg
    :alt: The DAPI channel with the segmented nuclei overlaid as a label layer.
    :align: center
    :figwidth: 100%
-.. figure:: _static/2D_dapi_single_cell_count_02.png
+.. figure:: _static/2D_dapi_single_cell_count_02.jpg
    :alt: Segmentation layer only
    :align: center
    :figwidth: 100%

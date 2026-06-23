@@ -65,11 +65,11 @@ treat:
   (``DAPI`` in this demo setup).
 
 
-.. figure:: _static/microglia_3D_00.png
+.. figure:: _static/microglia_3D_00.jpg
    :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_01.png
+.. figure:: _static/microglia_3D_01.jpg
    :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
    :align: center
    :figwidth: 100%
@@ -391,7 +391,7 @@ The next cell opens the projected analysis result in napari:
    :start-after: # %% VISUALIZE THE BASE RESULT IN NAPARI
    :end-before: # %% OPTIONALLY REFINE ALL THREE CHANNELS WITH CACHED CELLPOSE OUTPUTS
 
-.. figure:: _static/microglia_3D_zproj_00.png
+.. figure:: _static/microglia_3D_zproj_00.jpg
    :alt: 2D-projection of the original 3D stack, showing the microglia (magenta), Iba1 (cyan), and optional third channel (yellow), along with the segmentation layer of the microglia cells that are positive for both marker channels.
    :align: center
    :figwidth: 100%
@@ -406,26 +406,26 @@ This is intentional. Once you choose a z-projection, all downstream
 segmentation and result inspection should refer to the same projected data.
 
 
-.. figure:: _static/microglia_3D_zproj_01.png
+.. figure:: _static/microglia_3D_zproj_01.jpg
    :alt: Zoom onto the analyzed ROI, showing all channels and their segmented label layers.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_02.png
+.. figure:: _static/microglia_3D_zproj_02.jpg
    :alt: Microglia channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_03.png
+.. figure:: _static/microglia_3D_zproj_03.jpg
    :alt: The segmentation layer of the microglia channel, showing the Cellpose-segmented cell objects. 
    :align: center
    :figwidth: 100%
    
    Top: Zoom onto the analyzed ROI, showing all channels and their segmented label layers. Center: Microglia channel only. Bottom: Segmentation layer of the microglia channel, showing the Cellpose-segmented cell objects. Note that we miss some microglia cells in the center of the ROI. We will try to recover them in the optional refinement step below.
 
-.. figure:: _static/microglia_3D_zproj_04.png
+.. figure:: _static/microglia_3D_zproj_04.jpg
    :alt: Zoom onto the analyzed ROI, showing the marker channel and its segmented label layer.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_05.png
+.. figure:: _static/microglia_3D_zproj_05.jpg
    :alt: Segmentation layer of the marker channel, showing the Otsu-segmented marker objects.
    :align: center
    :figwidth: 100%
@@ -433,18 +433,18 @@ segmentation and result inspection should refer to the same projected data.
    Top: Zoom onto the analyzed ROI, showing the marker channel and its segmented label layer. Bottom: Marker channel only. The marker channel is segmented with Otsu thresholding, which results in a rather rough mask. However, since we are only interested in per-cell positivity (which microglia is Iba1-positive?), this is sufficient for the current demonstration.
 
 
-.. figure:: _static/microglia_3D_zproj_06.png
+.. figure:: _static/microglia_3D_zproj_06.jpg
    :alt: Zoom onto the analyzed ROI, showing the optional third channel and its segmented label layer.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_07.png
+.. figure:: _static/microglia_3D_zproj_07.jpg
    :alt: Segmentation layer of the optional third channel, showing the Cellpose-segmented third channel objects.
    :align: center
    :figwidth: 100%
    
    Top: Zoom onto the analyzed ROI, showing the optional third channel and its segmented label layer. Bottom: Segmented third channel only. The optional third channel is segmented with Cellpose, which results in an almost perfect mask this time. Cellpose's segmentation quality can vary across channels and tends to work best for more "roundish" objects (the microglia's processes complicate the Cellpose segmentation).
 
-.. figure:: _static/microglia_3D_zproj_08.png
+.. figure:: _static/microglia_3D_zproj_08.jpg
    :alt: Microglia segmentation layer, including only cells that are both Iba1-positive and DAPI-positive.
    :align: center
    :figwidth: 100%
@@ -462,11 +462,11 @@ The next cell optionally refines the result after the first inspection:
    :start-after: # %% OPTIONALLY REFINE ALL THREE CHANNELS WITH CACHED CELLPOSE OUTPUTS
    :end-before: # %% OPTIONALLY REANALYZE MANUALLY EDITED LABEL LAYERS FROM NAPARI
 
-.. figure:: _static/microglia_3D_zproj_10.png
+.. figure:: _static/microglia_3D_zproj_10.jpg
    :alt: Zoom onto the analyzed ROI, showing the microglia channels and its segmented label layer after refinement.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_09.png
+.. figure:: _static/microglia_3D_zproj_09.jpg
    :alt: Segmentation layer of the microglia channel after refinement, showing the Cellpose-segmented cell objects.
    :align: center
    :figwidth: 100%
@@ -545,19 +545,19 @@ channel 1:
    :start-after: # %% VISUALIZE CELLS POSITIVE FOR CHANNEL 0 + CHANNEL 1
    :end-before: # %% VISUALIZE CELLS POSITIVE FOR CHANNEL 0 + CHANNEL 2
 
-.. figure:: _static/microglia_3D_zproj_12.png
+.. figure:: _static/microglia_3D_zproj_12.jpg
    :alt: Zoom onto the analyzed ROI, showing the microglia, Iba1, and the resulting segmentation layer of the microglia cells that are positive for Iba1.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_13.png
+.. figure:: _static/microglia_3D_zproj_13.jpg
    :alt: The microglia channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_14.png
+.. figure:: _static/microglia_3D_zproj_14.jpg
    :alt: The Iba1 channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_15.png
+.. figure:: _static/microglia_3D_zproj_15.jpg
    :alt: Segmentation layer of the Iba1-positive cells. This view shows which microglia cells are positive for the Iba1 marker, based on the projected analysis and segmentation results.
    :align: center
    :figwidth: 100%
@@ -584,19 +584,19 @@ channel 2:
    :start-after: # %% VISUALIZE CELLS POSITIVE FOR CHANNEL 0 + CHANNEL 2
    :end-before: # %% VISUALIZE CELLS POSITIVE FOR CHANNEL 0 + CHANNEL 1 + CHANNEL 2
 
-.. figure:: _static/microglia_3D_zproj_16.png
+.. figure:: _static/microglia_3D_zproj_16.jpg
    :alt: Zoom onto the analyzed ROI, showing the microglia, DAPI, and the resulting segmentation layer of the microglia cells that are positive for DAPI.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_17.png
+.. figure:: _static/microglia_3D_zproj_17.jpg
    :alt: The microglia channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_18.png
+.. figure:: _static/microglia_3D_zproj_18.jpg
    :alt: The DAPI channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_19.png
+.. figure:: _static/microglia_3D_zproj_19.jpg
    :alt: Segmentation layer of the DAPI-positive cells. This view shows which microglia cells are positive for the DAPI marker, based on the projected analysis and segmentation results.
    :align: center
    :figwidth: 100%
@@ -617,11 +617,11 @@ The next cell creates the combined double-positive view:
    :start-after: # %% VISUALIZE CELLS POSITIVE FOR CHANNEL 0 + CHANNEL 1 + CHANNEL 2
    :end-before: # %% EXPORT RESULTS
 
-.. figure:: _static/microglia_3D_zproj_20.png
+.. figure:: _static/microglia_3D_zproj_20.jpg
    :alt: Zoom onto the analyzed ROI, showing the microglia, DAPI, and the resulting segmentation layer of the microglia cells that are positive for DAPI.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_23.png
+.. figure:: _static/microglia_3D_zproj_23.jpg
    :alt: Segmentation layer of the Iba1- and DAPI-positive cells. 
    :align: center
    :figwidth: 100%

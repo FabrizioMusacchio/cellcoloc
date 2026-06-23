@@ -36,7 +36,7 @@ This is a true 2D OME-TIFF file with two channels. The file does not provide
 reliable biological channel names in the OME metadata, so the channel meaning
 is assigned explicitly in the script.
 
-.. figure:: _static/dapi_stained_nuclei_2D_01.png
+.. figure:: _static/dapi_stained_nuclei_2D_01.jpg
    :alt: The DAPI-stained nuclei example dataset shown in napari with the two channels.
    :align: center
    :figwidth: 100%
@@ -278,7 +278,7 @@ The next cell only becomes relevant when you disable whole-image mode:
    :start-after: # %% DRAW ROIS INTERACTIVELY IN NAPARI
    :end-before: # %% SAVE THE DRAWN ROIS OR LOAD AN EXISTING ROI MASK
 
-.. figure:: _static/dapi_stained_nuclei_2D_09.png
+.. figure:: _static/dapi_stained_nuclei_2D_09.jpg
    :alt: ROI drawing step in napari with the shapes layer active for drawing ROIs.
    :align: center
    :figwidth: 100%
@@ -363,7 +363,7 @@ What happens here:
 - positive and negative cells are classified,
 - detailed, summary, and overview tables are assembled.
 
-.. figure:: _static/cellpose_running_on_gpu.png
+.. figure:: _static/cellpose_running_on_gpu.jpg
    :alt: Cellpose running on GPU on macOS, showing GPU activity window.
    :align: center
    :figwidth: 90%
@@ -398,7 +398,7 @@ The next cell opens the current result in napari:
    :start-after: # %% VISUALIZE THE RESULT IN NAPARI
    :end-before: # %% OPTIONALLY REFINE RESULTS AND VISUALIZE UPDATED RESULT IN NAPARI
 
-.. figure:: _static/dapi_stained_nuclei_2D_02.png
+.. figure:: _static/dapi_stained_nuclei_2D_02.jpg
    :alt: Segmentation and colocalization results shown in napari with the original channels, ROI labels, segmented cell masks, segmented marker masks, and positive-cell mask.
    :align: center
    :figwidth: 100%
@@ -416,29 +416,29 @@ This visualization usually includes:
 This is the first checkpoint where you inspect whether the segmentation and
 positivity calls look plausible before refining anything.
 
-.. figure:: _static/dapi_stained_nuclei_2D_03.png
+.. figure:: _static/dapi_stained_nuclei_2D_03.jpg
    :alt: Segmentation result for channel 0 (cell channel) shown in napari together with the original image for reference.
    :align: center
    :figwidth: 100%
-.. figure:: _static/dapi_stained_nuclei_2D_04.png
+.. figure:: _static/dapi_stained_nuclei_2D_04.jpg
    :alt: Segmentation result for channel 0 only, showing the segmented cell masks.
    :align: center
    :figwidth: 100%
 
    Top: Segmentation result for channel 0 (cell channel) shown in napari together with the original image for reference. Bottom: Segmentation result for channel 0 only, showing the segmented cell masks.
 
-.. figure:: _static/dapi_stained_nuclei_2D_05.png
+.. figure:: _static/dapi_stained_nuclei_2D_05.jpg
    :alt: Segmentation result for channel 1 (marker channel) shown in napari together with the original image for reference.
    :align: center
    :figwidth: 100%
-.. figure:: _static/dapi_stained_nuclei_2D_06.png
+.. figure:: _static/dapi_stained_nuclei_2D_06.jpg
    :alt: Segmentation result for channel 1 only, showing the segmented marker masks.
    :align: center
    :figwidth: 100%
    
    Top: Segmentation result for channel 1 (marker channel) shown in napari together with the original image for reference. Bottom: Segmentation result for channel 1 only, showing the segmented marker masks.
 
-.. figure:: _static/dapi_stained_nuclei_2D_10.png
+.. figure:: _static/dapi_stained_nuclei_2D_10.jpg
    :alt: Segmentation result for individual ROIs, showing the ROI labels.
    :align: center
    :figwidth: 100%
@@ -494,7 +494,7 @@ The next cell supports a more manual correction workflow:
    :start-after: # %% OPTIONALLY REANALYZE MANUALLY EDITED LABEL LAYERS FROM NAPARI
    :end-before: # %% EXPORT RESULTS
 
-.. figure:: _static/dapi_stained_nuclei_2D_08.png
+.. figure:: _static/dapi_stained_nuclei_2D_08.jpg
    :alt: Manually edited label layers in napari, showing the corrected marker masks.
    :align: center
    :figwidth: 100%

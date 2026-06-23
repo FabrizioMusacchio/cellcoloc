@@ -1,5 +1,5 @@
 Three-channel analysis tutorial
-==============================
+===============================
 
 This tutorial walks through a complete three-channel CellColoc workflow based
 on the interactive Jupyter notebook
@@ -49,11 +49,11 @@ This is a 3D multichannel fluorescence dataset. In this tutorial, we treat:
 - channel 2 as the second marker-like channel
   (``DAPI`` in this demo setup).
 
-.. figure:: _static/microglia_3D_00.png
+.. figure:: _static/microglia_3D_00.jpg
    :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_01.png
+.. figure:: _static/microglia_3D_01.jpg
    :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari.
    :align: center
    :figwidth: 100%
@@ -303,7 +303,7 @@ The next cell opens the base result in napari:
    :start-after: # %% VISUALIZE THE BASE RESULT IN NAPARI
    :end-before: # %% OPTIONALLY SET OR UPDATE A GLOBAL Z CROP FOR SUBSEQUENT REFINEMENT
 
-.. figure:: _static/microglia_3D_three_chan_00.png
+.. figure:: _static/microglia_3D_three_chan_00.jpg
    :alt: 3D multi-channel image stack of hippocampal CA1 tissue, showing microglia, Iba1, and DAPI channels in napari, along with their segmented label layers and ROI labels.
    :align: center
    :figwidth: 100%
@@ -325,26 +325,26 @@ This viewer can show:
 This is the main checkpoint where you can verify that all three segmentation
 paths look plausible before moving on to refinement.
 
-.. figure:: _static/microglia_3D_three_chan_01.png
+.. figure:: _static/microglia_3D_three_chan_01.jpg
    :alt: Zoom onto the analyzed ROI, showing all channels and their segmented label layers.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_02.png
+.. figure:: _static/microglia_3D_three_chan_02.jpg
    :alt: Microglia channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_03.png
+.. figure:: _static/microglia_3D_three_chan_03.jpg
    :alt: The segmentation layer of the microglia channel, showing the Cellpose-segmented cell objects. 
    :align: center
    :figwidth: 100%
    
    Top: Zoom onto the analyzed ROI, showing all channels and their segmented label layers. Center: Microglia channel only. Bottom: Segmentation layer of the microglia channel, showing the Cellpose-segmented cell objects. Note that we miss the upper center microglia cell, while the remaining cells are segmented correctly. This is a typical Cellpose segmentation result that can be improved with the optional refinement step.
 
-.. figure:: _static/microglia_3D_three_chan_04.png
+.. figure:: _static/microglia_3D_three_chan_04.jpg
    :alt: Zoom onto the analyzed ROI, showing the marker channel and its segmented label layer.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_05.png
+.. figure:: _static/microglia_3D_three_chan_05.jpg
    :alt: Segmentation layer of the marker channel, showing the Otsu-segmented marker objects.
    :align: center
    :figwidth: 100%
@@ -352,18 +352,18 @@ paths look plausible before moving on to refinement.
    Top: Zoom onto the analyzed ROI, showing the marker channel and its segmented label layer. Bottom: Marker channel only. The marker channel is segmented with Otsu thresholding, which results in a rather rough mask. However, since we are only interested in per-cell positivity (which microglia is Iba1-positive?), this is sufficient for the current demonstration.
 
 
-.. figure:: _static/microglia_3D_three_chan_06.png
+.. figure:: _static/microglia_3D_three_chan_06.jpg
    :alt: Zoom onto the analyzed ROI, showing the optional third channel and its segmented label layer.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_07.png
+.. figure:: _static/microglia_3D_three_chan_07.jpg
    :alt: Segmentation layer of the optional third channel, showing the Cellpose-segmented third channel objects.
    :align: center
    :figwidth: 100%
    
    Top: Zoom onto the analyzed ROI, showing the optional third channel and its segmented label layer. Bottom: Segmented third channel only. The optional third channel is segmented with Cellpose, which results in an almost perfect mask this time. This shows that the optional third channel can be segmented and included in the per-cell positivity analysis, even if its biological meaning differs from the first marker channel. It also demonstrates that Cellpose's segmentation quality can vary across channels and tends to work best for more "roundish" objects (the microglia's processes complicate the Cellpose segmentation).
 
-.. figure:: _static/microglia_3D_three_chan_08.png
+.. figure:: _static/microglia_3D_three_chan_08.jpg
    :alt: Microglia segmentation layer, including only cells that are both Iba1-positive and DAPI-positive.
    :align: center
    :figwidth: 100%
@@ -467,19 +467,19 @@ Internally, this uses:
 This is the standard two-channel positivity view which you get when analyzing only two channels.
 
 
-.. figure:: _static/microglia_3D_three_chan_14.png
+.. figure:: _static/microglia_3D_three_chan_14.jpg
    :alt: Overview of the microglia and Iba1 channels, showing the microglia channel (magenta) and the Iba1 channel (cyan) in Napari. 
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_15.png
+.. figure:: _static/microglia_3D_three_chan_15.jpg
    :alt: The microglia channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_16.png
+.. figure:: _static/microglia_3D_three_chan_16.jpg
    :alt: The Iba1 channel only.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_three_chan_17.png
+.. figure:: _static/microglia_3D_three_chan_17.jpg
    :alt: Segmentation layer of the Iba1-positive cells.
    :align: center
    :figwidth: 100%
@@ -530,7 +530,7 @@ and therefore corresponds to the logical AND of:
 - channel-0 versus channel-1 positivity,
 - channel-0 versus channel-2 positivity.
 
-.. figure:: _static/microglia_3D_three_chan_09.png
+.. figure:: _static/microglia_3D_three_chan_09.jpg
    :alt: Overview of the microglia (magenta), Iba1 (cyan), and optional third channel (yellow), along with the segmentation layer of the microglia cells that are positive for both marker channels.
    :align: center
    :figwidth: 100%
