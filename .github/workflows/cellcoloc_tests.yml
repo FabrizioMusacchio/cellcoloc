@@ -36,9 +36,16 @@ jobs:
         run: |
           source "$(conda info --base)/etc/profile.d/conda.sh"
           conda activate cellcoloc
-          pytest --cov=cellcoloc --cov-branch --cov-report=term --cov-report=xml
+          pytest --cov=cellcoloc --cov-branch --cov-report=term --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
