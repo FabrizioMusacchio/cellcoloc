@@ -1,0 +1,45 @@
+name: Run Python tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.12"
+          activate-environment: cellcoloc
+          auto-update-conda: true
+          miniforge-variant: Miniforge3
+          channels: conda-forge
+          conda-remove-defaults: true
+
+      - name: Install CellColoc and test dependencies
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate cellcoloc
+          pip install ".[dev]"
+
+      - name: Debug CellColoc import
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate cellcoloc
+          python -c "import cellcoloc; print('cellcoloc imported from:', cellcoloc.__file__)"
+
+      - name: Run tests
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate cellcoloc
+          pytest --cov=cellcoloc --cov-branch --cov-report=term --cov-report=xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
