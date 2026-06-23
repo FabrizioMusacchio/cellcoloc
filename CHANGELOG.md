@@ -8,7 +8,14 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
 
-## 🔜 Next version
+## 🚀 CellColoc v0.0.4
+
+June 23, 2026
+
+This release expands **CellColoc** from a pure multi-channel colocalization
+workflow into a broader interactive microscopy-analysis toolkit by adding a
+dedicated single-channel mode, a first full set of usage tutorials, and
+tutorial-derived notebook counterparts for the interactive example scripts.
 
 ### ✨ Features
 
@@ -39,6 +46,12 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 - add the first full usage tutorials to the Read the Docs documentation:
   - a 2D tutorial based on the DAPI-stained nuclei example workflow
   - a 3D tutorial based on the microglia example workflow
+  - a three-channel tutorial
+  - a three-channel z-projection tutorial
+  - a 2D single-channel nuclei tutorial
+- generate notebook counterparts for the interactive example workflows from
+  the tutorial structure itself, including local figure references inside the
+  ``user_scripts`` folder
 - expand the documentation with mathematical definitions of object-based
   colocalization and occupancy metrics
 - improve the Read the Docs configuration so copy buttons are shown on all
@@ -51,11 +64,17 @@ Each release is also archived on Zenodo for long-term preservation and citation 
   - separate visualization of cells positive for channel ``0+1``
   - separate visualization of cells positive for channel ``0+2``
   - separate visualization of cells positive for channel ``0+1+2``
+- add a dedicated three-channel z-projection demo script that demonstrates:
+  - global z projection before segmentation
+  - projected three-channel analysis
+  - projected positivity views for ``0+1``, ``0+2``, and ``0+1+2``
 - extend cache-based Cellpose refinement so the optional third analysis channel
   can also be rebuilt from cached Cellpose outputs, including optional
   threshold changes and postfiltering
 - keep manual reanalysis after napari label edits consistent with the active
   analysis z-bounds in the 3D workflows
+- surface the new single-channel workflow explicitly in the README and the
+  general documentation overview as a first-class CellColoc feature
 
 
 ---
