@@ -15,6 +15,7 @@ VS Code interactive window or notebook-like environment.
    usage_2d_dapi_stained_nuclei
    usage_3d_microglia
    usage_three_channel_analysis
+   usage_three_channel_zprojection
    
 
 
