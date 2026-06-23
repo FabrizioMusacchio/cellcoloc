@@ -23,8 +23,12 @@ CellColoc Documentation
    :target: https://cellcoloc.readthedocs.io/en/latest/overview.html#license
    :alt: GPLv3 License
 
-.. .. image:: https://github.com/FabrizioMusacchio/cellcoloc/actions/workflows/cellcoloc_tests.yml/badge.svg
-..    :alt: Tests
+.. image:: https://github.com/FabrizioMusacchio/cellcoloc/actions/workflows/cellcoloc_tests.yml/badge.svg
+   :alt: Tests
+
+.. image:: https://codecov.io/gh/FabrizioMusacchio/cellcoloc/graph/badge.svg?token=OYTRL4WO0U 
+   :target: https://codecov.io/gh/FabrizioMusacchio/cellcoloc
+   :alt: Codecov
 
 .. image:: https://img.shields.io/github/last-commit/FabrizioMusacchio/cellcoloc
    :target: https://github.com/FabrizioMusacchio/cellcoloc/commits/main/
