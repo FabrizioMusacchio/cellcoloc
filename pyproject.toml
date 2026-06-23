@@ -22,7 +22,7 @@ keywords = [
   "omio",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3",
@@ -41,6 +41,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+]
 interactive = [
   "ipykernel",
 ]
@@ -66,3 +70,7 @@ exclude = [
   "docs/source/_static",
   "user_scripts/figures",
 ]
+
+[tool.pytest.ini_options]
+addopts = "-ra -p no:napari -p no:napari-plugin-engine -p no:npe2"
+testpaths = ["tests"]
