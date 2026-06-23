@@ -10,11 +10,46 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ## 🔜 Next version
 
+### ✨ Features
+
+- add a dedicated single-channel segmentation and counting workflow that can
+  analyze one microscopy channel without any colocalization step while still
+  reusing CellColoc's existing core capabilities:
+  - Cellpose and threshold-based segmentation backends
+  - ROI-based or whole-image analysis
+  - prefiltering and postfiltering
+  - global z-cropping and optional z projection
+  - cached Cellpose refinement
+  - manual napari relabeling and reanalysis
+  - standardized mask and table export
+- add a dedicated 2D DAPI nuclei demo script for the new single-channel
+  workflow
+
 ### 📃 Changes
 
 - allow ``VOXEL_SCALE_ZYX`` to be provided either as a full ``(Z, Y, X)``
   tuple or, for 2D workflows, as a shorter ``(Y, X)`` tuple that is expanded
   internally to ``(1.0, Y, X)``
+- add the first full usage tutorials to the Read the Docs documentation:
+  - a 2D tutorial based on the DAPI-stained nuclei example workflow
+  - a 3D tutorial based on the microglia example workflow
+- expand the documentation with mathematical definitions of object-based
+  colocalization and occupancy metrics
+- improve the Read the Docs configuration so copy buttons are shown on all
+  standard highlighted code blocks instead of only Python code snippets
+- extend the 2D DAPI example user script with:
+  - whole-image-as-single-ROI mode
+  - automatic reuse of an existing saved ROI mask from the results directory
+- add a dedicated three-channel 3D microglia demo script that demonstrates:
+  - active segmentation of the third channel
+  - separate visualization of cells positive for channel ``0+1``
+  - separate visualization of cells positive for channel ``0+2``
+  - separate visualization of cells positive for channel ``0+1+2``
+- extend cache-based Cellpose refinement so the optional third analysis channel
+  can also be rebuilt from cached Cellpose outputs, including optional
+  threshold changes and postfiltering
+- keep manual reanalysis after napari label edits consistent with the active
+  analysis z-bounds in the 3D workflows
 
 
 ---
