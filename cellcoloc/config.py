@@ -39,6 +39,23 @@ class ChannelConfig:
 
 
 @dataclass(slots=True)
+class SingleChannelConfig:
+    """Describe a one-channel segmentation workflow.
+
+    Attributes
+    ----------
+    channel_index:
+        Zero-based channel index that should be loaded and segmented. This
+        lightweight config is used by CellColoc's optional single-channel
+        workflow, which reuses the same segmentation, ROI, projection,
+        filtering, and refinement backends as the multi-channel pipeline but
+        skips all colocalization logic.
+    """
+
+    channel_index: int
+
+
+@dataclass(slots=True)
 class DisplayNames:
     """Human-readable names used in napari layers and user-facing messages."""
 
@@ -46,6 +63,14 @@ class DisplayNames:
     marker: str = "Marker"
     optional_region: str = "Optional region"
     positive_cells: str = "Marker-positive cells"
+
+
+@dataclass(slots=True)
+class SingleChannelDisplayNames:
+    """Human-readable names used in one-channel napari visualizations."""
+
+    channel: str = "Channel"
+    objects: str = "Segmented objects"
 
 
 @dataclass(slots=True)
@@ -225,6 +250,20 @@ class ColocalizationConfig:
     overlap_fraction_threshold: float = 0.02
     min_overlap_voxels: int = 20
     evaluate_optional_region_cell_positivity: bool = False
+
+
+@dataclass(slots=True)
+class SingleChannelAnalysisConfig:
+    """Analysis thresholds for one-channel object counting workflows.
+
+    Attributes
+    ----------
+    min_object_voxels:
+        Minimum size required for segmented objects after ROI-wise
+        segmentation and before object counting or occupancy calculation.
+    """
+
+    min_object_voxels: int = 50
 
 
 @dataclass(slots=True)
