@@ -547,8 +547,10 @@ early intermediate result.
 Understanding the exported Excel workbook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In addition to the CSV export, CellColoc writes one Excel workbook with three
-worksheets:
+In addition to the CSV export, CellColoc writes one Excel workbook.
+
+For this two-channel colocalization workflow, the three central
+colocalization-oriented worksheets are:
 
 - ``detailed_overlaps``:
   one row per concrete cell-marker overlap event. This is the most granular
@@ -558,18 +560,28 @@ worksheets:
   one row per segmented cell. This table aggregates overlap events to the cell
   level and contains the final positive or negative classification of each
   cell.
-- ``roi_overview``:
+- ``roi_coloc_overview``:
   one row per ROI. This table summarizes the analysis at the region level and
   is usually the best starting point for comparing different ROIs or different
   files at a glance.
 
-For many downstream analyses, ``roi_overview`` is the most compact result
+In the current CellColoc release, the workbook may additionally contain
+further sheets with morphology and per-ROI summary metrics, for example
+channel-specific object-property tables. Those tables are described in more
+detail on the dedicated results reference page:
+
+`usage_results.html <usage_results.html>`_
+
+In this tutorial, we focus only on the core object-based colocalization
+outputs.
+
+For many downstream analyses, ``roi_coloc_overview`` is the most compact result
 table because it combines ROI geometry, object counts, positivity counts, and
 occupancy metrics in one place.
 
 
-Understanding the ``roi_overview`` columns
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Understanding the ``roi_coloc_overview`` columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The exact set of columns depends on whether you analyze only the two primary
 channels or also an optional third analysis channel. The groups below explain
@@ -681,7 +693,7 @@ As a simple reading strategy:
 4. compare the different ``*_occupancy_*`` blocks to quantify how strongly
    each segmented channel fills the ROI.
 
-This makes ``roi_overview`` the most useful sheet for quick ROI-level quality
+This makes ``roi_coloc_overview`` the most useful sheet for quick ROI-level quality
 control and for compact downstream statistics.
 
 
