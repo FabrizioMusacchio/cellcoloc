@@ -25,6 +25,10 @@ The package supports both 2D and 3D data, flexible segmentation backends (we sup
 - an optional third channel for additional occupancy quantification or optional third-marker positivity analysis,
 - an optional single-channel workflow for pure segmentation, counting, occupancy, and morphology analysis.
 
+![Figure 1. CellColoc workflow for object-based multi-channel colocalization analysis in microscopy images.](docs/source/_static/CellColoc_scheme.jpg)
+
+***Figure 1. CellColoc workflow for object-based multi-channel colocalization analysis in microscopy images.** **(a)** A full field of view (FOV) or user-defined regions of interest (ROIs) are selected interactively in napari. **(b)** Within the selected analysis region, each channel is segmented independently using either Cellpose or threshold-based methods. **(c)** Representative input channels for the cell channel $C$, marker channel $M$, and an optional third channel $T$. **(d)** Corresponding per-channel segmentation masks. **(e)** Per-channel object properties are extracted from the segmented masks. **(f)** Object-based colocalization is then evaluated by testing cell-channel objects for overlap with the marker channel ($C \cap M \neq \varnothing$), with the optional third channel ($C \cap T \neq \varnothing$), or with both channels ($(C \cap M \neq \varnothing) \land (C \cap T \neq \varnothing)$). **(g)** Resulting subsets of cell-channel objects classified as positive for $M$, positive for $T$, or positive for both $M$ and $T$.*
+
 Each analysis channel can use one of several segmentation backends:
 
 - `cellpose`
