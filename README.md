@@ -8,22 +8,22 @@
 
 It is designed for experiments where you want to:
 
-- analyze a single microscopy channel when no colocalization step is needed and the main goal is object counting, sizing, and morphology,
 - segment a larger biological object in one channel, such as soma, cytoplasm, neurites, or another cellular compartment,
 - segment or threshold a second channel that defines marker positivity,
 - classify cells as marker-positive or marker-negative based on overlap,
 - optionally segment a third channel for ROI occupancy quantification and, if desired, third-channel cell positivity,
-- inspect and refine results interactively in napari.
+- inspect and refine results interactively in napari,
+- analyze a single microscopy channel when no colocalization step is needed and the main goal is object counting, sizing, and morphology.
 
 The package supports both 2D and 3D data, flexible segmentation backends (we support both [*Cellpose*](https://www.cellpose.org) and classical thresholding), and a range of optional features including optional ROI-based analysis, optional global z-cropping, optional z-projection, and fast post hoc *Cellpose* threshold refinement.
 
 ## Core idea
 *CellColoc* is built around a simple but flexible model:
 
-- an optional single-channel workflow for pure segmentation, counting, occupancy, and morphology analysis,
 - one primary `cell` channel,
 - one primary `marker` channel,
-- an optional third channel for additional occupancy quantification or optional third-marker positivity analysis.
+- an optional third channel for additional occupancy quantification or optional third-marker positivity analysis,
+- an optional single-channel workflow for pure segmentation, counting, occupancy, and morphology analysis.
 
 Each analysis channel can use one of several segmentation backends:
 
@@ -50,7 +50,6 @@ For each analysis run, the package can:
 11. allow interactive post hoc refinement and manual relabel-based reanalysis.
 
 ## Main features
-
 - Interactive user-script workflow for VS Code interactive window or notebook-like execution
 - Reusable core package separated from project-specific scripts
 - 2D and 3D image handling
@@ -228,10 +227,13 @@ Tabular outputs include:
 - `overview`
   one row per ROI with counts, geometry, and occupancy metrics
 
-The detailed table is exported as CSV. All tables are also exported together into an Excel workbook.
+The detailed table is exported as CSV. All tables are also exported together into an Excel workbook. Please refer to the [documentation](https://cellcoloc.readthedocs.io/en/latest/usage_results.html) for a detailed description of the table columns.
 
 ## Installation
 A complete installation guide (including GPU support on Windows) is available in CellColoc's [Read the Docs documentation](https://cellcoloc.readthedocs.io/en/latest/installation.html)
+
+## Where to start
+We recommend to start with usage examples on the documentation website. The folder `user_scripts/` contains interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from [Zenodo](https://doi.org/10.5281/zenodo.20788293)) or with your own microscopy data.
 
 ## Citation
 If you use *CellColoc* in scientific work, please cite:
