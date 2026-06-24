@@ -13,14 +13,13 @@ colocalization analysis in microscopy images.
 
 The package is designed for workflows in which a user wants to:
 
-- analyze a single microscopy channel when no colocalization step is needed
-  and the goal is object counting, occupancy, or morphology analysis,
 - segment a larger biological object in one channel,
 - segment or threshold a marker-defining structure in a second channel,
 - classify cells as marker-positive or marker-negative based on overlap,
 - optionally include a third channel for occupancy quantification or optional
   third-marker positivity,
-- inspect, refine, and export results in a reproducible way.
+- inspect, refine, and export results in a reproducible way,
+- analyze a single microscopy channel when no colocalization step is needed and the goal is object counting, occupancy, or morphology analysis.
 
 The package supports both 2D and 3D data, flexible segmentation backends (we support both `Cellpose <https://www.cellpose.org>`_ and classical thresholding), and a range of optional features including optional ROI-based analysis, optional global z-cropping, optional z-projection, and fast post hoc Cellpose threshold refinement.
 
@@ -46,11 +45,19 @@ Core design
 
 CellColoc is built around a generic channel model:
 
-- an optional dedicated single-channel workflow for pure segmentation,
-  counting, occupancy, and morphology analysis,
 - one primary ``cell`` channel,
 - one primary ``marker`` channel,
-- one optional third analysis channel.
+- one optional third analysis channel,
+- an optional dedicated single-channel workflow for pure segmentation,
+  counting, occupancy, and morphology analysis,
+
+
+.. figure:: _static/CellColoc_scheme.jpg
+   :alt: Figure 1. CellColoc workflow for object-based multi-channel colocalization analysis in microscopy images
+   :align: center
+   :figwidth: 100%
+
+   **Figure X. CellColoc workflow for object-based multi-channel colocalization analysis in microscopy images.** **(a)** A full field of view (FOV) or user-defined regions of interest (ROIs) are selected interactively in napari. **(b)** Within the selected analysis region, each channel is segmented independently using either Cellpose or threshold-based methods. **(c)** Representative input channels for the cell channel :math:`C`, marker channel :math:`M`, and an optional third channel :math:`T`. **(d)** Corresponding per-channel segmentation masks. **(e)** Per-channel object properties are extracted from the segmented masks. **(f)** Object-based colocalization is then evaluated by testing cell-channel objects for overlap with the marker channel (:math:`C \cap M \neq \varnothing`), with the optional third channel (:math:`C \cap T \neq \varnothing`), or with both channels (:math:`(C \cap M \neq \varnothing) \land (C \cap T \neq \varnothing)`). **(g)** Resulting subsets of cell-channel objects classified as positive for :math:`M`, positive for :math:`T`, or positive for both :math:`M` and :math:`T`.
 
 Each analysis channel can use one of several segmentation backends:
 
@@ -175,12 +182,15 @@ The intended usage model is interactive and notebook-like:
 This makes CellColoc especially suitable for exploratory but still
 reproducible microscopy workflows.
 
+Where to start
+----------------
+
+We recommend to start with `usage examples <usage.html>`_ on this documentation website. On CellColoc's `GitHub repository <https://github.com/FabrizioMusacchio/cellcoloc>`_, you will additionally find a folder ``user_scripts/`` with interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from `Zenodo <https://doi.org/10.5281/zenodo.20788293>`_) or with your own microscopy data.
 
 License
 -------
 
-CellColoc is distributed under the terms of the GNU General Public License v3.0
-or later (GPL-3.0-or-later).
+CellColoc is distributed under the terms of the `GNU General Public License v3.0 or later (GPL-3.0-or-later) <https://github.com/FabrizioMusacchio/cellcoloc?tab=GPL-3.0-1-ov-file>`_.
 
 
 Citation
