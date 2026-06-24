@@ -7,7 +7,11 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
-## 🔜 Next version
+## 🚀 CellColoc v0.0.5
+
+June 24, 2026
+
+This release extends the multi-channel colocalization output with channel-wise morphology tables and ROI-level morphology summaries so that colocalization results and per-channel object properties can be inspected together in one workbook (Excel-file).
 
 ### ✨ Features
 
@@ -25,9 +29,7 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 June 23, 2026
 
-This release expands **CellColoc** from a pure multi-channel colocalization
-workflow into a broader interactive microscopy-analysis toolkit by adding a
-dedicated single-channel mode, a first full set of usage tutorials, and
+This release expands **CellColoc** from a pure multi-channel colocalization workflow into a broader interactive microscopy-analysis toolkit by adding a dedicated single-channel mode, a first full set of usage tutorials, and
 tutorial-derived notebook counterparts for the interactive example scripts.
 
 ### ✨ Features
