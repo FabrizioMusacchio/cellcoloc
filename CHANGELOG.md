@@ -7,6 +7,19 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
+## 🔜 Next version
+
+### ✨ Features
+
+- extend the multi-channel colocalization export with channel-wise morphology
+  tables and per-ROI morphology summaries:
+  - augment ``cell_summary`` with cell-channel size and shape metrics
+  - add ``marker_properties`` for segmented marker objects
+  - add ``3rd_channel_properties`` when an optional third channel is analyzed
+  - rename the ROI overview export sheet to ``roi_coloc_overview``
+  - add ``roi_cell_summary``, ``roi_marker_summary``, and optional
+    ``roi_3rd_channel_summary`` sheets with per-ROI mean morphology metrics
+
 
 ## 🚀 CellColoc v0.0.4
 

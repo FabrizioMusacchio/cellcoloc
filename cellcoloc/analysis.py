@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from skimage.measure import regionprops_table
+from skimage.measure import regionprops, regionprops_table
 
 from .config import CellposeModelConfig, ColocalizationConfig, RuntimeConfig
 from .filtering import apply_postfilters, apply_prefilter
@@ -99,6 +99,232 @@ def build_positive_cell_mask(cell_masks: np.ndarray, summary_table: pd.DataFrame
     lookup = np.zeros(max_label + 1, dtype=np.uint32)
     lookup[positive_labels] = positive_labels
     return lookup[cell_masks]
+
+
+def _compute_3d_surface_area_um2(
+    object_mask_zyx: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> float:
+    """Compute voxel-surface area of one 3D object in squared micrometers."""
+
+    z_size_um, y_size_um, x_size_um = voxel_scale_zyx
+    padded = np.pad(np.asarray(object_mask_zyx, dtype=bool), 1, mode="constant", constant_values=False)
+    transitions_z = np.count_nonzero(padded[1:, :, :] != padded[:-1, :, :])
+    transitions_y = np.count_nonzero(padded[:, 1:, :] != padded[:, :-1, :])
+    transitions_x = np.count_nonzero(padded[:, :, 1:] != padded[:, :, :-1])
+
+    face_area_z = y_size_um * x_size_um
+    face_area_y = z_size_um * x_size_um
+    face_area_x = z_size_um * y_size_um
+    return float(
+        transitions_z * face_area_z
+        + transitions_y * face_area_y
+        + transitions_x * face_area_x
+    )
+
+
+def _compute_3d_ellipticity(
+    object_mask_zyx: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+) -> float:
+    """Estimate a 3D ellipticity-like elongation score from voxel coordinates."""
+
+    coordinates = np.column_stack(np.where(object_mask_zyx))
+    if coordinates.shape[0] < 3:
+        return np.nan
+
+    spacing = np.asarray(voxel_scale_zyx, dtype=float)
+    coordinates_um = coordinates * spacing
+    centered = coordinates_um - coordinates_um.mean(axis=0, keepdims=True)
+    covariance = np.cov(centered, rowvar=False)
+    eigenvalues = np.sort(np.linalg.eigvalsh(covariance))[::-1]
+    eigenvalues = np.clip(eigenvalues, 0.0, None)
+
+    if eigenvalues[0] <= 0:
+        return np.nan
+
+    major_axis = np.sqrt(eigenvalues[0])
+    minor_axis = np.sqrt(eigenvalues[-1])
+    if major_axis <= 0:
+        return np.nan
+
+    return float(1.0 - (minor_axis / major_axis))
+
+
+def _channel_metric_column_names(prefix: str) -> list[str]:
+    """Return the standard morphology metric column names for one channel."""
+
+    return [
+        f"{prefix}_area_px_2d",
+        f"{prefix}_area_um2_2d",
+        f"{prefix}_perimeter_px_2d",
+        f"{prefix}_perimeter_um_2d",
+        f"{prefix}_roundness_2d",
+        f"{prefix}_eccentricity_2d",
+        f"{prefix}_volume_voxels_3d",
+        f"{prefix}_volume_um3_3d",
+        f"{prefix}_surface_area_um2_3d",
+        f"{prefix}_sphericity_3d",
+        f"{prefix}_ellipticity_3d",
+    ]
+
+
+def _empty_channel_properties_table(
+    label_column: str,
+    metric_prefix: str,
+) -> pd.DataFrame:
+    """Create an empty per-object morphology table for one segmented channel."""
+
+    return pd.DataFrame(
+        columns=[
+            "roi_id",
+            label_column,
+            "centroid_z",
+            "centroid_y",
+            "centroid_x",
+            *_channel_metric_column_names(metric_prefix),
+        ]
+    )
+
+
+def _build_channel_properties_table(
+    label_image: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
+    roi_labels_2d: np.ndarray,
+    label_column: str,
+    metric_prefix: str,
+) -> pd.DataFrame:
+    """Create one morphology row per segmented label of one channel."""
+
+    if np.max(label_image) == 0:
+        return _empty_channel_properties_table(label_column, metric_prefix)
+
+    is_effective_2d = label_image.shape[0] == 1
+    z_size_um, y_size_um, x_size_um = voxel_scale_zyx
+    pixel_area_um2 = y_size_um * x_size_um
+    voxel_volume_um3 = z_size_um * y_size_um * x_size_um
+    rows: list[dict[str, int | float]] = []
+    roi_labels_3d = np.broadcast_to(roi_labels_2d, label_image.shape)
+
+    if is_effective_2d:
+        for region in regionprops(label_image[0]):
+            object_label = int(region.label)
+            object_mask = label_image == object_label
+            roi_values = roi_labels_3d[object_mask]
+            roi_values = roi_values[roi_values != 0]
+            roi_id = int(np.unique(roi_values)[0]) if roi_values.size > 0 else 0
+
+            object_area_px = float(region.area)
+            object_area_um2 = float(object_area_px * pixel_area_um2)
+            perimeter_px = float(getattr(region, "perimeter", np.nan))
+            perimeter_um = (
+                float(perimeter_px * ((y_size_um + x_size_um) / 2.0))
+                if np.isfinite(perimeter_px)
+                else np.nan
+            )
+            roundness = (
+                float((4.0 * np.pi * object_area_px) / (perimeter_px ** 2))
+                if np.isfinite(perimeter_px) and perimeter_px > 0
+                else np.nan
+            )
+            rows.append(
+                {
+                    "roi_id": roi_id,
+                    label_column: object_label,
+                    "centroid_z": 0.0,
+                    "centroid_y": float(region.centroid[0]),
+                    "centroid_x": float(region.centroid[1]),
+                    f"{metric_prefix}_area_px_2d": object_area_px,
+                    f"{metric_prefix}_area_um2_2d": object_area_um2,
+                    f"{metric_prefix}_perimeter_px_2d": perimeter_px,
+                    f"{metric_prefix}_perimeter_um_2d": perimeter_um,
+                    f"{metric_prefix}_roundness_2d": roundness,
+                    f"{metric_prefix}_eccentricity_2d": float(getattr(region, "eccentricity", np.nan)),
+                    f"{metric_prefix}_volume_voxels_3d": np.nan,
+                    f"{metric_prefix}_volume_um3_3d": np.nan,
+                    f"{metric_prefix}_surface_area_um2_3d": np.nan,
+                    f"{metric_prefix}_sphericity_3d": np.nan,
+                    f"{metric_prefix}_ellipticity_3d": np.nan,
+                }
+            )
+    else:
+        for region in regionprops(label_image):
+            object_label = int(region.label)
+            object_mask = label_image == object_label
+            roi_values = roi_labels_3d[object_mask]
+            roi_values = roi_values[roi_values != 0]
+            roi_id = int(np.unique(roi_values)[0]) if roi_values.size > 0 else 0
+
+            object_volume_voxels = float(region.area)
+            object_volume_um3 = float(object_volume_voxels * voxel_volume_um3)
+            object_surface_area_um2 = _compute_3d_surface_area_um2(
+                object_mask,
+                voxel_scale_zyx,
+            )
+            object_sphericity = (
+                float(
+                    (np.pi ** (1.0 / 3.0)) * ((6.0 * object_volume_um3) ** (2.0 / 3.0))
+                    / object_surface_area_um2
+                )
+                if object_surface_area_um2 > 0 and object_volume_um3 > 0
+                else np.nan
+            )
+            rows.append(
+                {
+                    "roi_id": roi_id,
+                    label_column: object_label,
+                    "centroid_z": float(region.centroid[0]),
+                    "centroid_y": float(region.centroid[1]),
+                    "centroid_x": float(region.centroid[2]),
+                    f"{metric_prefix}_area_px_2d": np.nan,
+                    f"{metric_prefix}_area_um2_2d": np.nan,
+                    f"{metric_prefix}_perimeter_px_2d": np.nan,
+                    f"{metric_prefix}_perimeter_um_2d": np.nan,
+                    f"{metric_prefix}_roundness_2d": np.nan,
+                    f"{metric_prefix}_eccentricity_2d": np.nan,
+                    f"{metric_prefix}_volume_voxels_3d": object_volume_voxels,
+                    f"{metric_prefix}_volume_um3_3d": object_volume_um3,
+                    f"{metric_prefix}_surface_area_um2_3d": object_surface_area_um2,
+                    f"{metric_prefix}_sphericity_3d": object_sphericity,
+                    f"{metric_prefix}_ellipticity_3d": _compute_3d_ellipticity(
+                        object_mask,
+                        voxel_scale_zyx,
+                    ),
+                }
+            )
+
+    return pd.DataFrame(rows).sort_values(by=["roi_id", label_column]).reset_index(drop=True)
+
+
+def _build_channel_roi_summary_table(
+    object_table: pd.DataFrame | None,
+    roi_labels_2d: np.ndarray,
+    label_column: str,
+    count_column: str,
+    metric_prefix: str,
+) -> pd.DataFrame:
+    """Create one per-ROI morphology-mean row for one segmented channel."""
+
+    metric_columns = _channel_metric_column_names(metric_prefix)
+    if object_table is None:
+        object_table = _empty_channel_properties_table(label_column, metric_prefix)
+
+    rows: list[dict[str, int | float]] = []
+    for roi_id in np.unique(roi_labels_2d):
+        if roi_id == 0:
+            continue
+
+        object_rows = object_table[object_table["roi_id"] == roi_id]
+        row: dict[str, int | float] = {
+            "roi_id": int(roi_id),
+            count_column: int(len(object_rows)),
+        }
+        for column_name in metric_columns:
+            mean_value = object_rows[column_name].dropna().mean() if column_name in object_rows.columns else np.nan
+            row[f"average_{column_name}"] = float(mean_value) if pd.notna(mean_value) else np.nan
+        rows.append(row)
+
+    return pd.DataFrame(rows)
 
 
 def _normalize_z_crop_bounds(
@@ -468,9 +694,53 @@ def analyze_existing_masks(
     summary_table = _build_summary_table(
         detailed_table,
         full_cell_masks,
+        loaded_images.voxel_scale_zyx,
         colocalization_config,
         roi_labels_2d,
         effective_optional_region_masks,
+    )
+    marker_properties = _build_channel_properties_table(
+        label_image=full_marker_masks,
+        voxel_scale_zyx=loaded_images.voxel_scale_zyx,
+        roi_labels_2d=roi_labels_2d,
+        label_column="marker_label",
+        metric_prefix="marker",
+    )
+    third_channel_properties = (
+        _build_channel_properties_table(
+            label_image=effective_optional_region_masks,
+            voxel_scale_zyx=loaded_images.voxel_scale_zyx,
+            roi_labels_2d=roi_labels_2d,
+            label_column="optional_region_label",
+            metric_prefix="optional_region",
+        )
+        if effective_optional_region_masks is not None
+        else None
+    )
+    roi_cell_summary = _build_channel_roi_summary_table(
+        object_table=summary_table,
+        roi_labels_2d=roi_labels_2d,
+        label_column="cell_label",
+        count_column="n_cells",
+        metric_prefix="cell",
+    )
+    roi_marker_summary = _build_channel_roi_summary_table(
+        object_table=marker_properties,
+        roi_labels_2d=roi_labels_2d,
+        label_column="marker_label",
+        count_column="n_marker_objects",
+        metric_prefix="marker",
+    )
+    roi_third_channel_summary = (
+        _build_channel_roi_summary_table(
+            object_table=third_channel_properties,
+            roi_labels_2d=roi_labels_2d,
+            label_column="optional_region_label",
+            count_column="n_3rd_channel_objects",
+            metric_prefix="optional_region",
+        )
+        if third_channel_properties is not None
+        else None
     )
 
     overview_table = _build_overview_table(
@@ -494,6 +764,11 @@ def analyze_existing_masks(
             detailed=detailed_table,
             summary=summary_table,
             overview=overview_table,
+            marker_properties=marker_properties,
+            third_channel_properties=third_channel_properties,
+            roi_cell_summary=roi_cell_summary,
+            roi_marker_summary=roi_marker_summary,
+            roi_third_channel_summary=roi_third_channel_summary,
         ),
         cell_refinement_context=cell_refinement_context,
         marker_refinement_context=marker_refinement_context,
@@ -681,6 +956,7 @@ def refine_run_result_from_cellpose_cache(
 def _build_summary_table(
     detailed_table: pd.DataFrame,
     cell_masks: np.ndarray,
+    voxel_scale_zyx: tuple[float, float, float],
     config: ColocalizationConfig,
     roi_labels_2d: np.ndarray,
     optional_region_masks: np.ndarray | None = None,
@@ -708,6 +984,7 @@ def _build_summary_table(
                 "centroid_y",
                 "centroid_x",
                 "cell_voxels_delta",
+                *_channel_metric_column_names("cell"),
             ]
         )
 
@@ -755,8 +1032,21 @@ def _build_summary_table(
                 }
             )
 
+    cell_properties = _build_channel_properties_table(
+        label_image=cell_masks,
+        voxel_scale_zyx=voxel_scale_zyx,
+        roi_labels_2d=roi_labels_2d,
+        label_column="cell_label",
+        metric_prefix="cell",
+    )
+
     summary_table = pd.DataFrame(summary_rows).merge(props_table, on="cell_label", how="left")
     summary_table["cell_voxels_delta"] = summary_table["cell_voxels"] - summary_table["cell_voxels_props"]
+    summary_table = summary_table.merge(
+        cell_properties,
+        on=["roi_id", "cell_label"],
+        how="left",
+    )
 
     if config.evaluate_optional_region_cell_positivity:
         optional_region_summary = _build_optional_region_summary_table(

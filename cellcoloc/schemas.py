@@ -100,11 +100,40 @@ class OptionalRegionSegmentationResult:
 
 @dataclass(slots=True)
 class ColocalizationTables:
-    """Bundle the detailed, per-cell, and per-ROI result tables."""
+    """Bundle all exported multi-channel colocalization result tables.
+
+    Attributes
+    ----------
+    detailed:
+        Per-overlap table containing one row per cell-marker overlap event.
+    summary:
+        Main per-cell colocalization table for the cell channel, augmented with
+        cell-channel morphology metrics.
+    overview:
+        Existing per-ROI colocalization overview table. This is still exposed
+        under the historic attribute name ``overview`` for backward
+        compatibility, even though the Excel export sheet is named
+        ``roi_coloc_overview``.
+    marker_properties:
+        Per-object morphology table for the segmented marker channel.
+    third_channel_properties:
+        Optional per-object morphology table for the segmented third channel.
+    roi_cell_summary:
+        Per-ROI means of the cell-channel morphology metrics.
+    roi_marker_summary:
+        Per-ROI means of the marker-channel morphology metrics.
+    roi_third_channel_summary:
+        Optional per-ROI means of the third-channel morphology metrics.
+    """
 
     detailed: pd.DataFrame
     summary: pd.DataFrame
     overview: pd.DataFrame
+    marker_properties: pd.DataFrame | None = None
+    third_channel_properties: pd.DataFrame | None = None
+    roi_cell_summary: pd.DataFrame | None = None
+    roi_marker_summary: pd.DataFrame | None = None
+    roi_third_channel_summary: pd.DataFrame | None = None
 
 
 @dataclass(slots=True)

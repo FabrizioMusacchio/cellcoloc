@@ -406,7 +406,25 @@ def export_analysis_outputs(
     with pd.ExcelWriter(paths.excel_path) as writer:
         run_result.tables.detailed.to_excel(writer, sheet_name="detailed_overlaps", index=False)
         run_result.tables.summary.to_excel(writer, sheet_name="cell_summary", index=False)
-        run_result.tables.overview.to_excel(writer, sheet_name="roi_overview", index=False)
+        if run_result.tables.marker_properties is not None:
+            run_result.tables.marker_properties.to_excel(writer, sheet_name="marker_properties", index=False)
+        if run_result.tables.third_channel_properties is not None:
+            run_result.tables.third_channel_properties.to_excel(
+                writer,
+                sheet_name="3rd_channel_properties",
+                index=False,
+            )
+        run_result.tables.overview.to_excel(writer, sheet_name="roi_coloc_overview", index=False)
+        if run_result.tables.roi_cell_summary is not None:
+            run_result.tables.roi_cell_summary.to_excel(writer, sheet_name="roi_cell_summary", index=False)
+        if run_result.tables.roi_marker_summary is not None:
+            run_result.tables.roi_marker_summary.to_excel(writer, sheet_name="roi_marker_summary", index=False)
+        if run_result.tables.roi_third_channel_summary is not None:
+            run_result.tables.roi_third_channel_summary.to_excel(
+                writer,
+                sheet_name="roi_3rd_channel_summary",
+                index=False,
+            )
 
     print(f"Saved CSV analysis to:\n{paths.detailed_csv_path}")
     print(f"Saved Excel analysis to:\n{paths.excel_path}")
