@@ -126,14 +126,43 @@ def test_save_load_and_try_load_roi_labels_roundtrip(tmp_path: Path) -> None:
 def test_export_analysis_outputs_writes_expected_files(tmp_path: Path) -> None:
     paths = _make_results_paths(tmp_path)
     detailed = pd.DataFrame([{"roi_id": 1, "cell_label": 1, "overlap_voxels": 2}])
-    summary = pd.DataFrame([{"roi_id": 1, "cell_label": 1, "marker_positive": True}])
+    summary = pd.DataFrame(
+        [
+            {
+                "roi_id": 1,
+                "cell_label": 1,
+                "marker_positive": True,
+                "cell_area_px_2d": 4.0,
+            }
+        ]
+    )
     overview = pd.DataFrame([{"roi_id": 1, "n_cells": 1}])
+    marker_properties = pd.DataFrame([{"roi_id": 1, "marker_label": 1, "marker_area_px_2d": 4.0}])
+    third_channel_properties = pd.DataFrame(
+        [{"roi_id": 1, "optional_region_label": 1, "optional_region_area_px_2d": 4.0}]
+    )
+    roi_cell_summary = pd.DataFrame([{"roi_id": 1, "n_cells": 1, "average_cell_area_px_2d": 4.0}])
+    roi_marker_summary = pd.DataFrame(
+        [{"roi_id": 1, "n_marker_objects": 1, "average_marker_area_px_2d": 4.0}]
+    )
+    roi_third_channel_summary = pd.DataFrame(
+        [{"roi_id": 1, "n_3rd_channel_objects": 1, "average_optional_region_area_px_2d": 4.0}]
+    )
     run_result = ColocalizationRunResult(
         cell_masks=np.ones((1, 2, 2), dtype=np.uint32),
         marker_masks=np.ones((1, 2, 2), dtype=np.uint32),
         positive_cell_masks=np.ones((1, 2, 2), dtype=np.uint32),
         optional_region_masks=np.ones((1, 2, 2), dtype=np.uint32),
-        tables=ColocalizationTables(detailed=detailed, summary=summary, overview=overview),
+        tables=ColocalizationTables(
+            detailed=detailed,
+            summary=summary,
+            overview=overview,
+            marker_properties=marker_properties,
+            third_channel_properties=third_channel_properties,
+            roi_cell_summary=roi_cell_summary,
+            roi_marker_summary=roi_marker_summary,
+            roi_third_channel_summary=roi_third_channel_summary,
+        ),
     )
 
     export_analysis_outputs(run_result, paths)
@@ -144,6 +173,17 @@ def test_export_analysis_outputs_writes_expected_files(tmp_path: Path) -> None:
     assert paths.marker_mask_path.exists()
     assert paths.positive_cell_mask_path.exists()
     assert paths.optional_region_mask_path.exists()
+    workbook = pd.ExcelFile(paths.excel_path)
+    assert workbook.sheet_names == [
+        "detailed_overlaps",
+        "cell_summary",
+        "marker_properties",
+        "3rd_channel_properties",
+        "roi_coloc_overview",
+        "roi_cell_summary",
+        "roi_marker_summary",
+        "roi_3rd_channel_summary",
+    ]
 
 
 def test_runtime_helpers_create_and_use_fallbacks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

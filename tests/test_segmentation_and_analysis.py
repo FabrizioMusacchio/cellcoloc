@@ -174,7 +174,19 @@ def test_multichannel_threshold_pipeline_end_to_end(tmp_path) -> None:
 
     assert not run_result.tables.summary.empty
     assert "optional_region_positive" in run_result.tables.summary.columns
+    assert "cell_area_px_2d" in run_result.tables.summary.columns
+    assert "cell_roundness_2d" in run_result.tables.summary.columns
     assert "n_optional_region_positive_cells" in run_result.tables.overview.columns
+    assert run_result.tables.marker_properties is not None
+    assert "marker_area_px_2d" in run_result.tables.marker_properties.columns
+    assert run_result.tables.third_channel_properties is not None
+    assert "optional_region_area_px_2d" in run_result.tables.third_channel_properties.columns
+    assert run_result.tables.roi_cell_summary is not None
+    assert "average_cell_area_px_2d" in run_result.tables.roi_cell_summary.columns
+    assert run_result.tables.roi_marker_summary is not None
+    assert "average_marker_area_px_2d" in run_result.tables.roi_marker_summary.columns
+    assert run_result.tables.roi_third_channel_summary is not None
+    assert "average_optional_region_area_px_2d" in run_result.tables.roi_third_channel_summary.columns
 
     refined = refine_run_result_from_cellpose_cache(
         loaded_images=loaded,
@@ -217,6 +229,9 @@ def test_analysis_helpers_on_existing_masks(tmp_path) -> None:
     )
     assert analyzed.analysis_z_bounds == (0, 1)
     assert analyzed.tables.overview.iloc[0]["cell_occupancy_volume_voxels_3d"] > 0
+    assert "cell_volume_voxels_3d" in analyzed.tables.summary.columns
+    assert analyzed.tables.marker_properties is not None
+    assert "marker_volume_voxels_3d" in analyzed.tables.marker_properties.columns
 
     cropped = _apply_analysis_z_bounds(cell_masks, (0, 1))
     assert np.count_nonzero(cropped[1]) == 0
