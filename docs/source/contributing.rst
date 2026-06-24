@@ -30,7 +30,8 @@ Contribution Guidelines
 -----------------------
 
 The repository contains a dedicated contribution guide in the file
-```CONTRIBUTING.md`` <https://github.com/FabrizioMusacchio/cellcoloc?tab=contributing-ov-file>`_. It describes in more detail:
+``CONTRIBUTING.md`` (`link <https://github.com/FabrizioMusacchio/cellcoloc?tab=contributing-ov-file>`_). 
+It describes in more detail:
 
 * how to set up a local development environment
 * the preferred workflow for branching and pull requests
