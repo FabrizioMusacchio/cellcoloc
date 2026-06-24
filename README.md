@@ -181,21 +181,20 @@ This means a cell is called positive only if the overlap is both absolutely
 large enough and sufficiently large relative to the size of the segmented cell
 object.
 
-## Optional third-channel analysis
-An optional third channel can be included for additional analysis.
-
-Supported use cases include:
-
-- occupancy-only analysis, for example lesion, tumor, or infiltration coverage,
-- separate third-channel cell positivity,
-- derived double-positive counts for cells that are positive for both the main marker and the third segmented channel.
-
-For each segmented channel, *CellColoc* can report:
+### Occupancy computation
+In addition to object-based colocalization, *CellColoc* computes occupancy for
+every segmented analysis channel. This includes:
 
 - projected 2D occupied area,
 - 2D occupancy percentage,
 - 3D occupied volume,
 - 3D occupancy percentage.
+
+This applies to:
+
+- the primary ``cell`` channel,
+- the primary ``marker`` channel,
+- and, when configured, an optional third segmented channel.
 
 If $S \subseteq R$ is the union of all positive pixels or voxels of one
 segmented channel inside ROI $R$, the occupancy coverage is defined as:
@@ -206,6 +205,13 @@ $$
 
 For projected analyses, the same definition is applied to the resulting 2D
 analysis image.
+
+When an optional third channel is included, it can additionally be used for:
+
+- occupancy-only analysis, for example lesion, tumor, or infiltration coverage,
+- separate third-channel cell positivity,
+- derived double-positive counts for cells that are positive for both the main
+  marker and the third segmented channel.
 
 ## Outputs
 All outputs are written to a `results/` subfolder next to the raw dataset.
@@ -242,4 +248,3 @@ If you use *CellColoc* in scientific work, please cite:
 
 Zenodo record:
 [https://doi.org/10.5281/zenodo.20787509](https://doi.org/10.5281/zenodo.20787509)
-

@@ -148,10 +148,14 @@ absolutely large enough and sufficiently large relative to the size of the
 segmented cell object.
 
 
-Occupancy metrics
------------------
+Occupancy computation
+~~~~~~~~~~~~~~~~~~~~~
 
-For every segmented channel, CellColoc also computes occupancy within each ROI.
+In addition to object-based colocalization, CellColoc also computes occupancy
+for every segmented analysis channel within each ROI. This includes the
+primary ``cell`` channel, the primary ``marker`` channel, and, when
+configured, an optional third segmented channel.
+
 If :math:`S \subseteq R` is the union of all positive pixels or voxels of one
 segmented channel inside ROI :math:`R`, then the occupancy coverage is
 
@@ -163,6 +167,13 @@ reported as percent coverage.
 
 For 3D data, CellColoc can report this in volumetric form. For projected data,
 the same definition is applied to the analyzed 2D image.
+
+When an optional third channel is included, it can additionally be used for:
+
+- occupancy-only analysis, for example lesion, tumor, or infiltration coverage,
+- separate third-channel cell positivity,
+- derived double-positive counts for cells that are positive for both the main
+  marker and the third segmented channel.
 
 
 Interactive workflow
