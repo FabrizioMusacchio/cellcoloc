@@ -42,11 +42,16 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
+          disable_search: true
+          fail_ci_if_error: true
           files: coverage.xml
+          verbose: true
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
         with:
+          disable_search: true
           files: junit.xml
           report_type: test_results
+          verbose: true
