@@ -1,0 +1,17 @@
+cellpose
+omio-microscopy
+matplotlib
+pandas
+openpyxl
+scikit-image
+appdirs
+
+[cellpose3]
+cellpose==3.1.1.2
+
+[dev]
+pytest
+pytest-cov
+
+[interactive]
+ipykernel
