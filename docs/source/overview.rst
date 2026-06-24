@@ -76,9 +76,9 @@ Main features
 
 CellColoc currently provides:
 
-- OMIO-based microscopy loading
+- `OMIO <https://omio.readthedocs.io/en/latest/>`_-based microscopy loading
 - automatic 2D versus 3D detection
-- optional voxel-size resolution from OMIO metadata
+- optional voxel-size resolution from `OMIO <https://omio.readthedocs.io/en/latest/>`_ metadata
 - dedicated single-channel workflow for segmentation, object counting,
   occupancy, and morphology analysis without a colocalization step
 - optional ROI drawing in napari

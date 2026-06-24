@@ -41,8 +41,8 @@ This means *CellColoc* is not limited to [*Cellpose*](https://www.cellpose.org)-
 ## What CellColoc does
 For each analysis run, the package can:
 
-1. load microscopy images through `omio-microscopy`,
-2. resolve voxel size either from user input or OMIO metadata,
+1. load microscopy images through [`omio-microscopy`](https://omio.readthedocs.io/en/latest/),
+2. resolve voxel size either from user input or [OMIO](https://omio.readthedocs.io/en/latest/) metadata,
 3. optionally prepare a global analysis view using z-cropping and/or z-projection,
 4. let the user draw 2D ROIs in napari or reuse existing ROI masks,
 5. segment a single configured channel for pure object counting and morphology analysis, or segment each configured colocalization channel with *Cellpose* or threshold-based methods,
@@ -57,7 +57,7 @@ For each analysis run, the package can:
 - Interactive user-script workflow for VS Code interactive window or notebook-like execution
 - Reusable core package separated from project-specific scripts
 - 2D and 3D image handling
-- Automatic dimensionality detection from OMIO-loaded `TZCYX` data
+- Automatic dimensionality detection from [OMIO](https://omio.readthedocs.io/en/latest/)-loaded `TZCYX` data
 - Dedicated single-channel workflow for segmentation, object counting, occupancy, and morphology analysis without colocalization
 - Optional ROI drawing in napari
 - Optional whole-image analysis as one ROI
