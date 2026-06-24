@@ -80,11 +80,5 @@ filterwarnings = [
 
 [tool.coverage.run]
 branch = true
-source = ["cellcoloc"]
 relative_files = true
-
-[tool.coverage.paths]
-source = [
-  "cellcoloc",
-  "*/cellcoloc",
-]
+include = ["cellcoloc/*"]
