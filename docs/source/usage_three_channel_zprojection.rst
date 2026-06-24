@@ -621,7 +621,7 @@ The next cell creates the combined double-positive view:
    :alt: Zoom onto the analyzed ROI, showing the microglia, DAPI, and the resulting segmentation layer of the microglia cells that are positive for DAPI.
    :align: center
    :figwidth: 100%
-.. figure:: _static/microglia_3D_zproj_23.jpg
+.. figure:: _static/microglia_3D_zproj_24.jpg
    :alt: Segmentation layer of the Iba1- and DAPI-positive cells. 
    :align: center
    :figwidth: 100%
