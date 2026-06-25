@@ -1,7 +1,7 @@
 Installation
 ============
 
-Python environment and Python version
+Prepare the Python environment 
 -------------------------------------
 Either way you choose below, first create and activate a Python 
 3.12 environment, for example:
@@ -10,6 +10,14 @@ Either way you choose below, first create and activate a Python
 
    conda create -n cellcoloc python=3.12 -y
    conda activate cellcoloc
+
+.. note::
+
+   We have tested CellColoc with Python 3.12. Newer versions may work but 
+   are not guaranteed to be compatible. Older Python versions are not supported,
+   as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
+   reading microscopy data, and OMIO requires Python 3.12 or newer.
+
 
 Installation on Windows with GPU support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,18 +54,9 @@ standard installation above:
 
 Now you can follow one of the installation methods described below.
 
-Python version
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-We have tested CellColoc with Python 3.12. Newer versions may work but 
-are not guaranteed to be compatible. Older Python versions are not supported,
-as CellColoc relies on `OMIO <https://omio.readthedocs.io/en/latest/>`_ for 
-reading microscopy data, and OMIO requires Python 3.12 or newer.
-   
-
-
-PyPI
-----
+  
+Install CellColoc from PyPI
+---------------------------
 
 The standard installation is:
 
@@ -67,7 +66,7 @@ The standard installation is:
 
 
 Interactive use
----------------
+^^^^^^^^^^^^^^^^
 
 If you want to use CellColoc together with VS Code's interactive window or a
 notebook-like workflow, install the interactive extra:
@@ -78,7 +77,7 @@ notebook-like workflow, install the interactive extra:
 
 
 Cellpose 3
-----------
+^^^^^^^^^^
 
 CellColoc is designed to work with both older `Cellpose 3 <https://www.cellpose.org>`_ installations and
 newer `Cellpose 4 <https://www.cellpose.org>`_ installations.
