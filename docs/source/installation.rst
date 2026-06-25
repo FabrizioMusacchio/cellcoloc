@@ -19,40 +19,34 @@ Either way you choose below, first create and activate a Python
    reading microscopy data, and OMIO requires Python 3.12 or newer.
 
 
-Installation on Windows with GPU support
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+GPU support on Windows
+^^^^^^^^^^^^^^^^^^^^^^
 
 On Windows and in case you have a **CUDA-ready GPU**, we recommend installing
-PyTorch prior to CellColoc in order to prevent the installation of the CPU-only 
+PyTorch *prior* to CellColoc in order to prevent the installation of the CPU-only 
 PyTorch version for Cellpose. Thus, in case you want to use Cellpose with GPU 
-acceleration on your Windows PC, please follow these steps instead of the 
-standard installation above:
+acceleration on your Windows machine, please follow these additional steps *after* 
+creating and activating the Python environment described above:
 
 1. If not already done, install or update the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx>`_.  
    For the standard PyTorch wheels from the PyTorch website, a separate `CUDA Toolkit <https://developer.nvidia.com/cuda-downloads>`_ or `cuDNN <https://developer.nvidia.com/cudnn>`_ installation is often **not** required, because the wheel already bundles the needed CUDA runtime components. If you use a custom CUDA or PyTorch setup, however, those additional installations may still be relevant.
 2. Find out your CUDA version by running ``nvidia-smi`` in the terminal.
-3. Visit the `PyTorch website <https://pytorch.org/get-started/locally/>`_ and copy the correct command for your system. 
-   **Important: Do not execute the PyTorch installation command yet!** We first need to create a virtual environment for CellColoc and then install PyTorch in that environment! 
-4. Create a virtual environment for CellColoc using Python 3.12, e.g.,
-
-   .. code-block:: bash
-
-      conda create -n cellcoloc python=3.12 -y
-      conda activate cellcoloc
-
-5. In that environment, paste the PyTorch installation command you found in step 3. For example, for a system with CUDA 13.0, you would use:
+3. Visit the `PyTorch website <https://pytorch.org/get-started/locally/>`_ and copy 
+   the correct command for your system. 
+4. In that conda environment you have created earlier, paste the PyTorch installation 
+   command you found in step 3. For example, for a system with CUDA 13.0, you would use:
 
    .. code-block:: bash
 
       pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
 
-6. Verify that PyTorch can access your GPU:
+5. Verify that PyTorch can access your GPU:
 
    .. code-block:: bash
 
       python -c "import torch; print(torch.cuda.is_available())"
 
-Now you can follow one of the installation methods described below.
+Now follow one of the installation methods described below.
 
   
 Install CellColoc from PyPI
