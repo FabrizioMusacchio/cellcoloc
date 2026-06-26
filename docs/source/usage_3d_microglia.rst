@@ -88,7 +88,7 @@ The recommended way to follow this tutorial is:
 The subsections below follow the same order as the script cells.
 
 
-Imports and package bootstrap
+Imports
 -----------------------------
 
 The first cell imports the public CellColoc API, napari, NumPy, and
@@ -96,7 +96,7 @@ The first cell imports the public CellColoc API, napari, NumPy, and
 
 .. literalinclude:: ../../user_scripts/microglia_3D_user_script.py
    :language: python
-   :start-after: # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
+   :start-after: # %% IMPORTS
    :end-before: # %% PROJECT SETTINGS
 
 What this cell does:

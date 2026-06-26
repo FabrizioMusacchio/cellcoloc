@@ -17,7 +17,7 @@ The workflow is intentionally interactive and notebook-like:
 author: Fabrizio Musacchio
 date:   June 2026
 """
-# %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
+# %% IMPORTS
 # get the project root for accessing the example dataset which is 
 # located in the parent folder of the user_scripts folder:
 from pathlib import Path

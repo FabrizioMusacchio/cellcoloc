@@ -74,14 +74,14 @@ The recommended way to follow this tutorial is:
 The subsections below follow the same order as the script cells.
 
 
-Imports and package bootstrap
------------------------------
+Imports
+-------
 
 The first cell imports the public CellColoc API, napari, and NumPy:
 
 .. literalinclude:: ../../user_scripts/dapi_stained_nuclei_2D_user_script.py
    :language: python
-   :start-after: # %% IMPORTS AND LOCAL PACKAGE BOOTSTRAP
+   :start-after: # %% IMPORTS
    :end-before: # %% PROJECT SETTINGS
 
 What this cell does:
