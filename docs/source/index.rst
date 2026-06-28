@@ -34,10 +34,6 @@ CellColoc Documentation
    :target: https://github.com/FabrizioMusacchio/cellcoloc/commits/main/
    :alt: GitHub last commit
 
-.. image:: https://img.shields.io/codecov/c/github/FabrizioMusacchio/cellcoloc?logo=codecov
-   :target: https://codecov.io/gh/fabriziomusacchio/cellcoloc
-   :alt: codecov
-
 .. image:: https://img.shields.io/github/issues/FabrizioMusacchio/cellcoloc
    :target: https://github.com/FabrizioMusacchio/cellcoloc/issues
    :alt: GitHub Issues Open
