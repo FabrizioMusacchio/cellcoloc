@@ -327,6 +327,15 @@ The logic is:
 As in the 2D tutorial, ROIs are drawn in 2D and then applied across the stack
 in z for the internal analysis.
 
+.. important::
+
+   **Cellpose can be ROI-sensitive in ROI-wise workflows.** 
+
+   Please see our note in the :ref:`multi-channel tutorial <roi_cellpose_important>`
+   for details on how to avoid
+   ROI-sensitivity issues when using Cellpose in ROI-wise workflows.
+
+
 
 Optional: Save drawn ROIs or load an existing ROI mask
 ------------------------------------------------------

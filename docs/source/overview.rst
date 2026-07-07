@@ -19,9 +19,14 @@ The package is designed for workflows in which a user wants to:
 - optionally include a third channel for occupancy quantification or optional
   third-marker positivity,
 - inspect, refine, and export results in a reproducible way,
-- analyze a single microscopy channel when no colocalization step is needed and the goal is object counting, occupancy, or morphology analysis.
+- analyze a single microscopy channel when no colocalization step is needed 
+  and the goal is object counting, occupancy, or morphology analysis.
 
-The package supports both 2D and 3D data, flexible segmentation backends (we support both `Cellpose <https://www.cellpose.org>`_ and classical thresholding), and a range of optional features including optional ROI-based analysis, optional global z-cropping, optional z-projection, and fast post hoc Cellpose threshold refinement.
+The package supports both 2D and 3D data, flexible segmentation backends 
+(we support both `Cellpose <https://www.cellpose.org>`_ and classical 
+thresholding), and a range of optional features including optional 
+ROI-based analysis, optional global z-cropping, optional z-projection, 
+and fast post hoc Cellpose threshold refinement.
 
 Motivation
 ----------

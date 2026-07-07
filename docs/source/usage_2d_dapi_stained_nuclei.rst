@@ -307,6 +307,58 @@ If you want forced redraw behavior every time, set:
    REUSE_EXISTING_ROI_MASK_IF_AVAILABLE = False
 
 
+.. _roi_cellpose_important:
+
+.. important::
+
+   **Cellpose can be ROI-sensitive in ROI-wise workflows.**
+
+   When CellColoc runs Cellpose inside user-defined ROIs, it segments each ROI
+   crop independently. As a result, the same local image region can yield
+   slightly different Cellpose detections when the surrounding ROI becomes
+   smaller, larger, or differently shaped. This is not caused by the final ROI
+   export itself, but by the fact that Cellpose sees a different cropped image
+   context during segmentation. In practice, this means that:
+
+   - a cell may be absent in a small ROI crop,
+   - the same cell may appear once the ROI is expanded,
+   - and ROI-dependent detection changes can occur even inside overlapping ROI
+     subregions.
+
+   If you want to compare object counts across ROIs, it is therefore a good
+   idea to:
+
+   - draw ROIs generously rather than tightly around the target structures,
+   - keep ROI shapes reasonably consistent across comparable regions,
+   - and, when possible, validate suspicious cases by re-running the same
+     region with slightly larger ROIs or by using whole-image mode.
+
+   .. figure:: _static/cellcoloc_cellpose_ROI_effect.png
+      :alt: Example of ROI-size-sensitive Cellpose detections
+      :align: center
+      :figwidth: 100%
+
+      **Example of ROI-sensitive Cellpose behavior in ROI-wise segmentation.**
+      **(a)** Original cell-channel image with two example ROI families shown
+      as concentric nested ROIs of increasing size. **(b)** Resulting cell segmentation 
+      mask when Cellpose is applied to the small inner ROIs. Note, that only on the right
+      ROI two cells are detected; in the left ROI, no cell is detected, even though
+      in the original image in (a) we can clearly see a cell inside. **(c)** Cell 
+      segmentation mask when Cellpose is applied to the medium-sized ROIs. In the left
+      medium-sized ROI, the clearly present cells in that ROI are not detected, while in 
+      the right ROI, three cells now appear (still undersegmented). **(d)** Cell segmentation
+      mask when Cellpose is applied to the large ROIs. In the left large ROI, all actual
+      cells co-locating with the middle- and small-sized ROIs are now detected in addition
+      to the other cells in the large ROI. In the right large ROI, we observe the same
+      effect. Thus, the same local image region can yield different Cellpose detections 
+      when the surrounding ROI becomes smaller, larger, or differently shaped. We therefore
+      recommend to draw ROIs generously rather than tightly around the target structures.
+      The results presented in this figure can be reproduced by running the example script
+      ``additional_scripts/ROI_behavior_check.py`` in CellColoc's 
+      `GitHub repository <https://github.com/fabriziomusacchio/CellColoc>`_.
+
+
+
 Optional: Save drawn ROIs or load an existing ROI mask
 ------------------------------------------------------
 

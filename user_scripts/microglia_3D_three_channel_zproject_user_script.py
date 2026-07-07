@@ -190,7 +190,7 @@ RUNTIME_CONFIG = RuntimeConfig(
     crop_for_testing=None,
     image_loading_mode="memap")
 
-USE_FULL_IMAGE_AS_SINGLE_ROI = False
+USE_FULL_IMAGE_AS_SINGLE_ROI = True
 REUSE_EXISTING_ROI_MASK_IF_AVAILABLE = True
 INITIAL_RESULT_LAYER_KEYS = [
     "cell_image",

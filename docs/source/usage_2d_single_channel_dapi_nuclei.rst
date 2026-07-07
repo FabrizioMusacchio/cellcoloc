@@ -304,6 +304,16 @@ This is the same ROI logic used in the multi-channel scripts, just applied to
 the single analyzed channel.
 
 
+.. important::
+
+   **Cellpose can be ROI-sensitive in ROI-wise workflows.** 
+
+   Please see our note in the :ref:`multi-channel tutorial <roi_cellpose_important>`
+   for details on how to avoid
+   ROI-sensitivity issues when using Cellpose in ROI-wise workflows.
+
+
+
 Optional: Save drawn ROIs or load an existing ROI mask
 ------------------------------------------------------
 
