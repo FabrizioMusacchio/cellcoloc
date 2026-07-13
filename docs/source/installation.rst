@@ -59,17 +59,6 @@ The standard installation is:
    pip install cellcoloc
 
 
-Interactive use
-^^^^^^^^^^^^^^^^
-
-If you want to use CellColoc together with VS Code's interactive window or a
-notebook-like workflow, install the interactive extra:
-
-.. code-block:: bash
-
-   pip install "cellcoloc[interactive]"
-
-
 Cellpose 3
 ^^^^^^^^^^
 
@@ -101,12 +90,6 @@ For local development from a clone of the repository:
    cd CellColoc
    pip install -e .
 
-For interactive development:
-
-.. code-block:: bash
-
-   pip install -e ".[interactive]"
-
 Updating CellColoc
 ------------------
 
@@ -116,24 +99,12 @@ To update an existing installation, run:
 
    pip install --upgrade cellcoloc
 
-If you are using the interactive extra, run:
-
-.. code-block:: bash
-
-   pip install --upgrade "cellcoloc[interactive]"
-
 If you are using the development install, run, after 
 pulling the latest changes from the repository:
 
 .. code-block:: bash
 
    pip install --upgrade -e .
-
-or, for interactive development:
-
-.. code-block:: bash
-
-   pip install --upgrade -e ".[interactive]"
 
 Removing the CellColoc environment
 ------------------------------------
@@ -174,7 +145,4 @@ The core package currently depends on:
 - ``openpyxl``
 - ``scikit-image``
 - ``appdirs``
-
-The optional interactive extra additionally provides:
-
 - ``ipykernel``

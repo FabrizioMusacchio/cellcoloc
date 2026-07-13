@@ -240,7 +240,7 @@ Tabular outputs include:
 The detailed table is exported as CSV. All tables are also exported together into an Excel workbook. Please refer to the [documentation](https://cellcoloc.readthedocs.io/en/latest/usage_results.html) for a detailed description of the table columns.
 
 ## Installation
-A complete installation guide (including GPU support on Windows) is available in CellColoc's [Read the Docs documentation](https://cellcoloc.readthedocs.io/en/latest/installation.html)
+A complete installation guide (including GPU support on Windows) is available in CellColoc's [Read the Docs documentation](https://cellcoloc.readthedocs.io/en/latest/installation.html). Standard installation is simply `pip install cellcoloc`.
 
 ## Where to start
 We recommend to start with usage examples on the documentation website. The folder `user_scripts/` contains interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from [Zenodo](https://doi.org/10.5281/zenodo.20788293)) or with your own microscopy data.

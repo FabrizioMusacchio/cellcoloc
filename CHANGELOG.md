@@ -7,6 +7,20 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
+## 🚀 CellColoc v0.0.6
+
+July 13, 2026
+
+This release simplifies CellColoc installation by making notebook and VS Code interactive-window support part of the default package installation.
+
+### 📃 Changes
+
+- move ``ipykernel`` from the optional interactive extra into the default
+  package dependencies so interactive notebook-style workflows work directly
+  after a standard ``pip install cellcoloc``
+- simplify the installation and update instructions in the documentation by
+  removing the separate ``[interactive]`` install path
+
 ## 🚀 CellColoc v0.0.5
 
 June 24, 2026
@@ -198,7 +212,6 @@ Packaging notes:
 
 - PyPI package name: `cellcoloc`
 - import name: `cellcoloc`
-- optional interactive extra: `cellcoloc[interactive]`
 - optional tested Cellpose 3 extra: `cellcoloc[cellpose3]`
 
 ---

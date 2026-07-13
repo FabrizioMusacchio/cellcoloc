@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cellcoloc"
-version = "0.0.5"
+version = "0.0.6"
 description = "Interactive segmentation-based colocalization analysis for microscopy images"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -38,15 +38,13 @@ dependencies = [
   "openpyxl",
   "scikit-image",
   "appdirs",
+  "ipykernel",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest",
   "pytest-cov",
-]
-interactive = [
-  "ipykernel",
 ]
 cellpose3 = [
   "cellpose==3.1.1.2",
