@@ -111,7 +111,12 @@ def test_single_channel_table_builders_2d_and_3d(tmp_path) -> None:
     masks_2d[0, 1:3, 1:3] = 1
     object_table_2d = _build_single_channel_object_table(masks_2d, loaded_2d, roi_labels)
     assert "object_roundness_2d" in object_table_2d.columns
+    assert "object_mean_intensity" in object_table_2d.columns
     assert pd.notna(object_table_2d.loc[0, "object_area_px_2d"])
+    assert object_table_2d.loc[0, "object_mean_intensity"] == pytest.approx(10.0)
+    assert object_table_2d.loc[0, "object_median_intensity"] == pytest.approx(10.0)
+    assert object_table_2d.loc[0, "object_max_intensity"] == pytest.approx(10.0)
+    assert object_table_2d.loc[0, "object_sum_intensity"] == pytest.approx(40.0)
 
     loaded_3d = _make_loaded_single_channel(tmp_path, z=2)
     masks_3d = np.zeros((2, 6, 6), dtype=np.uint32)
@@ -119,6 +124,7 @@ def test_single_channel_table_builders_2d_and_3d(tmp_path) -> None:
     object_table_3d = _build_single_channel_object_table(masks_3d, loaded_3d, roi_labels)
     assert "object_sphericity_3d" in object_table_3d.columns
     assert pd.notna(object_table_3d.loc[0, "object_volume_voxels_3d"])
+    assert object_table_3d.loc[0, "object_sum_intensity"] == pytest.approx(80.0)
 
     plausibility = _build_single_channel_plausibility_table(masks_3d, roi_labels)
     assert "object_voxels - object_voxels_props" in plausibility.columns
@@ -132,6 +138,7 @@ def test_single_channel_table_builders_2d_and_3d(tmp_path) -> None:
     )
     assert overview.iloc[0]["n_objects"] == 1
     assert "average_object_volume_um3_3d" in overview.columns
+    assert overview.iloc[0]["average_object_mean_intensity"] == pytest.approx(10.0)
 
 
 def test_single_channel_threshold_pipeline_and_refinement_passthrough(tmp_path) -> None:

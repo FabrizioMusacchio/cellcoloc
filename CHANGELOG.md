@@ -7,6 +7,28 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
+## 🚀 CellColoc v0.0.7
+
+July 23, 2026
+
+This release extends CellColoc's object feature extraction with native-channel
+intensity measurements for every segmented object and matching ROI-level
+averages.
+
+### ✨ Features
+
+- add per-object intensity metrics to multi-channel and single-channel exports:
+  - mean intensity
+  - median intensity
+  - maximum intensity
+  - integrated intensity / sum intensity
+- propagate the new intensity metrics into per-ROI summary tables as
+  ``average_*`` columns for cell, marker, optional third-channel, and
+  single-channel object analyses
+- measure intensities from the analyzed channel image so z-cropping and
+  z-projection are respected while segmentation-specific prefilters do not
+  replace the reported signal values
+
 ## 🚀 CellColoc v0.0.6
 
 July 13, 2026

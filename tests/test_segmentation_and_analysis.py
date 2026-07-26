@@ -176,17 +176,24 @@ def test_multichannel_threshold_pipeline_end_to_end(tmp_path) -> None:
     assert "optional_region_positive" in run_result.tables.summary.columns
     assert "cell_area_px_2d" in run_result.tables.summary.columns
     assert "cell_roundness_2d" in run_result.tables.summary.columns
+    assert "cell_mean_intensity" in run_result.tables.summary.columns
+    assert "cell_sum_intensity" in run_result.tables.summary.columns
     assert "n_optional_region_positive_cells" in run_result.tables.overview.columns
     assert run_result.tables.marker_properties is not None
     assert "marker_area_px_2d" in run_result.tables.marker_properties.columns
+    assert "marker_mean_intensity" in run_result.tables.marker_properties.columns
     assert run_result.tables.third_channel_properties is not None
     assert "optional_region_area_px_2d" in run_result.tables.third_channel_properties.columns
+    assert "optional_region_sum_intensity" in run_result.tables.third_channel_properties.columns
     assert run_result.tables.roi_cell_summary is not None
     assert "average_cell_area_px_2d" in run_result.tables.roi_cell_summary.columns
+    assert "average_cell_mean_intensity" in run_result.tables.roi_cell_summary.columns
     assert run_result.tables.roi_marker_summary is not None
     assert "average_marker_area_px_2d" in run_result.tables.roi_marker_summary.columns
+    assert "average_marker_sum_intensity" in run_result.tables.roi_marker_summary.columns
     assert run_result.tables.roi_third_channel_summary is not None
     assert "average_optional_region_area_px_2d" in run_result.tables.roi_third_channel_summary.columns
+    assert "average_optional_region_max_intensity" in run_result.tables.roi_third_channel_summary.columns
 
     refined = refine_run_result_from_cellpose_cache(
         loaded_images=loaded,
@@ -228,6 +235,12 @@ def test_analysis_helpers_on_existing_masks(tmp_path) -> None:
         analysis_z_bounds=(0, 1),
     )
     assert analyzed.analysis_z_bounds == (0, 1)
+    cell_one = analyzed.tables.summary.loc[analyzed.tables.summary["cell_label"] == 1].iloc[0]
+    assert cell_one["cell_mean_intensity"] == pytest.approx(10.0)
+    assert cell_one["cell_median_intensity"] == pytest.approx(10.0)
+    assert cell_one["cell_max_intensity"] == pytest.approx(10.0)
+    assert cell_one["cell_sum_intensity"] == pytest.approx(40.0)
+    assert analyzed.tables.roi_cell_summary.iloc[0]["average_cell_mean_intensity"] == pytest.approx(9.0)
     assert analyzed.tables.overview.iloc[0]["cell_occupancy_volume_voxels_3d"] > 0
     assert "cell_volume_voxels_3d" in analyzed.tables.summary.columns
     assert analyzed.tables.marker_properties is not None

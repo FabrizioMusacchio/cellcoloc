@@ -152,7 +152,7 @@ def _compute_3d_ellipticity(
 
 
 def _channel_metric_column_names(prefix: str) -> list[str]:
-    """Return the standard morphology metric column names for one channel."""
+    """Return the standard object metric column names for one channel."""
 
     return [
         f"{prefix}_area_px_2d",
@@ -166,7 +166,47 @@ def _channel_metric_column_names(prefix: str) -> list[str]:
         f"{prefix}_surface_area_um2_3d",
         f"{prefix}_sphericity_3d",
         f"{prefix}_ellipticity_3d",
+        f"{prefix}_mean_intensity",
+        f"{prefix}_median_intensity",
+        f"{prefix}_max_intensity",
+        f"{prefix}_sum_intensity",
     ]
+
+
+def _compute_object_intensity_metrics(
+    label_image: np.ndarray,
+    intensity_image: np.ndarray | None,
+    object_label: int,
+    metric_prefix: str,
+) -> dict[str, float]:
+    """Measure native image intensities inside one segmented object."""
+
+    metric_names = {
+        f"{metric_prefix}_mean_intensity": np.nan,
+        f"{metric_prefix}_median_intensity": np.nan,
+        f"{metric_prefix}_max_intensity": np.nan,
+        f"{metric_prefix}_sum_intensity": np.nan,
+    }
+    if intensity_image is None:
+        return metric_names
+
+    intensity_array = np.asarray(intensity_image, dtype=np.float32)
+    if intensity_array.shape != label_image.shape:
+        raise ValueError(
+            "Intensity image and label image must have identical shapes to "
+            f"measure object intensities, got {intensity_array.shape} and {label_image.shape}."
+        )
+
+    object_values = intensity_array[label_image == object_label]
+    if object_values.size == 0:
+        return metric_names
+
+    return {
+        f"{metric_prefix}_mean_intensity": float(np.mean(object_values)),
+        f"{metric_prefix}_median_intensity": float(np.median(object_values)),
+        f"{metric_prefix}_max_intensity": float(np.max(object_values)),
+        f"{metric_prefix}_sum_intensity": float(np.sum(object_values)),
+    }
 
 
 def _empty_channel_properties_table(
@@ -189,12 +229,13 @@ def _empty_channel_properties_table(
 
 def _build_channel_properties_table(
     label_image: np.ndarray,
+    intensity_image: np.ndarray | None,
     voxel_scale_zyx: tuple[float, float, float],
     roi_labels_2d: np.ndarray,
     label_column: str,
     metric_prefix: str,
 ) -> pd.DataFrame:
-    """Create one morphology row per segmented label of one channel."""
+    """Create one object-property row per segmented label of one channel."""
 
     if np.max(label_image) == 0:
         return _empty_channel_properties_table(label_column, metric_prefix)
@@ -245,6 +286,12 @@ def _build_channel_properties_table(
                     f"{metric_prefix}_surface_area_um2_3d": np.nan,
                     f"{metric_prefix}_sphericity_3d": np.nan,
                     f"{metric_prefix}_ellipticity_3d": np.nan,
+                    **_compute_object_intensity_metrics(
+                        label_image,
+                        intensity_image,
+                        object_label,
+                        metric_prefix,
+                    ),
                 }
             )
     else:
@@ -289,6 +336,12 @@ def _build_channel_properties_table(
                     f"{metric_prefix}_ellipticity_3d": _compute_3d_ellipticity(
                         object_mask,
                         voxel_scale_zyx,
+                    ),
+                    **_compute_object_intensity_metrics(
+                        label_image,
+                        intensity_image,
+                        object_label,
+                        metric_prefix,
                     ),
                 }
             )
@@ -694,6 +747,7 @@ def analyze_existing_masks(
     summary_table = _build_summary_table(
         detailed_table,
         full_cell_masks,
+        loaded_images.cell_image,
         loaded_images.voxel_scale_zyx,
         colocalization_config,
         roi_labels_2d,
@@ -701,6 +755,7 @@ def analyze_existing_masks(
     )
     marker_properties = _build_channel_properties_table(
         label_image=full_marker_masks,
+        intensity_image=loaded_images.marker_image,
         voxel_scale_zyx=loaded_images.voxel_scale_zyx,
         roi_labels_2d=roi_labels_2d,
         label_column="marker_label",
@@ -709,6 +764,7 @@ def analyze_existing_masks(
     third_channel_properties = (
         _build_channel_properties_table(
             label_image=effective_optional_region_masks,
+            intensity_image=loaded_images.optional_region_image,
             voxel_scale_zyx=loaded_images.voxel_scale_zyx,
             roi_labels_2d=roi_labels_2d,
             label_column="optional_region_label",
@@ -956,6 +1012,7 @@ def refine_run_result_from_cellpose_cache(
 def _build_summary_table(
     detailed_table: pd.DataFrame,
     cell_masks: np.ndarray,
+    cell_image: np.ndarray,
     voxel_scale_zyx: tuple[float, float, float],
     config: ColocalizationConfig,
     roi_labels_2d: np.ndarray,
@@ -1034,6 +1091,7 @@ def _build_summary_table(
 
     cell_properties = _build_channel_properties_table(
         label_image=cell_masks,
+        intensity_image=cell_image,
         voxel_scale_zyx=voxel_scale_zyx,
         roi_labels_2d=roi_labels_2d,
         label_column="cell_label",

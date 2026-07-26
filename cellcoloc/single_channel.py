@@ -24,6 +24,7 @@ from skimage.measure import regionprops, regionprops_table
 from .analysis import (
     _apply_analysis_z_bounds,
     _compute_mask_occupancy_metrics,
+    _compute_object_intensity_metrics,
     _normalize_z_crop_bounds,
     _project_zyx_volume,
     _resolve_analysis_z_bounds,
@@ -363,6 +364,10 @@ def _build_single_channel_object_table(
                 "object_surface_area_um2_3d",
                 "object_sphericity_3d",
                 "object_ellipticity_3d",
+                "object_mean_intensity",
+                "object_median_intensity",
+                "object_max_intensity",
+                "object_sum_intensity",
             ]
         )
 
@@ -412,6 +417,12 @@ def _build_single_channel_object_table(
                     "object_surface_area_um2_3d": np.nan,
                     "object_sphericity_3d": np.nan,
                     "object_ellipticity_3d": np.nan,
+                    **_compute_object_intensity_metrics(
+                        masks,
+                        loaded_image.image,
+                        object_label,
+                        "object",
+                    ),
                 }
             )
     else:
@@ -456,6 +467,12 @@ def _build_single_channel_object_table(
                     "object_ellipticity_3d": _compute_3d_ellipticity(
                         object_mask,
                         loaded_image.voxel_scale_zyx,
+                    ),
+                    **_compute_object_intensity_metrics(
+                        masks,
+                        loaded_image.image,
+                        object_label,
+                        "object",
                     ),
                 }
             )
@@ -525,6 +542,10 @@ def _build_single_channel_overview_table(
             "object_surface_area_um2_3d",
             "object_sphericity_3d",
             "object_ellipticity_3d",
+            "object_mean_intensity",
+            "object_median_intensity",
+            "object_max_intensity",
+            "object_sum_intensity",
         ]
         for column_name in average_metric_columns:
             if column_name in object_rows.columns:

@@ -94,14 +94,15 @@ evaluation, the table may also contain:
 - ``marker_and_optional_region_positive``
 
 In current CellColoc versions, ``cell_summary`` always also contains the
-cell-channel morphology metrics, so that this sheet combines:
+cell-channel morphology and intensity metrics, so that this sheet combines:
 
 - colocalization state,
 - object size,
 - centroid information,
-- and shape descriptors.
+- shape descriptors,
+- and per-object brightness measurements.
 
-These morphology columns are described below under
+These morphology and intensity columns are described below under
 `Channel object-property sheets`_ because they follow the same metric logic as
 the dedicated channel-property sheets.
 
@@ -236,12 +237,36 @@ Interpretation:
 - ``sphericity`` captures how sphere-like an object is,
 - ``ellipticity`` reflects 3D elongation.
 
+Intensity metrics
+~~~~~~~~~~~~~~~~~
+
+For every segmented object, CellColoc also reports brightness measurements
+from the corresponding image channel:
+
+- ``*_mean_intensity``
+- ``*_median_intensity``
+- ``*_max_intensity``
+- ``*_sum_intensity``
+
+Interpretation:
+
+- ``mean_intensity`` is the average pixel or voxel value inside the object,
+- ``median_intensity`` is a robust central brightness estimate,
+- ``max_intensity`` records the brightest pixel or voxel in the object,
+- ``sum_intensity`` is the integrated object intensity.
+
+Intensity values are reported in the native image intensity units. They are
+therefore most useful for comparing objects within the same acquisition and
+analysis setting, or across datasets that were acquired and processed with
+matched settings.
+
 
 Per-ROI morphology summary sheets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The same multi-channel colocalization workbook also contains ROI-level
-morphology summary sheets that average object properties within each ROI:
+morphology and intensity summary sheets that average object properties within
+each ROI:
 
 - ``roi_cell_summary``
 - ``roi_marker_summary``
@@ -259,6 +284,7 @@ Examples:
 
 - ``average_cell_area_px_2d``
 - ``average_marker_roundness_2d``
+- ``average_cell_mean_intensity``
 - ``average_optional_region_volume_um3_3d``
 
 These sheets are useful when you want to compare not only how many objects a
@@ -266,7 +292,8 @@ ROI contains, but also whether the objects in that ROI are on average:
 
 - larger or smaller,
 - more elongated or more compact,
-- more spherical or less spherical.
+- more spherical or less spherical,
+- brighter or dimmer.
 
 
 Single-channel workbook
@@ -283,7 +310,9 @@ different structure:
 ~~~~~~~~~~~~~~~~~~
 
 One row per segmented object with the biologically relevant size and shape
-descriptors.
+descriptors. The table also includes object-level intensity descriptors:
+``object_mean_intensity``, ``object_median_intensity``,
+``object_max_intensity``, and ``object_sum_intensity``.
 
 ``voxel_plausibility_check``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -303,4 +332,5 @@ One row per ROI containing:
 
 - object counts,
 - occupancy metrics,
-- and per-ROI averages of the object-shape descriptors.
+- per-ROI averages of the object-shape descriptors,
+- and per-ROI averages of the object-intensity descriptors.
