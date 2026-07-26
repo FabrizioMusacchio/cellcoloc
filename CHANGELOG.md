@@ -9,14 +9,12 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 ## 🚀 CellColoc v0.0.7
 
-July 23, 2026
+July 26, 2026
 
-This release extends CellColoc's object feature extraction with native-channel
-intensity measurements for every segmented object and matching ROI-level
+This release extends CellColoc's object feature extraction with native-channel intensity measurements for every segmented object and matching ROI-level
 averages.
 
 ### ✨ Features
-
 - add per-object intensity metrics to multi-channel and single-channel exports:
   - mean intensity
   - median intensity
@@ -28,6 +26,11 @@ averages.
 - measure intensities from the analyzed channel image so z-cropping and
   z-projection are respected while segmentation-specific prefilters do not
   replace the reported signal values
+
+### ⬆️ New example data
+* added additional example data folder to the existing CellColoc Zenodo record (microglia_3D_full, synthetic_benchmark_data_sharp, and synthetic_benchmark_data) for the preprint analysis, including a README with channel descriptions and usage notes
+* 💡 Please note that the DOI of the Zenodo example data record has changed from `10.5281/zenodo.20788293` to [`10.5281/zenodo.21603005`](https://doi.org/10.5281/zenodo.21603005) to reflect the new extended example data set.
+
 
 ## 🚀 CellColoc v0.0.6
 
@@ -146,7 +149,7 @@ This release provides:
     interactive segmentation-based colocalization analysis in microscopy
     images*. Zenodo. https://doi.org/10.5281/zenodo.20787509
 - a dedicated Zenodo example-data record for **CellColoc**:
-  - DOI: `10.5281/zenodo.20788293`
+  - DOI: ~~`10.5281/zenodo.20788293`~~ [`10.5281/zenodo.21603005`](https://doi.org/10.5281/zenodo.21603005)
 - updated release metadata to reflect the new citable software archive and
   externally hosted example dataset
 

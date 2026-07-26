@@ -3,13 +3,12 @@
 CellColoc example datasets are distributed through Zenodo. Download the archive from:
 
 ```text
-https://doi.org/10.5281/zenodo.20788293
+https://doi.org/10.5281/zenodo.21603005
 ```
 
 Place the downloaded archive contents in this `example_data/` folder.
 
 ## Dataset folders
-
 The example-data collection is organized into two practical tiers:
 
 | Folder | Purpose |

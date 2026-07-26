@@ -201,7 +201,7 @@ reproducible microscopy workflows.
 Where to start
 ----------------
 
-We recommend to start with `usage examples <usage.html>`_ on this documentation website. On CellColoc's `GitHub repository <https://github.com/FabrizioMusacchio/cellcoloc>`_, you will additionally find a folder ``user_scripts/`` with interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from `Zenodo <https://doi.org/10.5281/zenodo.20788293>`_) or with your own microscopy data.
+We recommend to start with `usage examples <usage.html>`_ on this documentation website. On CellColoc's `GitHub repository <https://github.com/FabrizioMusacchio/cellcoloc>`_, you will additionally find a folder ``user_scripts/`` with interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from `Zenodo <https://doi.org/10.5281/zenodo.21603005>`_) or with your own microscopy data.
 
 License
 -------
