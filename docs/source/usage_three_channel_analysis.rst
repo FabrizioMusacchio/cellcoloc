@@ -406,7 +406,8 @@ first two channels. Overall, the cell demonstrates:
 - Cellpose threshold refinement for the cell channel,
 - Cellpose threshold refinement for the marker channel,
 - Cellpose threshold refinement for the third channel,
-- optional postfilters for all three channels,
+- optional postfilters, including size-based label cleanup, for all three
+  channels,
 - optional refinement-time z cropping,
 - viewer refresh with the updated three-channel result.
 

@@ -183,7 +183,11 @@ Key options in these configs include:
 - ``prefilter``:
   optional image prefiltering before segmentation.
 - ``postfilters``:
-  optional mask cleanup after segmentation.
+  optional mask cleanup after segmentation. Available postfilters include
+  ``"min_size"``, ``"min_intensity"``, ``"local_contrast"``, and
+  ``"bright_pixel_support"``. The ``"min_size"`` postfilter removes labels
+  smaller than ``postfilter_min_object_voxels`` and can also be used for
+  threshold-based masks such as Otsu outputs.
 
 If you do not want Cellpose for one channel, you can switch that channel to a
 threshold-based backend, for example:

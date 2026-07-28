@@ -159,9 +159,14 @@ class CellposeModelConfig:
         cleanup.
     postfilters:
         Optional post-segmentation filters applied to the resulting masks.
-        Supported values are ``None``, ``"min_intensity"``,
-        ``"local_contrast"``, ``"bright_pixel_support"``, or a list combining
-        them in the requested execution order.
+        Supported values are ``None``, ``"min_size"``,
+        ``"min_intensity"``, ``"local_contrast"``,
+        ``"bright_pixel_support"``, or a list combining them in the requested
+        execution order.
+    postfilter_min_object_voxels:
+        Minimum label size required by the ``"min_size"`` postfilter. In 2D
+        analyses or z-projected analyses, this corresponds to pixels in the
+        singleton-z label image.
     min_intensity_measure:
         Statistic used by the ``"min_intensity"`` postfilter. Supported values
         are ``"mean"``, ``"median"``, and ``"max"``.
@@ -215,6 +220,7 @@ class CellposeModelConfig:
     threshold_min_hole_voxels: int = 10
     threshold_apply_closing: bool = True
     postfilters: str | Sequence[str] | None = None
+    postfilter_min_object_voxels: int | None = None
     min_intensity_measure: str = "mean"
     min_intensity_threshold: float | None = None
     local_contrast_k: float = 1.0

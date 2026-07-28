@@ -505,7 +505,7 @@ Important settings
    segmented with Cellpose.
 
 ``REFINED_*_POSTFILTERS``
-   optional post hoc filters such as ``"min_intensity"``,
+   optional post hoc filters such as ``"min_size"``, ``"min_intensity"``,
    ``"local_contrast"``, or ``"bright_pixel_support"``. In this projected
    demonstration script they are left at ``None`` by default.
 

@@ -75,6 +75,29 @@ def test_apply_postfilters_min_intensity_max_removes_weak_label() -> None:
     assert 2 in np.unique(filtered)
 
 
+def test_apply_postfilters_min_size_removes_small_label() -> None:
+    labels = np.array([[[1, 1, 0], [0, 2, 2], [0, 0, 2]]], dtype=np.uint32)
+    image = np.ones_like(labels, dtype=np.float32)
+    cfg = CellposeModelConfig(
+        model_name_or_path="cpsam",
+        postfilters="min_size",
+        postfilter_min_object_voxels=3,
+    )
+
+    filtered = apply_postfilters(labels, image, cfg)
+
+    assert 1 not in np.unique(filtered)
+    assert 2 in np.unique(filtered)
+
+
+def test_normalize_postfilters_accepts_min_size_aliases() -> None:
+    assert _normalize_postfilters(["min_pixels", "min_voxels", "min_object_voxels"]) == [
+        "min_size",
+        "min_size",
+        "min_size",
+    ]
+
+
 def test_apply_postfilters_bright_pixel_fraction_removes_sparse_object() -> None:
     labels = np.array([[[1, 1, 0], [0, 2, 2], [0, 0, 0]]], dtype=np.uint32)
     image = np.array([[[100, 0, 0], [0, 200, 200], [0, 0, 0]]], dtype=np.float32)

@@ -198,7 +198,11 @@ Important options are the same as in the multi-channel workflow:
 - ``prefilter``:
   optional image prefiltering before segmentation.
 - ``postfilters``:
-  optional mask cleanup after segmentation.
+  optional mask cleanup after segmentation. Available postfilters include
+  ``"min_size"``, ``"min_intensity"``, ``"local_contrast"``, and
+  ``"bright_pixel_support"``. The ``"min_size"`` postfilter removes labels
+  smaller than ``postfilter_min_object_voxels`` and can also be used after
+  threshold-based segmentation.
 - ``z_crop`` and ``z_projection``:
   available here as well, even though this particular tutorial uses a true 2D
   dataset.
@@ -443,7 +447,7 @@ Relevant refinement settings include:
 - ``REFINED_FLOW_THRESHOLD``:
   new Cellpose flow threshold.
 - ``REFINED_POSTFILTERS``:
-  optional post hoc filters such as ``"min_intensity"``,
+  optional post hoc filters such as ``"min_size"``, ``"min_intensity"``,
   ``"local_contrast"``, or ``"bright_pixel_support"``.
 
 

@@ -6,6 +6,25 @@ Each release is also archived on Zenodo for long-term preservation and citation 
 
 [![Zenodo Archive](https://img.shields.io/badge/Zenodo%20Archive-10.5281%2Fzenodo.20787509-blue)](https://doi.org/10.5281/zenodo.20787509)
 
+## 🚀 CellColoc v0.0.8
+
+July 28, 2026
+
+This release adds a size-based label postfilter that can clean already
+segmented masks independently of the segmentation backend.
+
+### ✨ Features
+
+- add a new ``"min_size"`` postfilter for ``CellposeModelConfig.postfilters``
+  that removes segmented labels smaller than
+  ``postfilter_min_object_voxels``
+- support the ``"min_size"`` postfilter for Cellpose, Otsu, Li, and percentile
+  segmentation outputs during post hoc reanalysis
+- add aliases ``"min_pixels"``, ``"min_voxels"``, and
+  ``"min_object_voxels"`` for the same size-based postfilter
+- update the private Arush 3D pyramidal-cell workflow so Otsu marker masks can
+  be cleaned post hoc without requiring Cellpose refinement caches
+
 ## 🚀 CellColoc v0.0.7
 
 July 26, 2026

@@ -189,7 +189,8 @@ In addition, it demonstrates several 3D-specific options:
 It also demonstrates optional pre- and post-processing hooks:
 
 - ``prefilter`` and associated sigma or median-size parameters,
-- ``postfilters`` and their associated intensity or contrast parameters.
+- ``postfilters`` and their associated size, intensity, or contrast
+  parameters.
 
 These options are particularly useful for suppressing false positive somata,
 weak edge artifacts, or small disconnected objects in 3D stacks.
@@ -601,13 +602,34 @@ These can be set to:
 
 - ``None``:
   disable postfiltering,
+- ``"min_size"``
 - ``"min_intensity"``
 - ``"local_contrast"``
 - ``"bright_pixel_support"``
 - or a list such as
-  ``["min_intensity", "bright_pixel_support", "local_contrast"]``
+  ``["min_size", "min_intensity", "bright_pixel_support", "local_contrast"]``
 
 When a list is used, the filters are applied in that exact order.
+
+Minimum size threshold ``min_size``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Relevant parameter:
+
+- ``REFINED_*_POSTFILTER_MIN_OBJECT_VOXELS``
+
+This filter removes segmented labels whose size is smaller than the configured
+minimum. In true 3D analyses, the threshold is counted in voxels. In 2D or
+z-projected analyses, it corresponds to pixels in the singleton-z analysis
+label image.
+
+This filter asks:
+
+- is the segmented object large enough to be considered biologically plausible?
+
+Unlike Cellpose threshold refinement, this postfilter works on already existing
+labels and can therefore also clean threshold-based masks such as Otsu, Li, or
+percentile segmentations.
 
 Minimum intensity threshold ``min_intensity``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

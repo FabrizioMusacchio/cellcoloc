@@ -64,7 +64,7 @@ For each analysis run, the package can:
 - Optional reuse of previously saved ROI masks
 - Channel-wise segmentation method selection
 - Optional prefilter chains such as `["median", "gaussian"]`
-- Optional mask postfilters such as `min_intensity`, `local_contrast`, and `bright_pixel_support`
+- Optional mask postfilters such as `min_size`, `min_intensity`, `local_contrast`, and `bright_pixel_support`
 - Optional anisotropy handling for true 3D *Cellpose* runs
 - Optional 3D flow smoothing for *Cellpose*
 - Optional global z-crop for internal analysis

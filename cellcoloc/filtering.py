@@ -136,7 +136,9 @@ def apply_postfilters(
     original = np.asarray(intensity_image, dtype=np.float32)
 
     for postfilter in postfilters:
-        if postfilter == "min_intensity":
+        if postfilter == "min_size":
+            filtered = _apply_min_size_postfilter(filtered, model_config)
+        elif postfilter == "min_intensity":
             filtered = _apply_min_intensity_postfilter(filtered, original, model_config)
         elif postfilter == "local_contrast":
             filtered = _apply_local_contrast_postfilter(filtered, original, model_config)
@@ -185,8 +187,15 @@ def _normalize_postfilters(postfilters: str | Sequence[str] | None) -> list[str]
     else:
         values = list(postfilters)
 
-    normalized = [value.strip().lower() for value in values]
-    allowed = {"min_intensity", "local_contrast", "bright_pixel_support"}
+    normalized: list[str] = []
+    for value in values:
+        normalized_value = value.strip().lower()
+        if normalized_value in {"min_object_voxels", "min_pixels", "min_voxels"}:
+            normalized.append("min_size")
+        else:
+            normalized.append(normalized_value)
+
+    allowed = {"min_size", "min_intensity", "local_contrast", "bright_pixel_support"}
     invalid = [value for value in normalized if value not in allowed]
     if invalid:
         raise ValueError(
@@ -194,6 +203,40 @@ def _normalize_postfilters(postfilters: str | Sequence[str] | None) -> list[str]
             f"{invalid}. Allowed values are {sorted(allowed)}."
         )
     return normalized
+
+
+def _apply_min_size_postfilter(
+    label_image: np.ndarray,
+    model_config: CellposeModelConfig,
+) -> np.ndarray:
+    """Remove labels smaller than the configured postfilter size threshold."""
+
+    min_size = model_config.postfilter_min_object_voxels
+    if min_size is None:
+        raise ValueError(
+            "`min_size` postfilter requires "
+            "`CellposeModelConfig.postfilter_min_object_voxels` to be set."
+        )
+    if min_size < 0:
+        raise ValueError(
+            "`CellposeModelConfig.postfilter_min_object_voxels` must be >= 0, "
+            f"got {min_size}."
+        )
+    if min_size == 0:
+        return label_image.copy()
+
+    filtered = label_image.copy()
+    labels, counts = np.unique(filtered, return_counts=True)
+    remove_labels = labels[(labels != 0) & (counts < int(min_size))]
+    if remove_labels.size == 0:
+        return filtered
+
+    max_label = int(filtered.max())
+    remove_labels = remove_labels[remove_labels <= max_label]
+    lookup = np.zeros(max_label + 1, dtype=bool)
+    lookup[remove_labels] = True
+    filtered[lookup[filtered]] = 0
+    return filtered
 
 
 def _apply_min_intensity_postfilter(
