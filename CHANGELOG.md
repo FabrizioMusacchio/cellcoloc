@@ -1,7 +1,6 @@
 ## CellColoc changelog
 
-See here for a detailed list of changes made in each release of *CellColoc*.
-Please, also refer to the Repository [Releases page](https://github.com/FabrizioMusacchio/cellcoloc/releases).
+See here for a detailed list of changes made in each release of *CellColoc*. Please, also refer to the Repository [Releases page](https://github.com/FabrizioMusacchio/cellcoloc/releases).
 
 Each release is also archived on Zenodo for long-term preservation and citation purposes:
 
