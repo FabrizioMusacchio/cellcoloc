@@ -106,6 +106,12 @@ pulling the latest changes from the repository:
 
    pip install --upgrade -e .
 
+You can also upgrade from the GitHub repository directly:
+
+.. code-block:: bash
+
+   pip install --upgrade git+https://github.com/FabrizioMusacchio/CellColoc.git
+
 Removing the CellColoc environment
 ------------------------------------
 
