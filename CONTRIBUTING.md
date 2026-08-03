@@ -1,34 +1,34 @@
 # How to Contribute
 
-Thank you for your interest in contributing to OMIO. This project welcomes improvements to the code, documentation, tests, and overall usability. The goal of OMIO is to provide a robust, transparent, and reproducible interface for reading, standardizing, and converting microscopy image data, with a strong focus on OME-compatible metadata handling and downstream interoperability.
+Thank you for your interest in contributing to CellColoc. This project welcomes improvements to the code, documentation, tests, example workflows, and overall usability. The goal of CellColoc is to provide a robust, transparent, and reproducible interface for segmentation-based colocalization analysis in microscopy images, including ROI-based workflows, channel-wise segmentation, post hoc refinement, object measurements, and standardized result export.
 
 ## Before you start
 Please check the GitHub issue tracker to see whether your idea, bug report, or enhancement has already been discussed:
 
-[https://github.com/FabrizioMusacchio/omio/issues](https://github.com/FabrizioMusacchio/omio/issues)
+[https://github.com/FabrizioMusacchio/cellcoloc/issues](https://github.com/FabrizioMusacchio/cellcoloc/issues)
 
 * If a related issue exists, comment there to indicate your interest or to add relevant technical details.
 * If no issue exists, open a new one with a short description of:
   * what you would like to change or add
-  * why it is useful in the context of OMIO
+  * why it is useful in the context of CellColoc
   * any thoughts on implementation, edge cases, or testing
 
 For small fixes such as typos or minor documentation improvements, opening a pull request directly is fine.
 
 ## Development environment
-OMIO requires **Python 3.12 or newer** and builds on standard scientific Python packages commonly used in microscopy workflows, including NumPy, tifffile, zarr, and related libraries for metadata handling.
+CellColoc requires **Python 3.12** and builds on standard scientific Python packages commonly used in microscopy workflows, including Cellpose, OMIO, napari, NumPy, pandas, scikit-image, tifffile, and related libraries for image analysis and result export.
 
 A typical development setup using `conda` looks like this:
 
 ```sh
-git clone https://github.com/FabrizioMusacchio/omio.git
-cd omio
+git clone https://github.com/FabrizioMusacchio/cellcoloc.git
+cd cellcoloc
 
-conda create -n omio-dev -c conda-forge python=3.12
-conda activate omio-dev
+conda create -n cellcoloc-dev -c conda-forge python=3.12
+conda activate cellcoloc-dev
 
 pip install -e .
-````
+```
 
 To install optional development dependencies such as testing and linting tools:
 
@@ -70,10 +70,10 @@ Clear and consistent commit messages help keep the project history readable. Pre
 * `chore:` maintenance tasks or tooling updates
 
 Example:
-`fix: handle paginated TIFF files with mixed photometric interpretations`
+`fix: preserve marker labels during post hoc reanalysis`
 
 ## Testing
-OMIO uses `pytest` for automated testing. To run the full test suite locally:
+CellColoc uses `pytest` for automated testing. To run the full test suite locally:
 
 ```sh
 pytest
@@ -81,11 +81,11 @@ pytest
 
 If you add new features or fix bugs, please extend the test suite accordingly.
 
-Tests should remain small and self-contained. Large microscopy datasets should not be added to the repository. Whenever possible, use synthetic arrays or minimal example files generated during the test run.
+Tests should remain small and self-contained. Large microscopy datasets should not be added to the repository. Whenever possible, use synthetic arrays, small label masks, or minimal generated image stacks that exercise the behavior under test.
 
 
-## Notes for JOSS-related contributions  *(new)*
-OMIO is developed with the requirements of the *Journal of Open Source Software (JOSS)* in mind. Contributions should therefore respect the following principles, which are routinely evaluated during JOSS review:
+## Notes for JOSS-related contributions
+CellColoc is developed with the requirements of the *Journal of Open Source Software (JOSS)* in mind. Contributions should therefore respect the following principles, which are routinely evaluated during JOSS review:
 
 * **Reproducibility**
   Behavior should be deterministic given identical inputs and parameters. Any non-deterministic behavior must be explicitly documented.
@@ -98,63 +98,65 @@ OMIO is developed with the requirements of the *Journal of Open Source Software 
 * **Explicit limitations**
   Known limitations or unsupported cases should be documented rather than implicitly ignored.
 
-Following these guidelines helps ensure that OMIO remains reviewable, maintainable, and suitable for long-term archival publication.
+Following these guidelines helps ensure that CellColoc remains reviewable, maintainable, and suitable for long-term archival publication.
 
 
-## OME policy decisions and design constraints
-OMIO makes a number of explicit policy decisions when reading and converting microscopy data to OME-compatible representations. These decisions are intentional and are meant to favor robustness and downstream interoperability over implicit heuristics.
+## Analysis policy decisions and design constraints
+CellColoc makes a number of explicit policy decisions when turning microscopy images and segmentation masks into colocalization results. These decisions are intentional and are meant to favor reproducibility, transparent interpretation, and downstream comparability over hidden heuristics.
 
 Key principles include:
 
-* **Canonical axis normalization**
-  OMIO internally normalizes image data to the canonical OME axis order `TZCYX`. Missing axes may be inserted with length 1, but ambiguous or non-OME axis labels are not silently reinterpreted.
-* **Single-series default behavior**
-  For multi-series TIFF files, OMIO currently processes only the first series by default. This behavior is recorded in the output metadata and is considered a policy decision rather than a technical limitation.
-* **Metadata preservation over inference**
-  Existing OME-XML and ImageJ metadata are preserved wherever possible. OMIO avoids inventing or guessing metadata fields that are not present in the source file.
-* **Explicit handling of unsupported metadata**
-  Metadata fields that are detected but not yet supported are reported explicitly rather than silently ignored. This is intended to make limitations visible and reproducible.
+* **Object-based colocalization**
+  CellColoc evaluates colocalization from segmented objects and overlap criteria, not from raw intensity correlation. Changes to positivity logic should therefore be explicit, documented, and reflected in exported tables.
+* **Channel-wise segmentation**
+  Each analysis channel can use its own segmentation backend and filter chain. Contributions should preserve this per-channel configurability instead of hard-coding assumptions for a specific experiment.
+* **ROI-wise reproducibility**
+  ROI definitions, whole-image mode, z-cropping, and z-projection affect downstream measurements. New features should keep these analysis boundaries visible and consistently applied across masks, tables, and visualizations.
+* **Transparent result export**
+  Exported CSV and Excel columns should have stable, descriptive names. New result metrics should be documented and, where possible, accompanied by tests using small synthetic data.
+* **Explicit limitations**
+  Known limitations, backend-specific behavior, and unsupported cases should be documented rather than implicitly ignored.
 
-Contributions that alter or extend these policy decisions should be discussed in an issue before implementation, as such changes may affect reproducibility, compatibility with downstream tools, or consistency with existing datasets.
+Contributions that alter or extend these policy decisions should be discussed in an issue before implementation, as such changes may affect reproducibility, compatibility with existing user scripts, or interpretation of previously exported results.
 
 
 ## Reporting bugs
 Please report bugs via the GitHub issue tracker:
 
-[https://github.com/FabrizioMusacchio/omio/issues](https://github.com/FabrizioMusacchio/omio/issues)
+[https://github.com/FabrizioMusacchio/cellcoloc/issues](https://github.com/FabrizioMusacchio/cellcoloc/issues)
 
 Include the following information if possible:
 
-* OMIO version (`pip show omio`)
+* CellColoc version (`pip show cellcoloc`)
 * Python version
 * Operating system
 * Minimal steps or code snippet to reproduce the issue
-* If applicable, a small synthetic or cropped example file illustrating the problem
+* Relevant CellColoc configuration blocks, for example `CellposeModelConfig`, `ColocalizationConfig`, and `RuntimeConfig`
+* If applicable, a small synthetic example, cropped image, label mask, screenshot, or exported table illustrating the problem
 
-## Requests for new file formats and reader extensions
-In addition to direct code contributions via pull requests, users are encouraged to request support for additional microscopy file formats or format variants that are not yet covered by OMIO.
+## Requests for new analysis methods and workflow extensions
+In addition to direct code contributions via pull requests, users are encouraged to request new analysis capabilities that are not yet covered by CellColoc. Examples include additional colocalization rules, new object-positivity criteria, segmentation backends, prefilters, postfilters, ROI summaries, or exported object metrics.
 
 Such requests should be submitted via the GitHub issue tracker and include:
 
-* a clear description of the file format or variant in question
-* how the file differs from formats already supported by OMIO
-* which part of the reader pipeline fails or behaves unexpectedly
-* if available, relevant OMIO output such as warnings, parsed metadata, or axis interpretations
+* a clear description of the biological or image-analysis question
+* the expected input data structure, for example 2D, 3D, z-projected, two-channel, three-channel, or single-channel analysis
+* the desired segmentation, filtering, or colocalization behavior
+* how the requested method should be reflected in exported tables or masks
+* if available, a minimal script snippet, configuration block, screenshot, or current CellColoc output that illustrates the need
 
-Support for new formats or variants can only be added if a **representative example file** is made available. This is essential to ensure correct parsing, reproducibility, and long-term test coverage.
+For new analysis methods, representative example data are extremely helpful. They allow contributors to verify that the method behaves as expected, document its intended use, and add meaningful tests. When sharing data is not possible, please provide the smallest possible synthetic or cropped example that still captures the relevant behavior.
 
-Example files can be shared via:
+Useful supporting material can be shared via:
 * temporary download links (for example institutional web shares or cloud storage)
 * publicly accessible repositories or archives
-* other means that allow the developers to locally inspect and test the data
+* small synthetic arrays or masks that reproduce the requested behavior
+* expected output tables or manually curated reference masks
 
-Without access to an example file, reader extensions are generally not feasible, as OMIO deliberately avoids speculative or heuristic-based format inference.
-
-If sharing full datasets is not possible, users are encouraged to provide the smallest possible cropped or anonymized file that still reproduces the issue.
+Please do not add large microscopy datasets directly to the repository. For larger examples, use a stable external archive or provide a cropped/anonymized subset that is sufficient for testing.
 
 
 ## License and contributions
 By submitting a pull request, you agree that your contributions will be released under the project’s license as specified in the repository.
 
 If you are unsure how to begin or would like to discuss a potential contribution, feel free to open an issue to start a conversation.
-

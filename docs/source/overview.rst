@@ -214,9 +214,9 @@ Citation
 
 If you use CellColoc in scientific work, please cite:
 
-Musacchio, F. (2026). *CellColoc: A Python package for interactive
-segmentation-based colocalization analysis in microscopy images*. Zenodo.
-https://doi.org/10.5281/zenodo.20787509
+   Musacchio, F. (2026). *CellColoc: A Python package for interactive
+   segmentation-based colocalization analysis in microscopy images*. Zenodo.
+   https://doi.org/10.5281/zenodo.20787509
 
 .. raw:: html
 

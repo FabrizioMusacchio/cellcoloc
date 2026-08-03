@@ -1,32 +1,33 @@
-Contributing and Community Guidelines
+Contributing and community guidelines
 =====================================
 
 *CellColoc* is an open source project that evolves through contributions from its users
 and the broader microscopy community. Contributions range from bug reports and
-documentation improvements to new reader implementations and extensions of the
-I/O pipeline.
+documentation improvements to new analysis features, segmentation helpers,
+workflow examples, and result-export improvements.
 
-The goal of *CellColoc* is to provide a robust, explicit, and reproducible interface for
-reading, normalizing, and converting microscopy image data into OME compliant
-representations. Contributions are therefore evaluated not only by functionality,
-but also by clarity, reproducibility, and long term maintainability.
+The goal of *CellColoc* is to provide a robust, explicit, and reproducible
+interface for segmentation-based colocalization analysis in microscopy images.
+Contributions are therefore evaluated not only by functionality, but also by
+clarity, reproducibility, and long term maintainability.
 
-How to Contribute
+How to contribute
 -----------------
 
 If you are interested in contributing to *CellColoc*, the recommended entry points are:
 
 * reporting bugs or unexpected behavior
 * suggesting improvements to the documentation or examples
-* requesting support for additional file formats or format variants
+* requesting new colocalization, segmentation, filtering, or quantification
+  features
 * submitting pull requests with code changes
 
-Bug reports, feature requests, and format support requests should be submitted
-via the `GitHub issue tracker <https://github.com/FabrizioMusacchio/CellColoc/issues>`_.
+Bug reports and feature requests should be submitted via the
+`GitHub issue tracker <https://github.com/FabrizioMusacchio/cellcoloc/issues>`_.
 For code changes and larger contributions, please open a pull request against
 the main repository.
 
-Contribution Guidelines
+Contribution guidelines
 -----------------------
 
 The repository contains a dedicated contribution guide in the file
@@ -45,38 +46,39 @@ Before opening a pull request, please make sure that:
 * public functions and modules are documented via docstrings
 * user facing changes are reflected in the documentation pages
 
-Requests for New File Formats and Reader Extensions
----------------------------------------------------
+Requests for new analysis methods and workflow extensions
+---------------------------------------------------------
 
 In addition to direct code contributions via pull requests, users are encouraged
-to request support for additional microscopy file formats or format variants that
-are not yet covered by *CellColoc*.
+to request new analysis capabilities that are not yet covered by *CellColoc*.
+Examples include additional colocalization rules, new object-positivity
+criteria, segmentation backends, prefilters, postfilters, ROI summaries, or
+exported object metrics.
 
 Such requests should be submitted via the GitHub issue tracker and include:
 
-* a clear description of the file format or variant in question
-* how the file differs from formats already supported by *CellColoc*
-* which part of the reader or conversion pipeline fails or behaves unexpectedly
-* if available, relevant *CellColoc* output such as warnings, parsed metadata, or axis
-  interpretations
+* a clear description of the biological or image-analysis question
+* the expected input data structure, for example 2D, 3D, z-projected, two-channel,
+  three-channel, or single-channel analysis
+* the desired segmentation, filtering, or colocalization behavior
+* how the requested method should be reflected in exported tables or masks
+* if available, a minimal script snippet, configuration block, screenshot, or
+  current CellColoc output that illustrates the need
 
-Support for new file formats or format variants can only be added if a
-**representative example file** is made available. This is essential to ensure
-correct parsing, reproducibility, and long term test coverage.
+For new analysis methods, representative example data are extremely helpful.
+They allow contributors to verify that the method behaves as expected, document
+its intended use, and add meaningful tests. When sharing data is not possible,
+please provide the smallest possible synthetic or cropped example that still
+captures the relevant behavior.
 
-Example files can be shared via:
+Useful supporting material includes:
 
 * temporary download links, for example institutional web shares or cloud storage
 * publicly accessible repositories or archives
-* other means that allow the developers to locally inspect and test the data
+* small synthetic arrays or masks that reproduce the requested behavior
+* expected output tables or manually curated reference masks
 
-Without access to an example file, reader extensions are generally not feasible,
-as *CellColoc* deliberately avoids speculative or heuristic based format inference.
-
-If sharing full datasets is not possible, users are encouraged to provide the
-smallest possible cropped or anonymized file that still reproduces the issue.
-
-Code of Conduct
+Code of conduct
 ---------------
 
 All interactions in the *CellColoc* project are governed by a `Code of Conduct <https://github.com/FabrizioMusacchio/cellcoloc?tab=coc-ov-file>`_ based on
@@ -86,14 +88,15 @@ participating in the project, you agree to abide by these guidelines.
 If you experience or observe behavior that violates the Code of Conduct, please
 report it via email to the maintainer.
 
-Where to Start?
+Where to start
 ----------------
 
 If you are looking for a first contribution, the issue tracker may contain issues
 labeled as suitable starting points, for example documentation improvements,
-small refactorings, or reader extensions for narrowly defined format variants.
+small refactorings, tests for existing behavior, or narrowly scoped additions to
+analysis helpers.
 
-You are also welcome to open an issue to discuss ideas for new features or reader
-extensions before starting an implementation.
+You are also welcome to open an issue to discuss ideas for new features or
+workflow extensions before starting an implementation.
 
 Thank you for considering contributing to *CellColoc* 🙏
