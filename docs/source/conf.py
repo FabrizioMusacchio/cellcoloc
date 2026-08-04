@@ -96,3 +96,4 @@ copybutton_selector = "div.highlight pre"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_static_path = ['_static']
+html_logo = "_static/CellColoc_2_transparent_wide.png"
