@@ -212,7 +212,14 @@ CellColoc is distributed under the terms of the `GNU General Public License v3.0
 Citation
 --------
 
-If you use CellColoc in scientific work, please cite:
+If you use CellColoc in scientific work, please cite the CellColoc preprint:
+
+   Musacchio, F., Antony, H., Baijal, A., Hoffmann, D. M., Nebeling, F. C.,
+   Crux, S., & Fuhrmann, M. (2026). *CellColoc: A modular, open-source
+   workflow for cell colocalization, segmentation, and feature extraction in
+   microscopy images*. bioRxiv. https://doi.org/10.64898/2026.07.26.740771
+
+Please also cite the archived CellColoc software version used in your analysis:
 
    Musacchio, F. (2026). *CellColoc: A Python package for interactive
    segmentation-based colocalization analysis in microscopy images*. Zenodo.

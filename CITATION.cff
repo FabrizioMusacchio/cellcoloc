@@ -1,8 +1,8 @@
 cff-version: 1.2.0
-message: "If you use CellColoc in your research, please cite it using the metadata below."
-title: "CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images"
-version: 0.0.2
-date-released: 2026-06-21
+message: "If you use CellColoc in your research, please cite the preferred CellColoc paper below and the archived Zenodo software version used in your analysis."
+title: "CellColoc: A modular, open-source workflow for cell colocalization, segmentation, and feature extraction in microscopy images"
+version: 0.0.8
+date-released: 2026-07-28
 
 authors:
   - family-names: Musacchio
@@ -10,20 +10,44 @@ authors:
     orcid: https://orcid.org/0000-0002-9043-3349
 
 repository-code: https://github.com/FabrizioMusacchio/CellColoc
-doi: 10.5281/zenodo.18030883
+doi: 10.5281/zenodo.20787509
 license: GPL-3.0-or-later
 
 preferred-citation:
-  type: software
+  type: article
   authors:
     - family-names: Musacchio
       given-names: Fabrizio
       orcid: https://orcid.org/0000-0002-9043-3349
-  title: "CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images"
-  publisher: Zenodo
+    - family-names: Antony
+      given-names: Henrike
+    - family-names: Baijal
+      given-names: Arush
+    - family-names: Hoffmann
+      given-names: Denise Marie
+    - family-names: Nebeling
+      given-names: Felix Christopher
+    - family-names: Crux
+      given-names: Sophie
+    - family-names: Fuhrmann
+      given-names: Martin
+  title: "CellColoc: A modular, open-source workflow for cell colocalization, segmentation, and feature extraction in microscopy images"
+  journal: bioRxiv
   year: 2026
-  doi: 10.5281/zenodo.20787509
-  url: https://doi.org/10.5281/zenodo.20787509
+  doi: 10.64898/2026.07.26.740771
+  url: https://www.biorxiv.org/content/early/2026/07/29/2026.07.26.740771
+
+references:
+  - type: software
+    authors:
+      - family-names: Musacchio
+        given-names: Fabrizio
+        orcid: https://orcid.org/0000-0002-9043-3349
+    title: "CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images"
+    publisher: Zenodo
+    year: 2026
+    doi: 10.5281/zenodo.20787509
+    url: https://doi.org/10.5281/zenodo.20787509
 
 keywords:
   - microscopy

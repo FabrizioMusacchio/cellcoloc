@@ -246,9 +246,13 @@ A complete installation guide (including GPU support on Windows) is available in
 We recommend to start with usage examples on the documentation website. The folder `user_scripts/` contains interactive scripts that are described in the documentation and can be run cell by cell in VS Code's interactive window or in a notebook-like environment. They are designed to be run with provided example datasets (download from [Zenodo](https://doi.org/10.5281/zenodo.21603005)) or with your own microscopy data.
 
 ## Citation
-If you use *CellColoc* in scientific work, please cite:
+If you use *CellColoc* in scientific work, please cite the CellColoc preprint:
+
+> Musacchio, F., Antony, H., Baijal, A., Hoffmann, D. M., Nebeling, F. C., Crux, S., & Fuhrmann, M. (2026). *CellColoc: A modular, open-source workflow for cell colocalization, segmentation, and feature extraction in microscopy images*. bioRxiv. https://doi.org/10.64898/2026.07.26.740771
+
+Please also cite the archived CellColoc software version used in your analysis:
 
 > Musacchio, F. (2026). *CellColoc: A Python package for interactive segmentation-based colocalization analysis in microscopy images*. Zenodo. https://doi.org/10.5281/zenodo.20787509
 
-Zenodo record:
+Zenodo software archive:
 [https://doi.org/10.5281/zenodo.20787509](https://doi.org/10.5281/zenodo.20787509)

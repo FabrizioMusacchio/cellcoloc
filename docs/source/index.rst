@@ -69,7 +69,9 @@ CellColoc Documentation
    :target: https://doi.org/10.5281/zenodo.20787509
    :alt: Zenodo Archive
 
-
+.. image:: https://img.shields.io/badge/bioRxiv-10.64898%2F2026.07.26.740771-red
+   :target: https://doi.org/10.64898/2026.07.26.740771
+   :alt: bioRxiv preprint
 
 `CellColoc <https://github.com/FabrizioMusacchio/CellColoc>`_ is a Python package
 for interactive, segmentation-based colocalization analysis in microscopy
