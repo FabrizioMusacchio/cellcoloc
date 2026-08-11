@@ -4,6 +4,10 @@
 
 ![img](/figures/CellColoc_2.png)
 
+<p align="center">
+  <img src="/figures/CellColoc_2.png" width="60%" />
+</p>
+
 *CellColoc* is a Python package for interactive, segmentation-based colocalization analysis in microscopy images.
 
 It is designed for experiments where you want to:
