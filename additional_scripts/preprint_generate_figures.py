@@ -43,8 +43,7 @@ CA1_TAMOX_COLOR = CA1_COLOR
 MICROGLIA_MORPHOLOGY_EFFECT_METRICS = [
     ("mean_cell_area_um2_2d", "area", "$\\mu$m$^2$"),
     ("mean_cell_roundness_2d", "roundness", ""),
-    ("mean_cell_eccentricity_2d", "eccentricity", ""),
-]
+    ("mean_cell_eccentricity_2d", "eccentricity", "")]
 
 MICROGLIA_CELL_CMAP     = LinearSegmentedColormap.from_list("cell_red", ["#000000", "#ff3b30"])
 MICROGLIA_MARKER_CMAP   = LinearSegmentedColormap.from_list("marker_cyan", ["#000000", "#00f0ff"])
@@ -55,8 +54,7 @@ MICROGLIA_CHANNEL_CONFIG = ChannelConfig(
     marker_channel=1,
     optional_region_channel=2)
 MICROGLIA_MOUSE_ID_ALIASES = {
-    "22453": "22463",
-}
+    "22453": "22463"}
 MICROGLIA_TREATMENT_BY_MOUSE_ID = {
     "22461": "Tamoxifen",
     "22462": "Tamoxifen",
@@ -65,12 +63,10 @@ MICROGLIA_TREATMENT_BY_MOUSE_ID = {
     "22485": "Tamoxifen",
     "22486": "Tamoxifen",
     "22487": "Vehicle",
-    "22488": "Vehicle",
-}
+    "22488": "Vehicle"}
 MICROGLIA_TREATMENT_XTICK_LABELS = {
     "Vehicle": "veh.",
-    "Tamoxifen": "tam.",
-}
+    "Tamoxifen": "tam."}
 # %% CENTRAL PANEL CONTROLS
 @dataclass(frozen=True)
 class PanelConfig:
@@ -123,8 +119,7 @@ def image_panel(
         scalebar_position=scalebar_position,
         scalebar_length_microns=scalebar_length_microns,
         scalebar_label=scalebar_label,
-        grid_axis=None,
-    )
+        grid_axis=None)
 
 def plot_panel(
     output_subdir: str,
@@ -159,14 +154,11 @@ def plot_panel(
         spines=DEFAULT_SPINES.copy() if spines is None else spines.copy(),
         xrotation=xrotation,
         ytick_length=ytick_length,
-        grid_axis=grid_axis,
-    )
+        grid_axis=grid_axis)
 
 def clone_panel_set(panel_set: dict[str, PanelConfig], output_subdir: str) -> dict[str, PanelConfig]:
-    return {
-        key: replace(panel, output_subdir=output_subdir)
-        for key, panel in panel_set.items()
-    }
+    return {key: replace(panel, output_subdir=output_subdir)
+            for key, panel in panel_set.items()}
 
 SYNTHETIC_PANELS: dict[str, PanelConfig] = {
     "raw_channel0": image_panel("figure2", "panel_a.png", "Channel 0", figsize_cm=(5.4, 5.1), cmap="gray"),
@@ -291,8 +283,7 @@ SYNTHETIC_PANELS: dict[str, PanelConfig] = {
         ylim=(-0.02, 1.02),
         xlim=(-0.4, 1.4),
         spines={"top": False, "right": False, "left": False, "bottom": True},
-    ),
-}
+    )}
 
 SYNTHETIC_SUPPLEMENT_PANELS: dict[str, PanelConfig] = clone_panel_set(SYNTHETIC_PANELS, "figureS1")
 SYNTHETIC_GAUSSIAN_CELLPOSE_PANELS: dict[str, PanelConfig] = clone_panel_set(SYNTHETIC_PANELS, "figure_2_var")
@@ -498,14 +489,12 @@ MICROGLIA_PANELS: dict[str, PanelConfig] = {
         ylabel="best Iba1 overlap fraction",
         ylim=(0.0, 1.05),
         spines={"top": False, "right": False, "left": True, "bottom": True},
-    ),
-}
+    )}
 
 MICROGLIA_ZOOM_PANELS: dict[str, PanelConfig] = {
     key: replace(panel, output_subdir="figure4_zoom")
     for key, panel in MICROGLIA_PANELS.items()
-    if key.startswith(("ctx_", "ca1_"))
-}
+    if key.startswith(("ctx_", "ca1_"))}
 
 MICROGLIA_TREATMENT_PANELS: dict[str, PanelConfig] = {
     "n_cells": plot_panel(
@@ -561,8 +550,7 @@ MICROGLIA_TREATMENT_PANELS: dict[str, PanelConfig] = {
         ylabel="eccentricity",
         ylim=(0.0, 1.05),
         spines={"top": False, "right": False, "left": False, "bottom": True},
-    ),
-}
+    )}
 
 MICROGLIA_TREATMENT_GLOBAL_PANELS: dict[str, PanelConfig] = {
     "n_cells": plot_panel(
@@ -627,8 +615,7 @@ MICROGLIA_TREATMENT_GLOBAL_PANELS: dict[str, PanelConfig] = {
         ylabel="mean intensity (a.u.)",
         ylim=(0, None),
         spines={"top": False, "right": False, "left": False, "bottom": True},
-    ),
-}
+    )}
 # %% DATA CONTAINERS
 @dataclass(slots=True)
 class SyntheticEvaluation:
@@ -669,18 +656,14 @@ MICROGLIA_VIEW_CONFIG = MicrogliaFigureViewConfig(
     zoom_crop_size_px=500,
     include_optional_channel2_in_overlay=False,  # switch to turn on/off the optional channel 2 in the overlay panels
     image_loading_mode="memap",
-    apply_holm_correction=False,
-)
-
+    apply_holm_correction=False)
 
 def make_synthetic_paths(data_dir: Path) -> SyntheticBenchmarkPaths:
     return SyntheticBenchmarkPaths(
         data_dir=data_dir,
         gt_dir=data_dir / "ground_truth",
         gt_label_dir=data_dir / "ground_truth" / "labels",
-        results_dir=data_dir / "results",
-    )
-
+        results_dir=data_dir / "results")
 
 SYNTHETIC_GAUSSIAN_PATHS = make_synthetic_paths(SYNTHETIC_GAUSSIAN_DIR)
 SYNTHETIC_SHARP_PATHS = make_synthetic_paths(SYNTHETIC_SHARP_DIR)
@@ -688,8 +671,7 @@ SYNTHETIC_GAUSSIAN_CELLPOSE_PATHS = SyntheticBenchmarkPaths(
     data_dir=SYNTHETIC_GAUSSIAN_DIR / "cellpose_variant_stacks",
     gt_dir=SYNTHETIC_GAUSSIAN_DIR / "ground_truth",
     gt_label_dir=SYNTHETIC_GAUSSIAN_DIR / "ground_truth" / "labels",
-    results_dir=SYNTHETIC_GAUSSIAN_DIR / "cellpose_variant_stacks" / "results",
-)
+    results_dir=SYNTHETIC_GAUSSIAN_DIR / "cellpose_variant_stacks" / "results")
 SYNTHETIC_SHARP_CELLPOSE_PATHS = SyntheticBenchmarkPaths(
     data_dir=SYNTHETIC_SHARP_CELLPOSE_DIR,
     gt_dir=SYNTHETIC_SHARP_DIR / "ground_truth",
@@ -699,29 +681,24 @@ SYNTHETIC_SHARP_CELLPOSE_PATHS = SyntheticBenchmarkPaths(
 def cm_to_inch(value_cm: float) -> float:
     return value_cm * CM_TO_INCH
 
-
 def ensure_output_dir(relative_subdir: str) -> Path:
     output_dir = FIGURES_DIR / relative_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
-
 def output_path_for(config: PanelConfig) -> Path:
     return ensure_output_dir(config.output_subdir) / config.output_name
-
 
 def create_panel_figure(config: PanelConfig) -> tuple[plt.Figure, plt.Axes]:
     width_cm, height_cm = config.figsize_cm
     fig, ax = plt.subplots(figsize=(cm_to_inch(width_cm), cm_to_inch(height_cm)), dpi=PANEL_DPI)
     return fig, ax
 
-
 def finalize_panel(fig: plt.Figure, output_path: Path, config: PanelConfig) -> None:
     fig.tight_layout(pad=0.45)
     transparent = config.transparent if config.transparent is not None else output_path.suffix.lower() == ".pdf"
     fig.savefig(output_path, bbox_inches="tight", transparent=transparent)
     plt.close(fig)
-
 
 def apply_limits(ax: plt.Axes, config: PanelConfig) -> None:
     if config.xlim is not None:
@@ -730,7 +707,6 @@ def apply_limits(ax: plt.Axes, config: PanelConfig) -> None:
         lower, upper = config.ylim
         if lower is not None or upper is not None:
             ax.set_ylim(lower, upper)
-
 
 def apply_axes_controls(ax: plt.Axes, config: PanelConfig) -> None:
     if config.xlabel is not None:
@@ -755,7 +731,6 @@ def apply_axes_controls(ax: plt.Axes, config: PanelConfig) -> None:
     else:
         ax.grid(True, axis=config.grid_axis, alpha=0.25, linewidth=0.6)
 
-
 def apply_legend_controls(ax: plt.Axes, config: PanelConfig) -> None:
     legend = ax.get_legend()
     if not config.legend_show:
@@ -770,12 +745,10 @@ def apply_legend_controls(ax: plt.Axes, config: PanelConfig) -> None:
         return
     ax.legend(handles, labels, frameon=False, loc=config.legend_loc)
 
-
 def format_scalebar_microns_label(length_microns: float) -> str:
     if float(length_microns).is_integer():
         return f"{int(length_microns)} µm"
     return f"{length_microns:g} µm"
-
 
 def add_scalebar_if_requested(
     ax: plt.Axes,
@@ -810,15 +783,12 @@ def add_scalebar_if_requested(
             color="white",
             ha="center",
             va="top",
-            fontsize=8.5,
-        )
-
+            fontsize=8.5)
 
 def build_stack_color_map(stack_ids: list[str]) -> dict[str, tuple[float, float, float, float]]:
     cmap = plt.get_cmap("tab20")
     unique_ids = sorted(set(stack_ids))
     return {stack_id: cmap(index % 20) for index, stack_id in enumerate(unique_ids)}
-
 
 def safe_pearsonr(x: np.ndarray, y: np.ndarray) -> float:
     if len(x) < 2 or len(y) < 2:
@@ -826,7 +796,6 @@ def safe_pearsonr(x: np.ndarray, y: np.ndarray) -> float:
     if np.allclose(x, x[0]) or np.allclose(y, y[0]):
         return float("nan")
     return float(pearsonr(x, y)[0])
-
 
 def holm_adjust(p_values: list[float]) -> list[float]:
     order = np.argsort(p_values)
@@ -839,8 +808,6 @@ def holm_adjust(p_values: list[float]) -> list[float]:
         running_max = max(running_max, adjusted_value)
         adjusted[original_index] = running_max
     return adjusted.tolist()
-
-
 # %% IMAGE AND MASK HELPERS
 def squeeze_to_2d(array: np.ndarray) -> np.ndarray:
     squeezed = np.asarray(array)
@@ -848,14 +815,11 @@ def squeeze_to_2d(array: np.ndarray) -> np.ndarray:
         squeezed = squeezed[0]
     return squeezed
 
-
 def read_first_plane(path: Path) -> np.ndarray:
     return squeeze_to_2d(tifffile.imread(path))
 
-
 def synthetic_result_stem(stack_id: str) -> str:
     return f"{stack_id}.ome"
-
 
 def load_synthetic_stack_image(paths: SyntheticBenchmarkPaths, stack_id: str) -> np.ndarray:
     image = tifffile.imread(paths.data_dir / f"{stack_id}.ome.tif")
@@ -864,14 +828,12 @@ def load_synthetic_stack_image(paths: SyntheticBenchmarkPaths, stack_id: str) ->
         image = image[0]
     return image.astype(np.float32)
 
-
 def normalize_image_for_display(image: np.ndarray) -> np.ndarray:
     image = np.asarray(image, dtype=np.float32)
     low, high = np.percentile(image, [1.0, 99.5])
     if high <= low:
         return np.zeros_like(image, dtype=np.float32)
     return np.clip((image - low) / (high - low), 0.0, 1.0)
-
 
 def labels_to_rgb(label_image: np.ndarray) -> np.ndarray:
     labels = np.asarray(label_image)
@@ -884,12 +846,10 @@ def labels_to_rgb(label_image: np.ndarray) -> np.ndarray:
         rgb[labels == label] = cmap(index % 20)[:3]
     return rgb
 
-
 def choose_synthetic_example_stack(gt_summary: pd.DataFrame) -> str:
     target = float(gt_summary["n_channel0_cells_gt"].median())
     distances = (gt_summary["n_channel0_cells_gt"] - target).abs()
     return str(gt_summary.loc[distances.idxmin(), "stack_id"])
-
 
 def save_image_panel(
     image: np.ndarray,
@@ -907,19 +867,15 @@ def save_image_panel(
     ax.axis("off")
     finalize_panel(fig, output_path, config)
 
-
 def save_label_mask_panel(mask: np.ndarray, config: PanelConfig, output_path: Path) -> None:
     save_image_panel(labels_to_rgb(mask), config, output_path)
-
 
 def save_label_mask_panel_from_path(source_path: Path, config: PanelConfig, output_path: Path) -> None:
     save_label_mask_panel(read_first_plane(source_path), config, output_path)
 
-
 def save_preview_panel_image(source_path: Path, config: PanelConfig, output_path: Path) -> None:
     image = plt.imread(source_path)
     save_image_panel(image, config, output_path)
-
 
 def project_scalar_volume(
     image_zyx: np.ndarray,
@@ -966,7 +922,6 @@ def project_label_volume(
         return labels[0]
     return np.max(labels, axis=0)
 
-
 def center_crop_image(image: np.ndarray, crop_size_px: int) -> np.ndarray:
     if crop_size_px <= 0:
         raise ValueError("`crop_size_px` must be positive.")
@@ -980,7 +935,6 @@ def center_crop_image(image: np.ndarray, crop_size_px: int) -> np.ndarray:
     x1 = x0 + crop_width
     return array[y0:y1, x0:x1, ...]
 
-
 def choose_microglia_row_by_stack_name(manifest: pd.DataFrame, stack_name: str) -> pd.Series:
     subset = manifest[manifest["stack_name"] == stack_name]
     if subset.empty:
@@ -991,7 +945,6 @@ def choose_microglia_row_by_stack_name(manifest: pd.DataFrame, stack_name: str) 
         )
     return subset.iloc[0]
 
-
 def load_microglia_channel_views(
     source_path: Path,
     view_config: MicrogliaFigureViewConfig,
@@ -1001,30 +954,23 @@ def load_microglia_channel_views(
         channel_config=MICROGLIA_CHANNEL_CONFIG,
         voxel_scale_zyx=None,
         crop_for_testing=None,
-        image_loading_mode=view_config.image_loading_mode,
-    )
+        image_loading_mode=view_config.image_loading_mode)
     channel0 = normalize_image_for_display(
         project_scalar_volume(
             loaded_images.cell_image,
             projection_method=view_config.projection_method,
-            z_slice_index=view_config.z_slice_index,
-        )
-    )
+            z_slice_index=view_config.z_slice_index))
     channel1 = normalize_image_for_display(
         project_scalar_volume(
             loaded_images.marker_image,
             projection_method=view_config.projection_method,
-            z_slice_index=view_config.z_slice_index,
-        )
-    )
+            z_slice_index=view_config.z_slice_index))
     if loaded_images.optional_region_image is not None:
         optional_region = normalize_image_for_display(
             project_scalar_volume(
                 loaded_images.optional_region_image,
                 projection_method=view_config.projection_method,
-                z_slice_index=view_config.z_slice_index,
-            )
-        )
+                z_slice_index=view_config.z_slice_index))
     else:
         optional_region = np.zeros_like(channel0)
 
@@ -1040,10 +986,7 @@ def load_microglia_channel_views(
             "channel1": channel1,
             "channel2": optional_region,
             "overlay": overlay,
-        },
-        microns_per_pixel,
-    )
-
+        }, microns_per_pixel,)
 
 def load_microglia_mask_views(
     results_dir: Path,
@@ -1065,10 +1008,7 @@ def load_microglia_mask_views(
             tifffile.imread(results_dir / f"{stack_stem}_positive_cell_masks.tif"),
             projection_method=view_config.projection_method,
             z_slice_index=view_config.z_slice_index,
-        ),
-    }
-
-
+        )}
 # %% SYNTHETIC BENCHMARK EVALUATION HELPERS
 def compute_iou_matrix(gt_labels: np.ndarray, pred_labels: np.ndarray) -> tuple[list[int], list[int], np.ndarray]:
     gt_ids = [int(label) for label in np.unique(gt_labels) if label != 0]
@@ -1085,7 +1025,6 @@ def compute_iou_matrix(gt_labels: np.ndarray, pred_labels: np.ndarray) -> tuple[
             matrix[i, j] = intersection / union
     return gt_ids, pred_ids, matrix
 
-
 def match_instances(gt_labels: np.ndarray, pred_labels: np.ndarray, iou_threshold: float) -> dict[str, object]:
     gt_ids, pred_ids, iou = compute_iou_matrix(gt_labels, pred_labels)
     accepted_matches: list[dict[str, float | int]] = []
@@ -1100,8 +1039,7 @@ def match_instances(gt_labels: np.ndarray, pred_labels: np.ndarray, iou_threshol
                     "gt_label": int(gt_ids[row_index]),
                     "pred_label": int(pred_ids[col_index]),
                     "iou": current_iou,
-                }
-            )
+                })
 
     tp = len(accepted_matches)
     fp = len(pred_ids) - tp
@@ -1111,8 +1049,7 @@ def match_instances(gt_labels: np.ndarray, pred_labels: np.ndarray, iou_threshol
     f1 = (
         2.0 * precision * recall / (precision + recall)
         if np.isfinite(precision) and np.isfinite(recall) and (precision + recall) > 0
-        else np.nan
-    )
+        else np.nan)
     return {
         "matches": accepted_matches,
         "tp": tp,
@@ -1122,9 +1059,7 @@ def match_instances(gt_labels: np.ndarray, pred_labels: np.ndarray, iou_threshol
         "recall": recall,
         "f1": f1,
         "n_gt": len(gt_ids),
-        "n_pred": len(pred_ids),
-    }
-
+        "n_pred": len(pred_ids)}
 
 def load_synthetic_evaluation(paths: SyntheticBenchmarkPaths) -> SyntheticEvaluation:
     gt_summary = pd.read_csv(paths.gt_dir / "synthetic_benchmark_ground_truth_summary.csv")
@@ -1250,8 +1185,7 @@ def load_synthetic_evaluation(paths: SyntheticBenchmarkPaths) -> SyntheticEvalua
                 "channel1_precision": float(match_ch1["precision"]),
                 "channel1_recall": float(match_ch1["recall"]),
                 "channel1_f1": float(match_ch1["f1"]),
-            }
-        )
+            })
 
     gt_channel0_objects = pd.concat(gt_channel0_rows, ignore_index=True)
     pred_channel0_objects = pd.concat(pred_channel0_rows, ignore_index=True)
@@ -1263,10 +1197,7 @@ def load_synthetic_evaluation(paths: SyntheticBenchmarkPaths) -> SyntheticEvalua
         detection_long=detection_long,
         gt_channel0_objects=gt_channel0_objects,
         pred_channel0_objects=pred_channel0_objects,
-        matched_channel0=matched_channel0,
-    )
-
-
+        matched_channel0=matched_channel0)
 # %% QUANTITATIVE PLOT HELPERS
 def draw_spaghetti_panel(
     stack_table: pd.DataFrame,
@@ -1288,7 +1219,6 @@ def draw_spaghetti_panel(
     apply_axes_controls(ax, config)
     finalize_panel(fig, output_path, config)
 
-
 def draw_detection_metrics_panel(detection_long: pd.DataFrame, config: PanelConfig, output_path: Path) -> None:
     fig, ax = create_panel_figure(config)
     metrics = ["precision", "recall", "f1"]
@@ -1309,14 +1239,12 @@ def draw_detection_metrics_panel(detection_long: pd.DataFrame, config: PanelConf
             alpha=0.88,
             yerr=stds,
             capsize=3,
-            label=channel,
-        )
+            label=channel)
 
     ax.set_xticks(x_positions, ["Precision", "Recall", "F1"])
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
     finalize_panel(fig, output_path, config)
-
 
 def draw_synthetic_error_summary_panel(stack_table: pd.DataFrame, config: PanelConfig, output_path: Path) -> None:
     fig, ax = create_panel_figure(config)
@@ -1334,7 +1262,6 @@ def draw_synthetic_error_summary_panel(stack_table: pd.DataFrame, config: PanelC
     ax.set_xticks(x_positions, [label for label, _ in measures])
     apply_axes_controls(ax, config)
     finalize_panel(fig, output_path, config)
-
 
 def draw_gt_vs_pred_distribution_panel(
     gt_data: pd.DataFrame,
@@ -1358,13 +1285,11 @@ def draw_gt_vs_pred_distribution_panel(
                 s=18,
                 color=color_map[stack_id],
                 alpha=0.72,
-                edgecolors="none",
-            )
+                edgecolors="none")
 
     ax.set_xticks([0, 1], ["GT", "CellColoc"])
     apply_axes_controls(ax, config)
     finalize_panel(fig, output_path, config)
-
 
 def draw_matched_scatter_panel(
     matched_data: pd.DataFrame,
@@ -1403,14 +1328,11 @@ def draw_matched_scatter_panel(
         ha="left",
         va="top",
         fontsize=8.4,
-        bbox=dict(boxstyle="round,pad=0.28", facecolor="white", edgecolor="#d1dbe4", alpha=0.95),
-    )
+        bbox=dict(boxstyle="round,pad=0.28", facecolor="white", edgecolor="#d1dbe4", alpha=0.95))
 
     ax.set_xlabel("GT")
     apply_axes_controls(ax, config)
     finalize_panel(fig, output_path, config)
-
-
 # %% SYNTHETIC FIGURE GENERATION
 def draw_synthetic_benchmark_panels(
     evaluation: SyntheticEvaluation,
@@ -1431,16 +1353,13 @@ def draw_synthetic_benchmark_panels(
             np.clip(channel0 + channel2 * 0.7, 0.0, 1.0),
             np.clip(channel1 + channel2 * 0.7, 0.0, 1.0),
             np.clip(channel1, 0.0, 1.0),
-        ],
-        axis=-1,
-    )
+        ], axis=-1)
 
     example_masks = {
         "mask_channel0": read_first_plane(paths.results_dir / f"{result_stem}_cell_masks.tif"),
         "mask_channel1": read_first_plane(paths.results_dir / f"{result_stem}_marker_masks.tif"),
         "mask_region": read_first_plane(paths.results_dir / f"{result_stem}_region_mask.tif"),
-        "mask_positive": read_first_plane(paths.results_dir / f"{result_stem}_positive_cell_masks.tif"),
-    }
+        "mask_positive": read_first_plane(paths.results_dir / f"{result_stem}_positive_cell_masks.tif")}
 
     save_image_panel(channel0, panel_set["raw_channel0"], output_path_for(panel_set["raw_channel0"]))
     save_image_panel(channel1, panel_set["raw_channel1"], output_path_for(panel_set["raw_channel1"]))
@@ -1455,76 +1374,63 @@ def draw_synthetic_benchmark_panels(
         "gt_channel0_count",
         "pred_channel0_count",
         panel_set["counts_channel0"],
-        output_path_for(panel_set["counts_channel0"]),
-    )
+        output_path_for(panel_set["counts_channel0"]))
     draw_spaghetti_panel(
         evaluation.stack_table,
         "gt_channel1_count",
         "pred_channel1_count",
         panel_set["counts_channel1"],
-        output_path_for(panel_set["counts_channel1"]),
-    )
+        output_path_for(panel_set["counts_channel1"]))
     draw_spaghetti_panel(
         evaluation.stack_table,
         "gt_colocalized_count",
         "pred_colocalized_count",
         panel_set["counts_positive"],
-        output_path_for(panel_set["counts_positive"]),
-    )
+        output_path_for(panel_set["counts_positive"]))
     draw_spaghetti_panel(
         evaluation.stack_table,
         "gt_channel2_coverage_percent",
         "pred_channel2_coverage_percent",
         panel_set["coverage_channel2"],
-        output_path_for(panel_set["coverage_channel2"]),
-    )
+        output_path_for(panel_set["coverage_channel2"]))
     draw_detection_metrics_panel(
         evaluation.detection_long,
         panel_set["detection_metrics"],
-        output_path_for(panel_set["detection_metrics"]),
-    )
+        output_path_for(panel_set["detection_metrics"]))
     draw_synthetic_error_summary_panel(
         evaluation.stack_table,
         panel_set["error_summary"],
-        output_path_for(panel_set["error_summary"]),
-    )
+        output_path_for(panel_set["error_summary"]))
     draw_matched_scatter_panel(
         evaluation.matched_channel0,
         "gt_area_px_2d",
         "pred_area_px_2d",
         panel_set["areas_matched"],
-        output_path_for(panel_set["areas_matched"]),
-    )
+        output_path_for(panel_set["areas_matched"]))
     draw_matched_scatter_panel(
         evaluation.matched_channel0,
         "gt_roundness_2d",
         "pred_roundness_2d",
         panel_set["roundness_matched"],
-        output_path_for(panel_set["roundness_matched"]),
-    )
+        output_path_for(panel_set["roundness_matched"]))
     draw_matched_scatter_panel(
         evaluation.matched_channel0,
         "gt_eccentricity_2d",
         "pred_eccentricity_2d",
         panel_set["eccentricity_matched"],
-        output_path_for(panel_set["eccentricity_matched"]),
-    )
+        output_path_for(panel_set["eccentricity_matched"]))
     draw_matched_scatter_panel(
         evaluation.matched_channel0,
         "gt_overlap_fraction",
         "pred_overlap_fraction",
         panel_set["overlap_fraction_matched"],
-        output_path_for(panel_set["overlap_fraction_matched"]),
-    )
+        output_path_for(panel_set["overlap_fraction_matched"]))
     draw_gt_vs_pred_distribution_panel(
         evaluation.gt_channel0_objects,
         evaluation.pred_channel0_objects,
         "overlap_fraction",
         panel_set["overlap_fraction_distribution"],
-        output_path_for(panel_set["overlap_fraction_distribution"]),
-    )
-
-
+        output_path_for(panel_set["overlap_fraction_distribution"]))
 # %% MICROGLIA HELPERS AND FIGURE GENERATION
 def load_microglia_manifest() -> pd.DataFrame:
     if not MICROGLIA_MANIFEST_PATH.exists():
@@ -1538,8 +1444,7 @@ def load_microglia_manifest() -> pd.DataFrame:
         else:
             raise FileNotFoundError(
                 f"Missing {MICROGLIA_MANIFEST_PATH}. "
-                "Run additional_scripts/run_microglia_3d_full_batch.py first."
-            )
+                "Run additional_scripts/run_microglia_3d_full_batch.py first.")
     manifest = pd.read_csv(MICROGLIA_MANIFEST_PATH)
     if manifest.empty:
         raise ValueError("The microglia batch manifest is empty.")
@@ -1613,8 +1518,7 @@ def load_mean_cell_brightness(results_dir: Path, stack_name: str, source_path: P
         channel_config=MICROGLIA_CHANNEL_CONFIG,
         voxel_scale_zyx=None,
         crop_for_testing=None,
-        image_loading_mode="memap",
-    )
+        image_loading_mode="memap")
     cell_image = np.asarray(loaded_images.cell_image, dtype=np.float32)
     if cell_image.shape != masks.shape:
         if masks.shape[0] != 1:
@@ -1628,8 +1532,7 @@ def load_mean_cell_brightness(results_dir: Path, stack_name: str, source_path: P
         cell_image = project_scalar_volume(
             cell_image,
             projection_method=projection_method,
-            z_slice_index=None,
-        )[np.newaxis, ...]
+            z_slice_index=None)[np.newaxis, ...]
 
     if cell_image.shape != masks.shape:
         return float("nan")
@@ -1651,8 +1554,7 @@ def enrich_microglia_manifest(manifest: pd.DataFrame) -> pd.DataFrame:
         "n_iba1_positive_cells_per_mm3",
         "mean_cell_area_um2_2d",
         "mean_cell_eccentricity_2d",
-        "mean_cell_brightness",
-    }
+        "mean_cell_brightness"}
     if required_columns.issubset(manifest.columns):
         if manifest[list(required_columns)].notna().all().all():
             return manifest
@@ -1707,10 +1609,8 @@ def aggregate_microglia_manifest_by_mouse_region(manifest: pd.DataFrame) -> pd.D
             "n_iba1_positive_cells_per_mm3",
             "mean_cell_area_um2_2d",
             "mean_cell_eccentricity_2d",
-            "mean_cell_brightness",
-        ]
-        if column in manifest.columns
-    ]
+            "mean_cell_brightness"]
+        if column in manifest.columns]
     aggregation_map: dict[str, str | callable] = {column: "mean" for column in numeric_columns}
     aggregation_map.update(
         {
@@ -1718,20 +1618,17 @@ def aggregate_microglia_manifest_by_mouse_region(manifest: pd.DataFrame) -> pd.D
             "source_path": "first",
             "results_dir": "first",
             "treatment": "first",
-        }
-    )
+        })
     grouped = (
         manifest.groupby(["mouse_id", "region"], as_index=False)
         .agg(aggregation_map)
         .sort_values(by=["mouse_id", "region"])
-        .reset_index(drop=True)
-    )
+        .reset_index(drop=True))
     scan_counts = (
         manifest.groupby(["mouse_id", "region"])
         .size()
         .rename("n_region_scans")
-        .reset_index()
-    )
+        .reset_index())
     grouped = grouped.merge(scan_counts, on=["mouse_id", "region"], how="left")
     return grouped
 
@@ -1765,14 +1662,12 @@ def aggregate_microglia_manifest_by_mouse_treatment(manifest: pd.DataFrame) -> p
         {
             "region": lambda values: "; ".join(sorted(str(value) for value in values)),
             "n_region_scans": "sum",
-        }
-    )
+        })
     mouse_level = (
         grouped.groupby(["mouse_id", "treatment"], as_index=False)
         .agg(aggregation_map)
         .sort_values(by=["treatment", "mouse_id"])
-        .reset_index(drop=True)
-    )
+        .reset_index(drop=True))
     mouse_level["n_regions"] = mouse_level["region"].str.count(";") + 1
     return mouse_level
 
@@ -1801,8 +1696,7 @@ def compute_microglia_statistics(
         "mean_cell_area_um2_2d",
         "mean_cell_roundness_2d",
         "mean_cell_eccentricity_2d",
-        "mean_cell_brightness",
-    ]
+        "mean_cell_brightness"]
     raw_p_values: list[float] = []
     rows: list[dict[str, float | str]] = []
     for metric_column in metric_columns:
@@ -1841,9 +1735,7 @@ def compute_microglia_statistics(
                 "n_pairs": float(len(paired_values)),
                 "normality_p_value": normality_p_value,
                 "test_name": test_name,
-                "test_label": test_label,
-            }
-        )
+                "test_label": test_label})
         raw_p_values.append(float(p_value))
 
     adjusted = holm_adjust(raw_p_values)
@@ -1860,8 +1752,7 @@ def compute_microglia_statistics(
             "n_pairs": float(row["n_pairs"]),
             "normality_p_value": float(row["normality_p_value"]),
             "test_name": str(row["test_name"]),
-            "test_label": str(row["test_label"]),
-        }
+            "test_label": str(row["test_label"])}
     return stats_map
 
 def add_p_value_bracket(ax: plt.Axes, x0: float, x1: float, y: float, text: str, height: float) -> None:
@@ -1879,8 +1770,7 @@ def draw_group_comparison_panel(
     paired_values = (
         manifest.pivot(index="mouse_id", columns="region", values=metric_column)
         .dropna(subset=["CTX", "CA1"])
-        .sort_index()
-    )
+        .sort_index())
     regions = ["CTX", "CA1"]
     colors = [CTX_COLOR, CA1_COLOR]
     data = [paired_values[region].to_numpy(dtype=float) for region in regions]
@@ -1915,8 +1805,7 @@ def draw_group_comparison_panel(
             color="#a8b3bc",
             linewidth=0.9,
             alpha=0.9,
-            zorder=2,
-        )
+            zorder=2)
 
     n_pairs = len(paired_values)
     ax.set_xticks([1, 2], [f"CTX\n(n={n_pairs})", f"CA1\n(n={n_pairs})"])
@@ -1995,8 +1884,7 @@ def draw_treatment_region_panel(
             alpha=0.85,
             edgecolors="white",
             linewidths=0.3,
-            zorder=3,
-        )
+            zorder=3)
 
     paired_subset = manifest.copy()
     for treatment, line_color in [("Vehicle", "#b3bcc4"), ("Tamoxifen", "#8f99a3")]:
@@ -2019,8 +1907,7 @@ def draw_treatment_region_panel(
                 color=line_color,
                 linewidth=0.9,
                 alpha=0.95,
-                zorder=2,
-            )
+                zorder=2)
 
     all_values = np.concatenate([values for values in grouped_data if len(values)]) if any(len(values) for values in grouped_data) else np.array([0.0])
     y_min = float(np.min(all_values))
@@ -2049,12 +1936,10 @@ def draw_global_treatment_panel(
 
     group_specs = [
         ("Vehicle", 1.0, "#86c7d4"),
-        ("Tamoxifen", 2.0, "#e95f4e"),
-    ]
+        ("Tamoxifen", 2.0, "#e95f4e")]
     data = [
         manifest.loc[manifest["treatment"] == treatment, metric_column].dropna().to_numpy(dtype=float)
-        for treatment, _, _ in group_specs
-    ]
+        for treatment, _, _ in group_specs]
 
     box = ax.boxplot(data, patch_artist=True, widths=0.5, showfliers=False)
     for patch, (_, _, color) in zip(box["boxes"], group_specs):
@@ -2077,8 +1962,7 @@ def draw_global_treatment_panel(
             alpha=0.9,
             edgecolors="white",
             linewidths=0.3,
-            zorder=3,
-        )
+            zorder=3)
 
     all_values = np.concatenate([values for values in data if len(values)]) if any(len(values) for values in data) else np.array([0.0])
     y_min = float(np.min(all_values))
@@ -2108,8 +1992,7 @@ def get_paired_region_metric_values(manifest: pd.DataFrame, metric_column: str) 
     return (
         manifest.pivot(index="mouse_id", columns="region", values=metric_column)
         .dropna(subset=["CTX", "CA1"])
-        .sort_index()
-    )
+        .sort_index())
 
 def draw_morphology_effect_raw_panel(
     manifest: pd.DataFrame,
@@ -2121,8 +2004,7 @@ def draw_morphology_effect_raw_panel(
         nrows=len(MICROGLIA_MORPHOLOGY_EFFECT_METRICS),
         ncols=1,
         figsize=(cm_to_inch(width_cm), cm_to_inch(height_cm)),
-        dpi=PANEL_DPI,
-    )
+        dpi=PANEL_DPI)
     rng = np.random.default_rng(20260724)
     for ax, (metric_column, metric_label, unit_label) in zip(axes, MICROGLIA_MORPHOLOGY_EFFECT_METRICS):
         paired_values = get_paired_region_metric_values(manifest, metric_column)
@@ -2137,8 +2019,7 @@ def draw_morphology_effect_raw_panel(
             alpha=0.82,
             edgecolors="white",
             linewidths=0.3,
-            zorder=3,
-        )
+            zorder=3)
         mean_difference = float(np.mean(differences))
         sem_difference = float(np.std(differences, ddof=1) / np.sqrt(len(differences))) if len(differences) > 1 else 0.0
         ax.errorbar(
@@ -2151,8 +2032,7 @@ def draw_morphology_effect_raw_panel(
             elinewidth=1.2,
             capsize=3,
             markersize=4,
-            zorder=4,
-        )
+            zorder=4)
         unit_suffix = f" ({unit_label})" if unit_label else ""
         ax.set_ylabel(metric_label, rotation=0, ha="right", va="center", labelpad=40)
         ax.set_xlabel(f"CA1 - CTX{unit_suffix}")
@@ -2188,8 +2068,7 @@ def draw_morphology_effect_standardized_panel(
             alpha=0.82,
             edgecolors="white",
             linewidths=0.3,
-            zorder=3,
-        )
+            zorder=3)
         mean_standardized = float(np.mean(standardized))
         sem_standardized = float(np.std(standardized, ddof=1) / np.sqrt(len(standardized))) if len(standardized) > 1 else 0.0
         ax.errorbar(
@@ -2202,8 +2081,7 @@ def draw_morphology_effect_standardized_panel(
             elinewidth=1.2,
             capsize=3,
             markersize=4,
-            zorder=4,
-        )
+            zorder=4)
         y_labels.append(metric_label)
     ax.axvline(0.0, color="#7c8a95", linewidth=0.9, linestyle="--", zorder=1)
     ax.set_yticks(y_positions, y_labels)
@@ -2228,8 +2106,7 @@ def draw_microglia_qc_density_positive_fraction_panel(
             color="#a8b3bc",
             linewidth=0.9,
             alpha=0.85,
-            zorder=1,
-        )
+            zorder=1)
     for region, color in [("CTX", CTX_COLOR), ("CA1", CA1_COLOR)]:
         subset = manifest.loc[manifest["region"] == region]
         ax.scatter(
@@ -2241,8 +2118,7 @@ def draw_microglia_qc_density_positive_fraction_panel(
             edgecolors="white",
             linewidths=0.35,
             label=region,
-            zorder=3,
-        )
+            zorder=3)
     values = manifest[["n_cells_per_mm3", "iba1_positive_fraction"]].dropna()
     if len(values) >= 3:
         r_value, p_value = pearsonr(values["n_cells_per_mm3"], values["iba1_positive_fraction"])
@@ -2255,8 +2131,7 @@ def draw_microglia_qc_density_positive_fraction_panel(
             ha="left",
             va="top",
             fontsize=8.2,
-            bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "#d4dde5", "alpha": 0.85},
-        )
+            bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "#d4dde5", "alpha": 0.85})
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
     finalize_panel(fig, output_path, config)
@@ -2302,8 +2177,7 @@ def load_microglia_cell_object_table(manifest: pd.DataFrame) -> pd.DataFrame:
         "cell_eccentricity_2d",
         "min_cell_voxels",
         "best_overlap_fraction",
-        "overlap_fraction_threshold",
-    ]
+        "overlap_fraction_threshold"]
     for column in numeric_columns:
         if column in object_table.columns:
             object_table[column] = pd.to_numeric(object_table[column], errors="coerce")
@@ -2338,8 +2212,7 @@ def add_min_cell_threshold_line(ax: plt.Axes, threshold: float | None, *, orient
             ha="left",
             va="bottom",
             fontsize=7.8,
-            color="#4c6070",
-        )
+            color="#4c6070")
         return
     ax.axvline(threshold, color="#4c6070", linestyle="--", linewidth=1.0, zorder=1)
     ax.text(
@@ -2351,8 +2224,7 @@ def add_min_cell_threshold_line(ax: plt.Axes, threshold: float | None, *, orient
         va="top",
         fontsize=7.8,
         color="#4c6070",
-        rotation=90,
-    )
+        rotation=90)
 
 def draw_cell_size_distribution_violin_panel(
     object_table: pd.DataFrame,
@@ -2387,8 +2259,7 @@ def draw_cell_size_distribution_violin_panel(
             color=color,
             alpha=0.18,
             linewidths=0,
-            zorder=3,
-        )
+            zorder=3)
     ax.set_xticks([1, 2], [f"CTX\n(n={len(data[0])})", f"CA1\n(n={len(data[1])})"])
     add_min_cell_threshold_line(ax, microglia_min_cell_voxel_threshold(object_table), orientation="horizontal")
     apply_axes_controls(ax, config)
@@ -2411,8 +2282,7 @@ def draw_cell_size_distribution_strip_panel(
             color=color,
             alpha=0.20,
             linewidths=0,
-            zorder=3,
-        )
+            zorder=3)
         if len(values):
             median_value = float(np.median(values))
             ax.plot([index - 0.22, index + 0.22], [median_value, median_value], color="#1f2e3c", linewidth=1.4, zorder=4)
@@ -2442,8 +2312,7 @@ def draw_cell_size_distribution_histogram_panel(
             color=color,
             edgecolor=color,
             linewidth=1.1,
-            label=f"{region} (n={len(region_values)})",
-        )
+            label=f"{region} (n={len(region_values)})")
     add_min_cell_threshold_line(ax, microglia_min_cell_voxel_threshold(object_table), orientation="vertical")
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
@@ -2464,8 +2333,7 @@ def draw_area_roundness_scatter_panel(
             color=color,
             alpha=0.18,
             linewidths=0,
-            label=f"{region} (n={len(subset)})",
-        )
+            label=f"{region} (n={len(subset)})")
     add_min_cell_threshold_line(ax, microglia_min_cell_voxel_threshold(object_table), orientation="vertical")
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
@@ -2485,16 +2353,14 @@ def draw_count_median_area_scatter_panel(
         object_table.groupby("stack_name")["cell_area_px_2d"]
         .median()
         .rename("median_cell_area_px_2d")
-        .reset_index()
-    )
+        .reset_index())
     stack_table = manifest.merge(median_area, on="stack_name", how="left")
     paired_values = (
         stack_table.groupby(["mouse_id", "region"], as_index=False)
         .agg({"n_cells_per_mm3": "mean", "median_cell_area_px_2d": "mean"})
         .pivot(index="mouse_id", columns="region", values=["n_cells_per_mm3", "median_cell_area_px_2d"])
         .dropna()
-        .sort_index()
-    )
+        .sort_index())
     for _, row in paired_values.iterrows():
         ax.plot(
             [float(row[("n_cells_per_mm3", "CTX")]), float(row[("n_cells_per_mm3", "CA1")])],
@@ -2502,12 +2368,10 @@ def draw_count_median_area_scatter_panel(
             color="#a8b3bc",
             linewidth=0.9,
             alpha=0.85,
-            zorder=1,
-        )
+            zorder=1)
     for region, color in [("CTX", CTX_COLOR), ("CA1", CA1_COLOR)]:
         subset = stack_table.loc[stack_table["region"] == region].dropna(
-            subset=["n_cells_per_mm3", "median_cell_area_px_2d"]
-        )
+            subset=["n_cells_per_mm3", "median_cell_area_px_2d"])
         ax.scatter(
             subset["n_cells_per_mm3"].to_numpy(dtype=float),
             subset["median_cell_area_px_2d"].to_numpy(dtype=float),
@@ -2517,8 +2381,7 @@ def draw_count_median_area_scatter_panel(
             edgecolors="white",
             linewidths=0.35,
             label=region,
-            zorder=3,
-        )
+            zorder=3)
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
     finalize_panel(fig, output_path, config)
@@ -2540,8 +2403,7 @@ def draw_iba1_overlap_fraction_histogram_panel(
             color=color,
             edgecolor=color,
             linewidth=1.1,
-            label=f"{region} (n={len(values)})",
-        )
+            label=f"{region} (n={len(values)})")
     threshold = microglia_overlap_fraction_threshold(object_table)
     if threshold is not None:
         ax.axvline(threshold, color="#4c6070", linestyle="--", linewidth=1.0, zorder=3)
@@ -2554,8 +2416,7 @@ def draw_iba1_overlap_fraction_histogram_panel(
             va="top",
             fontsize=7.8,
             color="#4c6070",
-            rotation=90,
-        )
+            rotation=90)
     apply_axes_controls(ax, config)
     apply_legend_controls(ax, config)
     finalize_panel(fig, output_path, config)
@@ -2570,8 +2431,7 @@ def draw_iba1_overlap_fraction_distribution_panel(
     colors = [CTX_COLOR, CA1_COLOR]
     data = [
         object_table.loc[object_table["region"] == region, "best_overlap_fraction"].dropna().to_numpy(dtype=float)
-        for region in regions
-    ]
+        for region in regions]
     violin = ax.violinplot(data, positions=[1, 2], widths=0.65, showmeans=False, showmedians=True, showextrema=False)
     for body, color in zip(violin["bodies"], colors):
         body.set_facecolor(color)
@@ -2591,8 +2451,7 @@ def draw_iba1_overlap_fraction_distribution_panel(
             color=color,
             alpha=0.18,
             linewidths=0,
-            zorder=3,
-        )
+            zorder=3)
     threshold = microglia_overlap_fraction_threshold(object_table)
     if threshold is not None:
         ax.axhline(threshold, color="#4c6070", linestyle="--", linewidth=1.0, zorder=2)
@@ -2604,8 +2463,7 @@ def draw_iba1_overlap_fraction_distribution_panel(
             ha="left",
             va="bottom",
             fontsize=7.8,
-            color="#4c6070",
-        )
+            color="#4c6070")
     ax.set_xticks([1, 2], [f"CTX\n(n={len(data[0])})", f"CA1\n(n={len(data[1])})"])
     apply_axes_controls(ax, config)
     finalize_panel(fig, output_path, config)
@@ -2634,12 +2492,10 @@ def draw_microglia_result_panels(
 
     preview_map = {
         "ctx": load_microglia_channel_views(ctx_source_path, view_config),
-        "ca1": load_microglia_channel_views(ca1_source_path, view_config),
-    }
+        "ca1": load_microglia_channel_views(ca1_source_path, view_config)}
     mask_map = {
         "ctx": load_microglia_mask_views(ctx_results_dir, ctx_stem, view_config),
-        "ca1": load_microglia_mask_views(ca1_results_dir, ca1_stem, view_config),
-    }
+        "ca1": load_microglia_mask_views(ca1_results_dir, ca1_stem, view_config)}
 
     for region_key, (region_preview_map, microns_per_pixel) in preview_map.items():
         for suffix_key, image in region_preview_map.items():
@@ -2648,14 +2504,12 @@ def draw_microglia_result_panels(
                 image,
                 MICROGLIA_PANELS[panel_key],
                 output_path_for(MICROGLIA_PANELS[panel_key]),
-                microns_per_pixel=microns_per_pixel,
-            )
+                microns_per_pixel=microns_per_pixel)
             save_image_panel(
                 center_crop_image(image, view_config.zoom_crop_size_px),
                 MICROGLIA_ZOOM_PANELS[panel_key],
                 output_path_for(MICROGLIA_ZOOM_PANELS[panel_key]),
-                microns_per_pixel=microns_per_pixel,
-            )
+                microns_per_pixel=microns_per_pixel)
 
     for region_key, region_mask_map in mask_map.items():
         for suffix_key, mask in region_mask_map.items():
@@ -2664,8 +2518,7 @@ def draw_microglia_result_panels(
             save_label_mask_panel(
                 center_crop_image(mask, view_config.zoom_crop_size_px),
                 MICROGLIA_ZOOM_PANELS[panel_key],
-                output_path_for(MICROGLIA_ZOOM_PANELS[panel_key]),
-            )
+                output_path_for(MICROGLIA_ZOOM_PANELS[panel_key]))
 
     metric_panel_map = {
         "n_cells": "n_cells_per_mm3",
@@ -2673,98 +2526,81 @@ def draw_microglia_result_panels(
         "iba1_positive_fraction": "iba1_positive_fraction",
         "mean_cell_area": "mean_cell_area_um2_2d",
         "mean_cell_roundness": "mean_cell_roundness_2d",
-        "mean_cell_eccentricity": "mean_cell_eccentricity_2d",
-    }
+        "mean_cell_eccentricity": "mean_cell_eccentricity_2d"}
     for panel_key, metric_column in metric_panel_map.items():
         draw_group_comparison_panel(
             manifest=paired_manifest,
             metric_column=metric_column,
             stats_map=stats_map,
             config=MICROGLIA_PANELS[panel_key],
-            output_path=output_path_for(MICROGLIA_PANELS[panel_key]),
-        )
+            output_path=output_path_for(MICROGLIA_PANELS[panel_key]))
         draw_treatment_region_panel(
             manifest=aggregated_manifest,
             metric_column=metric_column,
             config=MICROGLIA_TREATMENT_PANELS[panel_key],
-            output_path=output_path_for(MICROGLIA_TREATMENT_PANELS[panel_key]),
-        )
+            output_path=output_path_for(MICROGLIA_TREATMENT_PANELS[panel_key]))
         draw_global_treatment_panel(
             manifest=mouse_treatment_manifest,
             metric_column=metric_column,
             config=MICROGLIA_TREATMENT_GLOBAL_PANELS[panel_key],
-            output_path=output_path_for(MICROGLIA_TREATMENT_GLOBAL_PANELS[panel_key]),
-        )
+            output_path=output_path_for(MICROGLIA_TREATMENT_GLOBAL_PANELS[panel_key]))
 
     draw_group_comparison_panel(
         manifest=paired_manifest,
         metric_column="mean_cell_brightness",
         stats_map=stats_map,
         config=MICROGLIA_PANELS["mean_cell_brightness"],
-        output_path=output_path_for(MICROGLIA_PANELS["mean_cell_brightness"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["mean_cell_brightness"]))
     draw_global_treatment_panel(
         manifest=mouse_treatment_manifest,
         metric_column="mean_cell_brightness",
         config=MICROGLIA_TREATMENT_GLOBAL_PANELS["mean_cell_brightness"],
-        output_path=output_path_for(MICROGLIA_TREATMENT_GLOBAL_PANELS["mean_cell_brightness"]),
-    )
+        output_path=output_path_for(MICROGLIA_TREATMENT_GLOBAL_PANELS["mean_cell_brightness"]))
     draw_morphology_effect_raw_panel(
         manifest=paired_manifest,
         config=MICROGLIA_PANELS["morphology_effect_raw"],
-        output_path=output_path_for(MICROGLIA_PANELS["morphology_effect_raw"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["morphology_effect_raw"]))
     draw_morphology_effect_standardized_panel(
         manifest=paired_manifest,
         config=MICROGLIA_PANELS["morphology_effect_standardized"],
-        output_path=output_path_for(MICROGLIA_PANELS["morphology_effect_standardized"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["morphology_effect_standardized"]))
     draw_microglia_qc_density_positive_fraction_panel(
         manifest=aggregated_manifest,
         config=MICROGLIA_PANELS["qc_density_positive_fraction"],
-        output_path=output_path_for(MICROGLIA_PANELS["qc_density_positive_fraction"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["qc_density_positive_fraction"]))
     draw_cell_size_distribution_violin_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["cell_size_distribution_violin"],
-        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_violin"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_violin"]))
     draw_cell_size_distribution_strip_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["cell_size_distribution_strip"],
-        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_strip"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_strip"]))
     draw_cell_size_distribution_histogram_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["cell_size_distribution_histogram"],
-        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_histogram"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["cell_size_distribution_histogram"]))
     draw_area_roundness_scatter_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["area_roundness_scatter"],
-        output_path=output_path_for(MICROGLIA_PANELS["area_roundness_scatter"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["area_roundness_scatter"]))
     draw_count_median_area_scatter_panel(
         manifest=manifest,
         object_table=object_table,
         config=MICROGLIA_PANELS["count_median_area_scatter"],
-        output_path=output_path_for(MICROGLIA_PANELS["count_median_area_scatter"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["count_median_area_scatter"]))
     draw_iba1_overlap_fraction_histogram_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["iba1_overlap_fraction_histogram"],
-        output_path=output_path_for(MICROGLIA_PANELS["iba1_overlap_fraction_histogram"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["iba1_overlap_fraction_histogram"]))
     draw_iba1_overlap_fraction_distribution_panel(
         object_table=object_table,
         config=MICROGLIA_PANELS["iba1_overlap_fraction_distribution"],
-        output_path=output_path_for(MICROGLIA_PANELS["iba1_overlap_fraction_distribution"]),
-    )
+        output_path=output_path_for(MICROGLIA_PANELS["iba1_overlap_fraction_distribution"]))
 
 def synthetic_results_available(paths: SyntheticBenchmarkPaths) -> bool:
     expected = paths.results_dir / f"{synthetic_result_stem('synthetic_stack_00')}_roi_overview.csv"
     return expected.exists()
-
 # %% MAIN FUNCTION
 def main() -> None:
     plt.rcParams.update(
@@ -2775,9 +2611,8 @@ def main() -> None:
             "xtick.labelsize": 10,
             "ytick.labelsize": 10,
             "font.family": "sans-serif",
-            "font.sans-serif": ["Helvetica", "Arial", "DejaVu Sans"],
-        }
-    )
+            "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+        })
 
     if synthetic_results_available(SYNTHETIC_SHARP_PATHS):
         synthetic_evaluation = load_synthetic_evaluation(SYNTHETIC_SHARP_PATHS)
