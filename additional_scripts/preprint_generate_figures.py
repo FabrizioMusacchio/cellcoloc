@@ -1,4 +1,9 @@
-"""Generate figure panels for the CellColoc preprint."""
+"""Generate figure panels for the CellColoc preprint.
+
+author: Fabrizio Musacchio
+date:   July/August 2026
+
+"""
 # %% IMPORTS
 from __future__ import annotations
 
